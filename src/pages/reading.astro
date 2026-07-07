@@ -1,0 +1,37 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../layouts/Layout.astro';
+
+const books = (await getCollection('reading')).sort((a, b) => {
+  const da = a.data.dateRead?.valueOf() ?? 0;
+  const db = b.data.dateRead?.valueOf() ?? 0;
+  return db - da;
+});
+
+const rendered = await Promise.all(
+  books.map(async (book) => ({ book, Content: (await render(book)).Content }))
+);
+---
+
+<Layout title="Reading — Brian" description="Books I've read">
+  <h1>Reading</h1>
+  {books.length === 0 && <p class="muted">No books yet.</p>}
+  <ul class="book-list">
+    {rendered.map(({ book, Content }) => (
+      <li class="book">
+        {book.data.cover ? (
+          <img src={book.data.cover} alt={`Cover of ${book.data.title}`} loading="lazy" />
+        ) : (
+          <div class="book-cover-placeholder">{book.data.title}</div>
+        )}
+        <div>
+          <h2>{book.data.title}</h2>
+          <p class="author">{book.data.author}</p>
+          <div class="thoughts">
+            <Content />
+          </div>
+        </div>
+      </li>
+    ))}
+  </ul>
+</Layout>

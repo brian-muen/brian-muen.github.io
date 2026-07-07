@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="330" viewBox="0 0 220 330">
+  <rect width="220" height="330" fill="#39465a"/>
+  <rect x="12" y="12" width="196" height="306" fill="none" stroke="#8fa1b8" stroke-width="1.5"/>
+  <text x="110" y="140" text-anchor="middle" font-family="Georgia, serif" font-size="20" fill="#e8edf3">A Sample</text>
+  <text x="110" y="168" text-anchor="middle" font-family="Georgia, serif" font-size="20" fill="#e8edf3">Book</text>
+  <text x="110" y="290" text-anchor="middle" font-family="Georgia, serif" font-size="13" fill="#aebccd">Jane Author</text>
+</svg>

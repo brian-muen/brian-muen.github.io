@@ -1,0 +1,202 @@
+:root {
+  --text: #000000;
+  --muted: #6b6b6b;
+  --border: #e5e5e5;
+  --bg: #ffffff;
+  --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+  --sidebar-width: 11rem;
+  --content-width: 40rem;
+  --page-padding-x: 2rem;
+  --page-padding-y: 2.5rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--serif);
+  color: var(--text);
+  background: var(--bg);
+}
+
+body {
+  margin: 0;
+  display: flex;
+  min-height: 100vh;
+  line-height: 1.65;
+  font-size: 1.0625rem;
+}
+
+/* Sidebar */
+.sidebar {
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  padding: var(--page-padding-y) var(--page-padding-x);
+}
+
+.sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  font-size: 1rem;
+}
+
+.sidebar nav a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.sidebar nav a:hover,
+.sidebar nav a[aria-current='page'] {
+  color: var(--text);
+}
+
+main {
+  flex: 1;
+  min-width: 0;
+  max-width: var(--content-width);
+  padding: var(--page-padding-y) var(--page-padding-x) 4rem;
+}
+
+/* Stack sidebar on top for small screens */
+@media (max-width: 640px) {
+  :root {
+    --page-padding-x: 1.25rem;
+    --page-padding-y: 1.25rem;
+  }
+
+  body {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    padding-bottom: 0;
+  }
+
+  .sidebar nav {
+    flex-direction: row;
+    gap: 1.25rem;
+  }
+}
+
+h1 {
+  font-size: 1.75rem;
+  line-height: 1.25;
+  margin: 0 0 1rem;
+}
+
+h2 {
+  font-size: 1.25rem;
+  margin: 2rem 0 0.5rem;
+}
+
+a {
+  color: var(--text);
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2rem 0;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.small {
+  font-size: 0.875rem;
+}
+
+/* Writing list */
+.post-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.post-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.5rem 0;
+}
+
+.post-list time {
+  color: var(--muted);
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+/* Reading */
+.book-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.book {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.book img {
+  width: 110px;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.book-cover-placeholder {
+  width: 110px;
+  height: 165px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.book h2 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.book .author {
+  color: var(--muted);
+  margin: 0.125rem 0 0.75rem;
+  font-size: 0.9375rem;
+}
+
+.book .thoughts {
+  font-size: 0.9375rem;
+}
+
+.book .thoughts p:first-child {
+  margin-top: 0;
+}
+
+/* Essay content */
+article img {
+  max-width: 100%;
+}
+
+article blockquote {
+  margin: 1.5rem 0;
+  padding-left: 1rem;
+  border-left: 2px solid var(--border);
+  color: var(--muted);
+}

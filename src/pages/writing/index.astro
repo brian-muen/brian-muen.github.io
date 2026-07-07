@@ -1,0 +1,23 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+
+const posts = (await getCollection('writing')).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+);
+
+const fmt = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+---
+
+<Layout title="Writing — Brian" description="Essays">
+  <h1>Writing</h1>
+  {posts.length === 0 && <p class="muted">Nothing here yet.</p>}
+  <ul class="post-list">
+    {posts.map((post) => (
+      <li>
+        <a href={`/writing/${post.id}`}>{post.data.title}</a>
+        <time datetime={post.data.date.toISOString()}>{fmt.format(post.data.date)}</time>
+      </li>
+    ))}
+  </ul>
+</Layout>
