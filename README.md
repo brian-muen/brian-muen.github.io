@@ -35,6 +35,9 @@ Essay text in markdown...
 
 The filename becomes the URL: `why-i-write.md` → `/writing/why-i-write`.
 
+Old WordPress posts go in `src/content/writing/archive/` — they appear under an
+**Archive** toggle at the bottom of the Writing page, separate from newer essays.
+
 ## Adding a book
 
 1. Drop a cover image into `public/covers/` (e.g. `public/covers/dune.jpg`).

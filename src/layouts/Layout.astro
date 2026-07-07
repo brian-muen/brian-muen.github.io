@@ -15,6 +15,12 @@ const links = [
   { href: '/reading', label: 'Reading' },
 ];
 
+const social = [
+  { href: 'https://x.com/diffferance', label: 'Twitter' },
+  { href: 'https://github.com/brian-muen', label: 'GitHub' },
+  { href: 'https://app.thestorygraph.com/profile/brian_', label: 'Storygraph' },
+];
+
 function isCurrent(href: string) {
   if (href === '/') return path === '/';
   return path === href || path.startsWith(href + '/');
@@ -28,6 +34,9 @@ function isCurrent(href: string) {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     {description && <meta name="description" content={description} />}
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
     <title>{title}</title>
   </head>
   <body>
@@ -38,8 +47,15 @@ function isCurrent(href: string) {
         ))}
       </nav>
     </aside>
-    <main>
-      <slot />
-    </main>
+    <div class="content">
+      <main>
+        <slot />
+      </main>
+      <footer class="social">
+        {social.map((s) => (
+          <a href={s.href} rel="me">{s.label}</a>
+        ))}
+      </footer>
+    </div>
   </body>
 </html>

@@ -3,7 +3,7 @@
   --muted: #6b6b6b;
   --border: #e5e5e5;
   --bg: #ffffff;
-  --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+  --serif: 'EB Garamond', Garamond, 'Apple Garamond', 'Times New Roman', serif;
   --sidebar-width: 11rem;
   --content-width: 40rem;
   --page-padding-x: 2rem;
@@ -56,7 +56,32 @@ main {
   flex: 1;
   min-width: 0;
   max-width: var(--content-width);
-  padding: var(--page-padding-y) var(--page-padding-x) 4rem;
+  padding: var(--page-padding-y) var(--page-padding-x) 2rem;
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100vh;
+}
+
+.social {
+  display: flex;
+  gap: 1.25rem;
+  padding: 0 var(--page-padding-x) var(--page-padding-y);
+  max-width: var(--content-width);
+}
+
+.social a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+.social a:hover {
+  color: var(--text);
 }
 
 /* Stack sidebar on top for small screens */
@@ -129,6 +154,32 @@ hr {
   color: var(--muted);
   font-size: 0.875rem;
   white-space: nowrap;
+}
+
+.archive {
+  margin-top: 2rem;
+}
+
+.archive summary {
+  cursor: pointer;
+  color: var(--muted);
+  list-style: none;
+}
+
+.archive summary::-webkit-details-marker {
+  display: none;
+}
+
+.archive summary::before {
+  content: '+ ';
+}
+
+.archive[open] summary::before {
+  content: '− ';
+}
+
+.archive .post-list {
+  margin-top: 0.75rem;
 }
 
 /* Reading */
