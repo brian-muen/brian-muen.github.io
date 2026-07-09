@@ -1,5 +1,5 @@
 ---
-title: "The Lady in the Lake"
+title: "The Lady in the Lake (Philip Marlowe, #4)"
 author: "Raymond Chandler"
 dateRead: 2021-06-03
 dateAdded: 2021-05-26
