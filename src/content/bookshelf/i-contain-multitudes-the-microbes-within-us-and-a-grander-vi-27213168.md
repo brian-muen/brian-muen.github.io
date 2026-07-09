@@ -15,7 +15,7 @@ subjects: ["Microorganisms", "Human body", "Symbiosis", "Microbiology", "nyt:hea
 coverColor: "#17201f"
 fiction: false
 ---
-[b:I Contain Multitudes: The Microbes Within Us and a Grander View of Life|27213168|I Contain Multitudes  The Microbes Within Us and a Grander View of Life|Ed Yong|https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1445606162l/27213168._SY75_.jpg|47255162] by [a:Ed Yong|4124738|Ed Yong|https://images.gr-assets.com/authors/1573241090p2/4124738.jpg] dives into the wonderful and often misunderstood field of microbiology. Yong unravels discoveries and knock down conspiracies — all while talking about microbes! I have to say that this is the most fascinating book I have read so far this year.
+*I Contain Multitudes: The Microbes Within Us and a Grander View of Life* by Ed Yong dives into the wonderful and often misunderstood field of microbiology. Yong unravels discoveries and knock down conspiracies — all while talking about microbes! I have to say that this is the most fascinating book I have read so far this year.
 
    The myriad microbes in our bodies are collectively known as the microbiome or microbiota. Microbes are a big part of our lives. According to Yong, our oxygen is produced by photosynthetic microbes in the ocean and the bacteria in chloroplasts (we would not be here without them!). Though most cast microbes as antagonists, "[t]here are fewer than 100 species of bacteria that cause infectious diseases in humans"(11). Our microbes also supplement our body cells. It carries a whopping 500 times more genes than your cells. What your body cells cannot do, your microbes are most likely capable of. 
 
@@ -36,4 +36,4 @@ fiction: false
 
  
 Synthetic biologist aren't limited to sending microbes after pathogens. They might also train their creations to eliminate cancer cells or convert toxins into medicines. (239)
-  In this book, Yong takes readers on a captivating ride through the history and application of microbiology. It contains compelling anecdotes which are sprinkled with a topping of information. For readers interested in how microbes affect our lives, [Ed Yong's](https://www.goodreads.com/author/show/4124738.Ed_Yong) [I Contain Multitudes](https://www.goodreads.com/book/show/27213168-i-contain-multitudes?ac=1&from_search=true&qid=0mnbMN2Qhx&rank=1) is the book to devour.
+In this book, Yong takes readers on a captivating ride through the history and application of microbiology. It contains compelling anecdotes which are sprinkled with a topping of information. For readers interested in how microbes affect our lives, Ed Yong's *I Contain Multitudes* is the book to devour.
