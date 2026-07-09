@@ -28,7 +28,9 @@ export function parseSeries(title: string): { series: string | null; seriesIndex
   if (!m) return { series: null, seriesIndex: null };
   const raw = m[2].split(/[.–\-]/)[0];
   const n = Number(raw);
-  return { series: m[1].trim(), seriesIndex: Number.isFinite(n) ? n : null };
+  // Normalize "The Reckoners" / "Reckoners" (and "The Rat" / "Rat") to one key.
+  const series = m[1].trim().replace(/^the\s+/i, '');
+  return { series: series || null, seriesIndex: Number.isFinite(n) ? n : null };
 }
 
 /** Site-relative cover path only (optional cache-bust query). */
