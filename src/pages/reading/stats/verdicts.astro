@@ -1,0 +1,203 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import StatsNav from '../../../components/StatsNav.astro';
+import { loadBooks, pct, safeJsonForScript } from '../../../lib/bookshelf-stats';
+import { buildVerdicts } from '../../../lib/stats-viz';
+
+const books = await loadBooks();
+const v = buildVerdicts(books);
+const maxBucket = Math.max(1, ...v.buckets.map((b) => b.n));
+const maxYearN = Math.max(1, ...v.years.map((y) => y.rated));
+
+const TW = 720;
+const TH = 200;
+const TP = { t: 16, b: 32, l: 36, r: 16 };
+const yearPts = v.years.filter((y) => y.avg != null);
+const t0 = yearPts[0]?.year ?? 2020;
+const t1 = yearPts[yearPts.length - 1]?.year ?? t0;
+const xOf = (year: number) =>
+  TP.l + ((year - t0) / Math.max(1, t1 - t0)) * (TW - TP.l - TP.r);
+const yOf = (avg: number) => TP.t + ((5 - avg) / 4) * (TH - TP.t - TP.b);
+const avgLine = yearPts.map((y) => `${xOf(y.year).toFixed(1)},${yOf(y.avg!).toFixed(1)}`).join(' ');
+
+const fingerprintBits: string[] = [];
+if (v.avg != null) fingerprintBits.push(`${v.avg.toFixed(2)}★ average across ${v.rated} rated books`);
+if (v.mode != null) {
+  const modeBucket = v.buckets.find((b) => b.min === v.mode) ?? v.buckets.find((b) => b.n === Math.max(...v.buckets.map((x) => x.n)));
+  if (modeBucket) fingerprintBits.push(`${modeBucket.label} is your default verdict (${modeBucket.n} books)`);
+}
+if (v.streak?.kind === 'high') {
+  fingerprintBits.push(`longest generous streak: ${v.streak.n} finishes ≥4★ (${v.streak.from}–${v.streak.to})`);
+}
+const fingerprint = fingerprintBits.join('. ') + (fingerprintBits.length ? '.' : '');
+---
+
+<Layout title="Verdicts — Brian" description="How I rate the books I finish">
+  <p class="muted small"><a href="/reading">← Reading</a></p>
+  <h1>Verdicts</h1>
+  <StatsNav current="/reading/stats/verdicts" />
+  <p class="taste-fingerprint">{fingerprint || 'Ratings, plotted.'}</p>
+
+  <div class="stat-cards">
+    <div class="stat-card">
+      <span class="stat-big">{v.avg != null ? v.avg.toFixed(2) : '—'}</span>
+      <span class="stat-sub">average ★</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-big">{v.median != null ? v.median.toFixed(1) : '—'}</span>
+      <span class="stat-sub">median ★</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-big">{v.mode != null ? `${v.mode}` : '—'}</span>
+      <span class="stat-sub">most common rating</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-big">{v.rated}</span>
+      <span class="stat-sub">rated · {v.unrated} unrated</span>
+    </div>
+  </div>
+
+  <section class="stats-section">
+    <h2>The histogram</h2>
+    <p class="muted small">Where the stars land. Fractional ratings snap to the nearest half-star for the bars.</p>
+    <ul class="stat-bars" id="verdict-bars">
+      {v.buckets.map((b) => (
+        <li>
+          <button type="button" class="stat-label wide verdict-bucket" data-bucket={String(b.min)}>
+            {b.label}
+          </button>
+          <span class="stat-track"><span class="stat-fill" style={`--w:${pct(b.n, maxBucket)}`}></span></span>
+          <span class="stat-value">{b.n}</span>
+        </li>
+      ))}
+    </ul>
+    <div class="heatmap-detail" id="verdict-detail" hidden></div>
+  </section>
+
+  {yearPts.length > 1 && (
+    <section class="stats-section">
+      <h2>Average by year</h2>
+      <p class="muted small">Did the grades get softer or harsher? Hover a year.</p>
+      <div class="scatter-wrap">
+        <div class="scatter-readout muted small" id="verdict-year-readout">&nbsp;</div>
+        <svg id="verdict-year" viewBox={`0 0 ${TW} ${TH}`} role="img" aria-label="Average rating by year">
+          {[2, 3, 4, 5].map((r) => {
+            const y = yOf(r);
+            return (
+              <g>
+                <line x1={TP.l} y1={y} x2={TW - TP.r} y2={y} class="tl-grid" />
+                <text x={TP.l - 6} y={y + 3} class="tl-tick" text-anchor="end">{r}</text>
+              </g>
+            );
+          })}
+          {yearPts.map((y) => (
+            <text x={xOf(y.year)} y={TH - 8} class="tl-tick" text-anchor="middle">{y.year}</text>
+          ))}
+          <polyline points={avgLine} class="tl-line" />
+          {yearPts.map((y) => (
+            <circle
+              class="scatter-dot verdict-year-dot"
+              cx={xOf(y.year).toFixed(1)}
+              cy={yOf(y.avg!).toFixed(1)}
+              r={Math.max(3.5, 2 + (y.rated / maxYearN) * 5)}
+              data-year={y.year}
+              data-avg={y.avg}
+              data-rated={y.rated}
+              data-generous={y.generous != null ? Math.round(y.generous * 100) : ''}
+            />
+          ))}
+        </svg>
+      </div>
+      <ul class="stat-bars verdict-generous">
+        {v.years
+          .filter((y) => y.rated > 0)
+          .map((y) => (
+            <li>
+              <span class="stat-label">{y.year}</span>
+              <span class="stat-track">
+                <span class="stat-fill" style={`--w:${pct(Math.round((y.generous ?? 0) * 100), 100)}`}></span>
+              </span>
+              <span class="stat-value">{y.generous != null ? `${Math.round(y.generous * 100)}% ≥4★` : '—'}</span>
+            </li>
+          ))}
+      </ul>
+      <p class="muted small">Bars: share of that year’s rated books that got at least 4★.</p>
+    </section>
+  )}
+
+  <section class="stats-section">
+    <h2>High court</h2>
+    <p class="muted small">4.5★ and up — the books that cleared the bar.</p>
+    <ul class="verdict-list">
+      {v.highest.map((b) => (
+        <li>
+          <a href={`/reading/books/${b.id}`}>{b.title}</a>
+          <span class="muted small">{b.author}</span>
+          <span class="verdict-star">{b.rating}★</span>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  {v.lowest.length > 0 && (
+    <section class="stats-section">
+      <h2>Harsh takes</h2>
+      <p class="muted small">3★ and under — still finished, still judged.</p>
+      <ul class="verdict-list">
+        {v.lowest.map((b) => (
+          <li>
+            <a href={`/reading/books/${b.id}`}>{b.title}</a>
+            <span class="muted small">{b.author}</span>
+            <span class="verdict-star">{b.rating}★</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  <p class="muted small stats-footnote">
+    {v.unrated} books have no rating and are left out of the averages.
+    For how those stars line up with genres and length, see
+    <a href="/reading/stats/taste">Taste</a>.
+  </p>
+
+  <script type="application/json" id="verdict-data" set:html={safeJsonForScript({ buckets: v.buckets })} />
+</Layout>
+
+<script>
+  import { esc, bookHref } from '../../../lib/dom-safe';
+
+  const data = JSON.parse(document.getElementById('verdict-data').textContent);
+  const detail = document.getElementById('verdict-detail');
+  let active = null;
+
+  document.getElementById('verdict-bars')?.addEventListener('click', (e) => {
+    const btn = e.target.closest?.('[data-bucket]');
+    if (!btn) return;
+    const key = btn.dataset.bucket;
+    if (active === key) {
+      detail.hidden = true;
+      active = null;
+      return;
+    }
+    active = key;
+    const bucket = data.buckets.find((b) => String(b.min) === key);
+    if (!bucket) return;
+    detail.innerHTML =
+      `<p class="heatmap-detail-title">${esc(bucket.label)} — ${bucket.n} book${bucket.n === 1 ? '' : 's'}</p><ul>` +
+      bucket.samples.map((s) => `<li><a href="${bookHref(s.id)}">${esc(s.title)}</a> <span class="muted small">${s.rating}★</span></li>`).join('') +
+      '</ul>';
+    detail.hidden = false;
+  });
+
+  const readout = document.getElementById('verdict-year-readout');
+  document.getElementById('verdict-year')?.addEventListener('pointerover', (e) => {
+    const d = e.target.closest?.('.verdict-year-dot');
+    if (!d || !readout) return;
+    const g = d.dataset.generous !== '' ? ` · ${d.dataset.generous}% ≥4★` : '';
+    readout.textContent = `${d.dataset.year} — ${d.dataset.avg}★ avg across ${d.dataset.rated} rated${g}`;
+  });
+  document.getElementById('verdict-year')?.addEventListener('pointerout', () => {
+    if (readout) readout.innerHTML = '&nbsp;';
+  });
+</script>

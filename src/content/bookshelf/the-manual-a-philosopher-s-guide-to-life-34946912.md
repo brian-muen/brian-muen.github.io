@@ -6,10 +6,10 @@ dateAdded: 2020-12-20
 pages: 70
 pubYear: 125
 readCount: 1
-cover: /covers/bookshelf/the-manual-a-philosopher-s-guide-to-life-34946912.jpg?v=1783563198
+cover: "/covers/bookshelf/the-manual-a-philosopher-s-guide-to-life-34946912.jpg?v=1783563198"
 isbn: "9781545461112"
 moods: ["Reflective", "Hopeful", "Inspiring"]
-coverColor: "#307878"
+coverColor: "#419a86"
 fiction: false
 ---
 **Three Sentence Summary**

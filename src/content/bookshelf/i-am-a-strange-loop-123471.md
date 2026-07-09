@@ -12,6 +12,6 @@ isbn: "9780465008377"
 moods: ["Fascinating"]
 genres: ["Philosophy", "Psychology", "Science"]
 subjects: ["Self (Philosophy)", "Intellect", "Consciousness", "Soul", "Kognitiver Prozess", "Metamathematik", "Symbolen", "Bewustzijn", "Selbsterkenntnis", "Künstliche Intelligenz", "Selbstbezüglichkeit", "Patronen (modellen)", "Identity (psychology)", "Medvetandet", "Kèunstliche Intelligenz", "Selbstbezèuglichkeit"]
-coverColor: "#d8f0c0"
+coverColor: "#f0f0f0"
 fiction: false
 ---

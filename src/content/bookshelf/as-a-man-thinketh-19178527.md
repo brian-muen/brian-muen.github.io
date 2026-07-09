@@ -9,6 +9,6 @@ readCount: 1
 cover: "/covers/bookshelf/as-a-man-thinketh-19178527.jpg?v=1783563183"
 isbn: "9798635476567"
 genres: ["Philosophy", "Nonfiction", "Psychology"]
-coverColor: "#18c0a8"
+coverColor: "#1cc0aa"
 fiction: false
 ---

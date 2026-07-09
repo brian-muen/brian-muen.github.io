@@ -12,7 +12,7 @@ isbn: "9781473233249"
 moods: ["Adventurous", "Tense", "Mysterious", "Funny", "Emotional", "Inspiring", "Hopeful", "Lighthearted"]
 genres: ["Science Fiction", "Young Adult", "Adventure", "Fiction", "Fantasy"]
 subjects: ["Science fiction", "Air pilots", "Extraterrestrial beings", "Survival", "War", "Fiction", "nyt:young-adult-hardcover=2018-11-25", "New York Times bestseller", "Children's fiction", "American literature", "Young adult fiction", "general", "dystopian", "action & adventure", "survival stories"]
-coverColor: "#486060"
+coverColor: "#212b37"
 fiction: true
 ---
 I haven't read something so engrossing since, like, *Harry Potter*.

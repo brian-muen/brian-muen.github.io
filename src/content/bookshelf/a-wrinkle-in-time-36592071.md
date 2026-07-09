@@ -12,6 +12,6 @@ isbn: "9781250153272"
 moods: ["Adventurous", "Inspiring", "Hopeful", "Mysterious", "Emotional", "Lighthearted", "Funny", "Reflective"]
 genres: ["Fantasy", "Romance", "Science Fiction", "Young Adult", "Classics", "Fiction", "Adventure"]
 subjects: ["Love", "sci-fi", "Newbery Medal", "Open Library Staff Picks", "Juvenile fiction", "Space and time", "Fiction", "Science fiction", "Friendship in adolesce", "Time travel", "Murry family (Fictitious character)", "Brothers and sisters", "Extraterrestrial beings", "Friendship", "Fantasy", "& Magic"]
-coverColor: "#004860"
+coverColor: "#107290"
 fiction: true
 ---

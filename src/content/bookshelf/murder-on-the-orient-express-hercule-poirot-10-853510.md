@@ -13,6 +13,6 @@ moods: ["Mysterious", "Adventurous", "Tense", "Challenging", "Lighthearted", "Da
 genres: ["Mystery", "Fiction", "Crime", "Classics", "Biography", "Nonfiction", "Adventure"]
 subjects: ["Agatha Christie", "Private investigator", "P.I.", "Hercule Poirot", "Detective", "Murder", "Mystery", "Juvenile", "Humour", "Fiction", "Literature", "Stories", "Private investigators", "Private investigators in fiction", "Travel", "Railroad"]
 places: ["Belgrade", "England", "Istanbul", "Belgium"]
-coverColor: "#001848"
+coverColor: "#00092f"
 fiction: true
 ---

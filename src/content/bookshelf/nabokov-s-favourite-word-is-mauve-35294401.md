@@ -12,7 +12,7 @@ isbn: "9781471152825"
 moods: ["Lighthearted"]
 genres: ["Humor"]
 subjects: ["Humor", "general"]
-coverColor: "#f0f0f0"
+coverColor: "#f0f0ea"
 fiction: false
 ---
 The writing's alright

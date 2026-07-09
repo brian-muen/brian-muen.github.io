@@ -13,6 +13,6 @@ moods: ["Tense", "Dark", "Reflective", "Mysterious", "Informative", "Sad"]
 genres: ["Fiction", "Fantasy"]
 subjects: ["ritual", "Death", "Spanish language books", "Spanish fiction", "Colombian fiction", "Fiction", "Death in fiction", "Translations into Russian", "Honor", "Murder", "Revenge", "social conditions", "twins", "weddings", "Venganza", "Asesinato"]
 places: ["Colombia"]
-coverColor: "#a83030"
+coverColor: "#7e8a81"
 fiction: true
 ---

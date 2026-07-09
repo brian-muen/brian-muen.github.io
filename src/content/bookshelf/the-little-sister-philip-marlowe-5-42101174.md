@@ -10,6 +10,6 @@ cover: "/covers/bookshelf/the-little-sister-philip-marlowe-5-42101174.jpg?v=1783
 isbn: "9780241954324"
 genres: ["Classics", "Adventure", "Fiction", "Crime", "Mystery"]
 subjects: ["Fiction", "crime", "Fiction", "mystery & detective", "general", "Marlowe", "philip (fictitious character)", "fiction", "Private investigators", "fiction"]
-coverColor: "#f0f000"
+coverColor: "#5d5c5d"
 fiction: true
 ---

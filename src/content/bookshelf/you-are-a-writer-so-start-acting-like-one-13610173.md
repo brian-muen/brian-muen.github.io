@@ -9,6 +9,6 @@ pubYear: 2012
 readCount: 1
 cover: "/covers/bookshelf/you-are-a-writer-so-start-acting-like-one-13610173.jpg?v=1783563202"
 moods: ["Informative"]
-coverColor: "#f0f0f0"
+coverColor: "#485454"
 fiction: false
 ---

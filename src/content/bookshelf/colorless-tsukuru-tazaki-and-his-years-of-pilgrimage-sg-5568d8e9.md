@@ -10,6 +10,6 @@ cover: "/covers/bookshelf/colorless-tsukuru-tazaki-and-his-years-of-pilgrimage-s
 isbn: "9780385352109"
 moods: ["Reflective", "Emotional", "Sad", "Mysterious", "Dark", "Hopeful", "Tense", "Adventurous"]
 genres: ["Fiction", "Literary Fiction", "Fantasy"]
-coverColor: "#a8c0c0"
+coverColor: "#a9bfc0"
 fiction: true
 ---

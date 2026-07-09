@@ -9,6 +9,6 @@ readCount: 1
 cover: "/covers/bookshelf/knowing-god-39093554.jpg?v=1783563190"
 genres: ["Nonfiction", "Classics"]
 subjects: ["Faith"]
-coverColor: "#c0c078"
+coverColor: "#010000"
 fiction: false
 ---

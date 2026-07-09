@@ -13,6 +13,6 @@ moods: ["Informative", "Challenging", "Reflective", "Sad", "Dark", "Inspiring"]
 genres: ["Nonfiction", "Classics"]
 subjects: ["Mass media", "Influence", "Television broadcasting", "Social aspects", "Social aspects of Television broadcasting", "Nonfiction", "Performing Arts", "Sociology", "Culturele invloeden", "Televisie", "open_syllabus_project", "Médias", "Television", "Aspect social", "CHR 1986", "PRO Gotham Book Mart (former owner) (Gotham Book Mart Collection copy)"]
 places: ["United States"]
-coverColor: "#d81830"
+coverColor: "#f0d74a"
 fiction: false
 ---

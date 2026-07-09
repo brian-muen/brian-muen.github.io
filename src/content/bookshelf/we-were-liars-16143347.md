@@ -12,6 +12,6 @@ isbn: "9780385741262"
 moods: ["Mysterious", "Emotional", "Dark", "Sad", "Tense", "Adventurous", "Reflective", "Challenging"]
 genres: ["Fiction", "Young Adult", "Mystery", "Romance"]
 subjects: ["Love", "Wealth", "Juvenile fiction", "Fiction", "Amnesia", "Islands", "Families", "Friendship", "Massachusetts", "YOUNG ADULT FICTION", "Teenage girls", "Cousins", "Truthfulness and falsehood", "Emotions & Feelings", "Family", "Social Themes"]
-coverColor: "#f0f0f0"
+coverColor: "#6e5536"
 fiction: true
 ---

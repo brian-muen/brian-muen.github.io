@@ -12,7 +12,7 @@ moods: ["Reflective", "Emotional"]
 genres: ["Philosophy", "Biography", "Science"]
 subjects: ["philosophy", "Neurosurgeons", "Cancer", "Lungs", "Husband and wife", "Patients", "Personal Memoirs", "Health", "Biography", "BIOGRAPHY & AUTOBIOGRAPHY", "SOCIAL SCIENCES", "Death & Dying", "Biographies", "MEDICAL", "Lung Neoplasms", "Lung cancer patients"]
 places: ["United States", "Arizona", "California", "New Haven CT", "Yale University", "Stanford University"]
-coverColor: "#f0f0f0"
+coverColor: "#f0f0ef"
 fiction: false
 ---
 In Dr. Paul Kalanithi’s memoir, When Breath Becomes Air, he chronicles his life: as a child, in medical school, and ultimately, of his final days. On the verge of finishing his neurosurgery residency and with a bright future ahead of him, Paul’s life is turned upside down when he is diagnosed with stage IV lung cancer. Paul writes of the way with which he faces his own mortality. This book fully appreciates the immense responsibility of doctors and of the fragility of life.

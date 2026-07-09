@@ -13,7 +13,7 @@ moods: ["Mysterious", "Reflective", "Dark", "Adventurous", "Emotional", "Sad", "
 genres: ["Fiction", "Contemporary", "Literary Fiction", "Fantasy", "Classics", "Mystery"]
 subjects: ["Self-actulaization (Psychology)", "Fiction", "Miscellanea", "Japanese Authors", "Runaway teenagers", "Parent and child", "Japan", "fiction", "Near and far eastern fiction (fictional works by one author)", "Japanese fiction", "Translations into Chinese", "Chang pian xiao shuo", "Eccentrics and eccentricities", "Detective and mystery stories", "New York Times reviewed", "Korean language materials", "Runaways"]
 places: ["ri ben", "Japan"]
-coverColor: "#d8a878"
+coverColor: "#d29a7e"
 fiction: true
 pace: "medium"
 ---

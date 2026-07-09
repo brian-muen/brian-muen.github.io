@@ -11,6 +11,6 @@ isbn: "9780593418918"
 moods: ["Mysterious", "Dark", "Tense", "Emotional", "Sad", "Adventurous", "Reflective", "Challenging"]
 genres: ["Mystery", "Historical Fiction", "Fiction", "Literary Fiction", "Thriller"]
 subjects: ["nyt:combined-print-and-e-book-fiction=2024-07-21", "New York Times bestseller"]
-coverColor: "#484830"
+coverColor: "#3b3a22"
 fiction: true
 ---

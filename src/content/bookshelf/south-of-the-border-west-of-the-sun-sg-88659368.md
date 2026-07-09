@@ -10,6 +10,6 @@ cover: "/covers/bookshelf/south-of-the-border-west-of-the-sun-sg-88659368.jpg?v=
 isbn: "9780307762740"
 moods: ["Mysterious"]
 genres: ["Fiction", "Romance", "Classics", "Fantasy"]
-coverColor: "#d8a860"
+coverColor: "#dac69c"
 fiction: true
 ---

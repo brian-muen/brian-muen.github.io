@@ -11,6 +11,6 @@ isbn: "9780747578888"
 moods: ["Dark", "Mysterious", "Tense", "Challenging", "Reflective", "Adventurous", "Emotional"]
 genres: ["Thriller", "Fiction"]
 subjects: ["Social life and customs", "Tour guides (Persons)", "Serial murderers", "Sex-oriented businesses", "Fiction", "Serial murders", "suspense", "Japan"]
-coverColor: "#d8a8d8"
+coverColor: "#e10681"
 fiction: true
 ---

@@ -12,7 +12,7 @@ isbn: "9780062368591"
 moods: ["Informative", "Inspiring", "Hopeful", "Challenging", "Reflective", "Relaxing", "Funny", "Adventurous"]
 genres: ["Science", "Nonfiction"]
 subjects: ["Microorganisms", "Human body", "Symbiosis", "Microbiology", "nyt:health=2016-09-11", "New York Times bestseller", "New York Times reviewed", "Anaerobic Bacteria", "Physiology", "Microbiota", "Human body -- Microbiology", "Humans -- microbiology", "Micro-organismes", "Symbiose", "Cuerpo humano -- Microbiología", "Microorganismos"]
-coverColor: "#f0f0f0"
+coverColor: "#17201f"
 fiction: false
 ---
 [b:I Contain Multitudes: The Microbes Within Us and a Grander View of Life|27213168|I Contain Multitudes  The Microbes Within Us and a Grander View of Life|Ed Yong|https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1445606162l/27213168._SY75_.jpg|47255162] by [a:Ed Yong|4124738|Ed Yong|https://images.gr-assets.com/authors/1573241090p2/4124738.jpg] dives into the wonderful and often misunderstood field of microbiology. Yong unravels discoveries and knock down conspiracies — all while talking about microbes! I have to say that this is the most fascinating book I have read so far this year.

@@ -13,6 +13,6 @@ moods: ["Reflective", "Mysterious", "Emotional", "Relaxing", "Adventurous"]
 genres: ["Short Stories", "Fiction", "Fantasy", "Literary Fiction"]
 subjects: ["Social life and customs", "Japan in fiction", "Fiction", "Earthquakes", "short stories (single author)", "Near and far eastern fiction (fictional works by one author)", "Nowele japońskie", "Tłumaczenia polskie", "Novela", "Vida social y costumbres", "Romans", "nouvelles", "Mœurs et coutumes", "Manners and customs", "Social aspects"]
 places: ["Japan"]
-coverColor: "#304890"
+coverColor: "#5b1e36"
 fiction: true
 ---

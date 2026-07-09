@@ -10,7 +10,7 @@ cover: "/covers/bookshelf/crushing-it-how-great-entrepreneurs-build-their-busine
 isbn: "9780062674678"
 genres: ["Business", "Psychology", "Self-Help"]
 subjects: ["Social media", "Internet marketing", "Success in business", "New business enterprises", "Entrepreneurship", "Social influence", "Influence (Psychology)", "Branding (Marketing)", "Economic aspects", "nyt:advice-how-to-and-miscellaneous=2018-02-18", "New York Times bestseller", "Motivational & inspirational", "Business & economics -> management -> entrepreneurship", "Business & economics -> business -> ecommerce", "General interests & hobbies -> self-help -> self-help general", "BUSINESS & ECONOMICS"]
-coverColor: "#f0d860"
+coverColor: "#efcd5e"
 fiction: false
 ---
 [b:Crushing It!|36045512|Crushing It!  How Great Entrepreneurs Build Their Business and Influence—and How You Can, Too|Gary Vaynerchuk|https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1518378060l/36045512._SY75_.jpg|57620167] by [a:Gary Vaynerchuk|1371305|Gary Vaynerchuk|https://images.gr-assets.com/authors/1256948420p2/1371305.jpg] is a updated edition of his book [b:Crush It!|6474550|Crush It!  Why Now Is the Time to Cash In on Your Passion|Gary Vaynerchuk|https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1348122101l/6474550._SX50_.jpg|6665719]. This book provides valuable information for individuals seeking to build their personal brand. Though the rising power of the Internet, anyone can have the opportunity to become an influencer.

@@ -975,3 +975,262 @@ export function buildMetamorphosis(books: BookRow[]): MetamorphosisPayload {
 
   return { before, after, deltas, genreShifts };
 }
+
+// ─── Verdicts (rating distribution + timeline) ───────────────────────────────
+
+export type VerdictBucket = {
+  label: string;
+  /** Inclusive lower bound for display grouping. */
+  min: number;
+  max: number;
+  n: number;
+  share: number;
+  samples: { id: string; title: string; rating: number }[];
+};
+
+export type VerdictYear = {
+  year: number;
+  n: number;
+  rated: number;
+  avg: number | null;
+  /** Share of rated books that are ≥4★. */
+  generous: number | null;
+};
+
+export type VerdictsPayload = {
+  rated: number;
+  unrated: number;
+  avg: number | null;
+  median: number | null;
+  mode: number | null;
+  buckets: VerdictBucket[];
+  years: VerdictYear[];
+  highest: { id: string; title: string; author: string; rating: number; dateRead: number }[];
+  lowest: { id: string; title: string; author: string; rating: number; dateRead: number }[];
+  streak: { kind: 'high' | 'low'; n: number; from: string; to: string } | null;
+};
+
+/**
+ * Rating distribution, yearly generosity, and extreme verdicts.
+ * Fractional stars are bucketed to nearest half for the histogram.
+ */
+export function buildVerdicts(books: BookRow[]): VerdictsPayload {
+  const ratedBooks = books.filter((b) => b.rating != null) as (BookRow & { rating: number })[];
+  const ratings = ratedBooks.map((b) => b.rating).sort((a, b) => a - b);
+  const avg = ratings.length ? round2(ratings.reduce((s, r) => s + r, 0) / ratings.length) : null;
+  const median = medianOrNull(ratings);
+
+  const modeMap = new Map<number, number>();
+  for (const r of ratings) modeMap.set(r, (modeMap.get(r) ?? 0) + 1);
+  let mode: number | null = null;
+  let modeN = 0;
+  for (const [r, n] of modeMap) {
+    if (n > modeN || (n === modeN && (mode == null || r > mode))) {
+      mode = r;
+      modeN = n;
+    }
+  }
+
+  // Histogram buckets: 2, 2.5, 3, 3.5, 4, 4.5, 5 (collapse rare quarters into nearest half)
+  const edges = [2, 2.5, 3, 3.5, 4, 4.5, 5];
+  function bucketKey(r: number) {
+    let best = edges[0];
+    let bestD = Math.abs(r - best);
+    for (const e of edges) {
+      const d = Math.abs(r - e);
+      if (d < bestD) {
+        best = e;
+        bestD = d;
+      }
+    }
+    return best;
+  }
+  const byBucket = new Map<number, (BookRow & { rating: number })[]>();
+  for (const e of edges) byBucket.set(e, []);
+  for (const b of ratedBooks) byBucket.get(bucketKey(b.rating))!.push(b);
+
+  const buckets: VerdictBucket[] = edges.map((e) => {
+    const list = byBucket.get(e)!;
+    const label = Number.isInteger(e) ? `${e}★` : `${e}★`;
+    return {
+      label,
+      min: e,
+      max: e,
+      n: list.length,
+      share: ratings.length ? round2(list.length / ratings.length) : 0,
+      samples: list
+        .slice()
+        .sort((a, b) => b.dateRead - a.dateRead)
+        .slice(0, 4)
+        .map((b) => ({ id: b.id, title: shortTitle(b.title), rating: b.rating })),
+    };
+  });
+
+  const byYear = new Map<number, (BookRow & { rating: number })[]>();
+  for (const b of ratedBooks) {
+    const y = yearOf(b.dateRead);
+    if (!byYear.has(y)) byYear.set(y, []);
+    byYear.get(y)!.push(b);
+  }
+  const allYears = [...new Set(books.map((b) => yearOf(b.dateRead)))].sort((a, b) => a - b);
+  const years: VerdictYear[] = allYears.map((year) => {
+    const list = byYear.get(year) ?? [];
+    const nYear = books.filter((b) => yearOf(b.dateRead) === year).length;
+    const avgY = list.length ? round2(list.reduce((s, b) => s + b.rating, 0) / list.length) : null;
+    const generous = list.length
+      ? round2(list.filter((b) => b.rating >= 4).length / list.length)
+      : null;
+    return { year, n: nYear, rated: list.length, avg: avgY, generous };
+  });
+
+  const byRatingDesc = ratedBooks.slice().sort((a, b) => b.rating - a.rating || b.dateRead - a.dateRead);
+  const byRatingAsc = ratedBooks.slice().sort((a, b) => a.rating - b.rating || b.dateRead - a.dateRead);
+  const toExt = (b: BookRow & { rating: number }) => ({
+    id: b.id,
+    title: shortTitle(b.title),
+    author: b.author,
+    rating: b.rating,
+    dateRead: b.dateRead,
+  });
+  const highest = byRatingDesc.filter((b) => b.rating >= 4.5).slice(0, 8).map(toExt);
+  const lowest = byRatingAsc.filter((b) => b.rating <= 3).slice(0, 8).map(toExt);
+
+  // Longest run of consecutive finishes all ≥4 or all ≤3
+  let streak: VerdictsPayload['streak'] = null;
+  const chrono = ratedBooks.slice().sort((a, b) => a.dateRead - b.dateRead);
+  function scan(kind: 'high' | 'low', pred: (r: number) => boolean) {
+    let best = 0;
+    let bestFrom = 0;
+    let bestTo = 0;
+    let cur = 0;
+    let curFrom = 0;
+    for (let i = 0; i < chrono.length; i++) {
+      if (pred(chrono[i].rating)) {
+        if (cur === 0) curFrom = chrono[i].dateRead;
+        cur += 1;
+        if (cur > best) {
+          best = cur;
+          bestFrom = curFrom;
+          bestTo = chrono[i].dateRead;
+        }
+      } else {
+        cur = 0;
+      }
+    }
+    if (best >= 4) {
+      const fmt = (t: number) =>
+        new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric' }).format(new Date(t));
+      if (!streak || best > streak.n) {
+        streak = { kind, n: best, from: fmt(bestFrom), to: fmt(bestTo) };
+      }
+    }
+  }
+  scan('high', (r) => r >= 4);
+  scan('low', (r) => r <= 3);
+
+  return {
+    rated: ratedBooks.length,
+    unrated: books.length - ratedBooks.length,
+    avg,
+    median,
+    mode,
+    buckets,
+    years,
+    highest,
+    lowest,
+    streak,
+  };
+}
+
+// ─── Taste (ratings × genres / length / fiction / authors) ───────────────────
+
+export type TasteGroup = {
+  label: string;
+  n: number;
+  avg: number;
+  /** Share of this group's rated books that are ≥4★. */
+  highShare: number;
+};
+
+export type TastePayload = {
+  fiction: TasteGroup | null;
+  nonfiction: TasteGroup | null;
+  length: TasteGroup[];
+  genres: TasteGroup[];
+  authors: TasteGroup[];
+  /** Genres you rate high vs read often — interesting mismatches. */
+  surprises: { label: string; avg: number; n: number; note: string }[];
+};
+
+function groupAvg(list: (BookRow & { rating: number })[], label: string): TasteGroup | null {
+  if (!list.length) return null;
+  const avg = round2(list.reduce((s, b) => s + b.rating, 0) / list.length);
+  const highShare = round2(list.filter((b) => b.rating >= 4).length / list.length);
+  return { label, n: list.length, avg, highShare };
+}
+
+/**
+ * How ratings interplay with fiction/nonfiction, length, genres, and authors.
+ */
+export function buildTaste(books: BookRow[]): TastePayload {
+  const rated = books.filter((b) => b.rating != null) as (BookRow & { rating: number })[];
+
+  const fiction = groupAvg(
+    rated.filter((b) => b.fiction === true),
+    'Fiction'
+  );
+  const nonfiction = groupAvg(
+    rated.filter((b) => b.fiction === false),
+    'Nonfiction'
+  );
+
+  const lengthDefs: { label: string; test: (p: number) => boolean }[] = [
+    { label: 'Under 200p', test: (p) => p > 0 && p < 200 },
+    { label: '200–299p', test: (p) => p >= 200 && p < 300 },
+    { label: '300–399p', test: (p) => p >= 300 && p < 400 },
+    { label: '400p+', test: (p) => p >= 400 },
+  ];
+  const length = lengthDefs
+    .map((d) => groupAvg(rated.filter((b) => d.test(b.pages)), d.label))
+    .filter((g): g is TasteGroup => g != null && g.n >= 3);
+
+  const genreMap = new Map<string, (BookRow & { rating: number })[]>();
+  for (const b of rated) {
+    for (const g of b.genres) {
+      if (!genreMap.has(g)) genreMap.set(g, []);
+      genreMap.get(g)!.push(b);
+    }
+  }
+  const genres = [...genreMap.entries()]
+    .filter(([, list]) => list.length >= 4)
+    .map(([label, list]) => groupAvg(list, label)!)
+    .sort((a, b) => b.avg - a.avg || b.n - a.n);
+
+  const authorMap = new Map<string, (BookRow & { rating: number })[]>();
+  for (const b of rated) {
+    if (!authorMap.has(b.author)) authorMap.set(b.author, []);
+    authorMap.get(b.author)!.push(b);
+  }
+  const authors = [...authorMap.entries()]
+    .filter(([, list]) => list.length >= 2)
+    .map(([label, list]) => groupAvg(list, label)!)
+    .sort((a, b) => b.avg - a.avg || b.n - a.n)
+    .slice(0, 12);
+
+  const overall = rated.length ? rated.reduce((s, b) => s + b.rating, 0) / rated.length : 0;
+  const surprises = genres
+    .map((g) => {
+      const delta = g.avg - overall;
+      if (Math.abs(delta) < 0.25) return null;
+      const note =
+        delta > 0
+          ? `+${delta.toFixed(2)}★ above your shelf average`
+          : `${delta.toFixed(2)}★ below your shelf average`;
+      return { label: g.label, avg: g.avg, n: g.n, note };
+    })
+    .filter((x): x is NonNullable<typeof x> => x != null)
+    .sort((a, b) => Math.abs(b.avg - overall) - Math.abs(a.avg - overall))
+    .slice(0, 6);
+
+  return { fiction, nonfiction, length, genres, authors, surprises };
+}

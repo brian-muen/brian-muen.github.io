@@ -12,6 +12,6 @@ moods: ["Informative", "Inspiring", "Reflective", "Educational"]
 genres: ["Classics", "History", "Philosophy", "Nonfiction"]
 subjects: ["Open Library Staff Picks", "Early works to 1800", "Military art and science", "great_books_of_the_western_world", "Business", "Self-Improvement", "Philosophy", "open_syllabus_project", "Fiction", "Nonfiction", "Politics", "Military", "Classic Literature", "History", "Strategy"]
 places: ["China"]
-coverColor: "#f0f0f0"
+coverColor: "#3e2720"
 fiction: false
 ---

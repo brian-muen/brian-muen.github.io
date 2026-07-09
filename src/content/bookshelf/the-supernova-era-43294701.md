@@ -13,7 +13,7 @@ moods: ["Adventurous"]
 genres: ["Fiction", "Young Adult", "Fantasy", "Science Fiction"]
 subjects: ["apocalypse", "china", "fantasy", "Dystopia", "Radiation", "Fiction", "End of the world"]
 places: ["China"]
-coverColor: "#f0f0f0"
+coverColor: "#281521"
 fiction: true
 ---
 This book is like cotton candy on your tongue slowly melting away into nothingness. It's like a fairytale: fun and lighthearted with some dark undertones thrown in too.

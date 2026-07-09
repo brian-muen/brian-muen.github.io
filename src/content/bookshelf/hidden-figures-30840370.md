@@ -11,7 +11,7 @@ isbn: "9780062662378"
 moods: ["Informative", "Inspiring", "Emotional", "Reflective", "Hopeful", "Adventurous", "Challenging"]
 genres: ["Young Adult", "Biography", "History"]
 subjects: ["nyt:childrens-middle-grade-paperback=2016-12-25", "New York Times bestseller", "Mathematicians", "African americans", "biography", "juvenile literature", "Aeronautics", "history", "Women", "united states"]
-coverColor: "#304860"
+coverColor: "#359398"
 fiction: false
 ---
 [b:Hidden Figures|30840370|Hidden Figures|Margot Lee Shetterly|https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1474752658l/30840370._SX50_.jpg|55627110] by [a:Margot Lee Shetterly|14176929|Margot Lee Shetterly|https://s.gr-assets.com/assets/nophoto/user/f_50x66-6a03a5c12233c941481992b82eea8d23.png] reveals the remarkable careers of Katherine Johnson, Mary Jackson, Dorothy Vaughan, and Christine Darden. During World War II, many women were given the opportunity to occupy at the NACA only available to men. After the war, the NACA would eventually become the famed NASA of outer space. These women would work tirelessly as "human computers" to prepare aircraft and later rockets for their missions. Margot Shetterly notes the adversity these individuals faced, both as women and as African Americans. 

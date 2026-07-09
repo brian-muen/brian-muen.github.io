@@ -215,6 +215,8 @@ export const STATS_LINKS = [
   { href: '/reading/stats/constellation', label: 'Constellation' },
   { href: '/reading/stats/galaxy', label: 'Galaxy' },
   { href: '/reading/stats/orbit', label: 'Orbits' },
+  { href: '/reading/stats/verdicts', label: 'Verdicts' },
+  { href: '/reading/stats/taste', label: 'Taste' },
   { href: '/reading/stats/evolution', label: 'Evolution' },
   { href: '/reading/stats/metamorphosis', label: 'Metamorphosis' },
   { href: '/reading/stats/fossils', label: 'Fossils' },

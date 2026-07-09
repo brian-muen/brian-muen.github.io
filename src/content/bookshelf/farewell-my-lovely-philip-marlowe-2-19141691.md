@@ -10,6 +10,6 @@ readCount: 1
 cover: "/covers/bookshelf/farewell-my-lovely-philip-marlowe-2-19141691.jpg?v=1783563186"
 isbn: "9780140109795"
 genres: ["Classics", "Mystery", "Crime", "Fiction"]
-coverColor: "#c01818"
+coverColor: "#c01a17"
 fiction: true
 ---

@@ -13,7 +13,7 @@ moods: ["Challenging", "Dark", "Informative", "Adventurous", "Funny", "Tense", "
 genres: ["Drama", "Fiction", "Classics", "Biography", "History", "Young Adult", "Nonfiction"]
 subjects: ["Antoine (Marcus Antonius)", "Assassination", "Assassins", "Bibliography", "Biography", "Classic Literature", "Conspiracies", "Drama", "English literature", "Fiction", "Generals", "Heads of state", "History", "History and criticism", "Julius Caesar", "Language"]
 places: ["Rome", "Israel", "Rome (Empire)", "Rome (Italy)"]
-coverColor: "#d86048"
+coverColor: "#c95242"
 fiction: true
 pace: "medium"
 ---

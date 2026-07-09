@@ -12,6 +12,6 @@ isbn: "9780679743460"
 moods: ["Mysterious", "Adventurous", "Reflective", "Emotional", "Challenging", "Hopeful", "Tense", "Sad"]
 genres: ["Classics", "Fantasy", "Fiction", "Science Fiction"]
 subjects: ["Fantasy fiction", "Near and far eastern fiction (fictional works by one author)", "Fiction", "fantasy", "contemporary", "Tokyo (japan)", "Roman", "Japanisch", "Ficción", "Consciousness", "Conciencia (Psicología)", "general", "Japan", "Japanese fiction", "Translations into Chinese", "Japanese fiction--translations into english"]
-coverColor: "#481830"
+coverColor: "#201737"
 fiction: true
 ---

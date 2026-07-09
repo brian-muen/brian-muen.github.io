@@ -12,6 +12,6 @@ moods: ["Emotional", "Reflective", "Sad", "Dark", "Funny", "Challenging", "Relax
 genres: ["Fiction", "Young Adult", "Romance", "Contemporary", "Fantasy", "Literary Fiction"]
 subjects: ["Student", "Theaterwissenschaft", "Liebesbeziehung", "Belletristische Darstellung", "Fiction", "romance", "general", "College students", "Fiction", "Man-woman relationships", "Young men", "Fiction", "romance", "contemporary", "Japan", "fiction", "Near and far eastern fiction (fictional works by one author)", "Chinese fiction", "Chang pian xiao shuo", "Japanese fiction", "Translations into Chinese"]
 places: ["Japan"]
-coverColor: "#f0f0f0"
+coverColor: "#777870"
 fiction: true
 ---

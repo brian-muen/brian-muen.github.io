@@ -13,6 +13,6 @@ moods: ["Mysterious", "Reflective", "Dark", "Challenging", "Tense", "Funny", "Sa
 genres: ["Fiction", "Literary Fiction", "Fantasy", "Science Fiction", "Romance"]
 subjects: ["literary fiction", "contemporary fantasy", "psychological fiction", "parapsychology", "fate and fatalism", "Fiction", "Japanese fiction", "Man-woman relationships", "Marriage", "Missing persons", "Politics and government", "Translations into English", "Fiction", "psychological", "Japan", "fiction", "Man-woman relationships", "fiction", "Fiction", "political"]
 places: ["Japan", "Tokyo", "Manchuria", "Ginza", "Shinjuku", "Shinjuku Gyoen", "Akasaka", "Setagaya Ward"]
-coverColor: "#601848"
+coverColor: "#713546"
 fiction: true
 ---

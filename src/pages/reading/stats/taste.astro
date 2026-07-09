@@ -1,0 +1,157 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import StatsNav from '../../../components/StatsNav.astro';
+import { loadBooks, pct } from '../../../lib/bookshelf-stats';
+import { buildTaste, buildVerdicts } from '../../../lib/stats-viz';
+
+const books = await loadBooks();
+const taste = buildTaste(books);
+const verdicts = buildVerdicts(books);
+const overall = verdicts.avg ?? 0;
+
+const split = [taste.fiction, taste.nonfiction].filter(Boolean) as NonNullable<typeof taste.fiction>[];
+const maxGenreN = Math.max(1, ...taste.genres.map((g) => g.n));
+const maxAuthorN = Math.max(1, ...taste.authors.map((a) => a.n));
+const maxLenN = Math.max(1, ...taste.length.map((g) => g.n));
+
+const ficNote =
+  taste.fiction && taste.nonfiction
+    ? taste.nonfiction.avg === taste.fiction.avg
+      ? 'Fiction and nonfiction land at the same average.'
+      : taste.nonfiction.avg > taste.fiction.avg
+        ? `Nonfiction edges fiction by ${(taste.nonfiction.avg - taste.fiction.avg).toFixed(2)}★.`
+        : `Fiction edges nonfiction by ${(taste.fiction.avg - taste.nonfiction.avg).toFixed(2)}★.`
+    : '';
+
+const topGenre = taste.genres[0];
+const bottomGenre = taste.genres[taste.genres.length - 1];
+const fingerprint = [
+  overall ? `Shelf average ${overall.toFixed(2)}★` : null,
+  ficNote || null,
+  topGenre && bottomGenre && topGenre.label !== bottomGenre.label
+    ? `Highest-rated tag: ${topGenre.label} (${topGenre.avg.toFixed(2)}★). Softest: ${bottomGenre.label} (${bottomGenre.avg.toFixed(2)}★).`
+    : null,
+]
+  .filter(Boolean)
+  .join(' ');
+---
+
+<Layout title="Taste — Brian" description="How ratings mix with genres, length, and authors">
+  <p class="muted small"><a href="/reading">← Reading</a></p>
+  <h1>Taste</h1>
+  <StatsNav current="/reading/stats/taste" />
+  <p class="taste-fingerprint">{fingerprint || 'Ratings meeting the rest of the shelf.'}</p>
+
+  {split.length > 0 && (
+    <section class="stats-section">
+      <h2>Fiction vs nonfiction</h2>
+      <p class="muted small">Same stars, different shelves. Only rated books with a fiction flag.</p>
+      <div class="taste-split">
+        {split.map((g) => (
+          <div class="taste-split-card">
+            <h3>{g.label}</h3>
+            <p class="taste-split-avg">{g.avg.toFixed(2)}★</p>
+            <p class="muted small">{g.n} rated · {Math.round(g.highShare * 100)}% ≥4★</p>
+            <div class="evo-meter" title={`${g.avg} average`}>
+              <span class="evo-meter-fill" style={`width:${pct(g.avg - 2, 3)}`}></span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )}
+
+  {taste.length.length > 0 && (
+    <section class="stats-section">
+      <h2>Does length matter?</h2>
+      <p class="muted small">Average rating by page-count bucket. Thin books vs doorstops.</p>
+      <ul class="stat-bars">
+        {taste.length.map((g) => (
+          <li>
+            <span class="stat-label wide">{g.label}</span>
+            <span class="stat-track">
+              <span class="stat-fill" style={`--w:${pct(g.n, maxLenN)}`}></span>
+            </span>
+            <span class="stat-value">{g.avg.toFixed(2)}★ · {g.n}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  {taste.genres.length > 0 && (
+    <section class="stats-section">
+      <h2>Genres by average rating</h2>
+      <p class="muted small">
+        Tags with at least 4 rated books. A book can sit in more than one row — same overlap as elsewhere.
+      </p>
+      <ul class="taste-rank">
+        {taste.genres.map((g) => {
+          const delta = g.avg - overall;
+          const dir = Math.abs(delta) < 0.05 ? 'flat' : delta > 0 ? 'up' : 'down';
+          return (
+            <li class={`taste-rank-row taste-delta-${dir}`}>
+              <div class="taste-rank-head">
+                <span class="taste-rank-label">{g.label}</span>
+                <span class="taste-rank-meta muted small">{g.n} books · {Math.round(g.highShare * 100)}% ≥4★</span>
+              </div>
+              <div class="taste-rank-bar-row">
+                <span class="evo-meter">
+                  <span class="evo-meter-fill" style={`width:${pct(g.avg - 2, 3)}`}></span>
+                </span>
+                <span class="taste-rank-avg">
+                  {g.avg.toFixed(2)}★
+                  <span class="taste-rank-delta">
+                    {dir === 'flat' ? '≈ avg' : `${delta > 0 ? '+' : ''}${delta.toFixed(2)}`}
+                  </span>
+                </span>
+              </div>
+              <span class="taste-rank-volume muted small" title="How often this tag appears">
+                volume {pct(g.n, maxGenreN).replace('%', '')}%
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  )}
+
+  {taste.surprises.length > 0 && (
+    <section class="stats-section">
+      <h2>Surprises</h2>
+      <p class="muted small">Tags that sit furthest from your overall average — favorites and soft spots.</p>
+      <ul class="taste-surprises">
+        {taste.surprises.map((s) => (
+          <li>
+            <strong>{s.label}</strong>
+            <span class="taste-surprise-avg">{s.avg.toFixed(2)}★</span>
+            <span class="muted small">{s.note} · n={s.n}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  {taste.authors.length > 0 && (
+    <section class="stats-section">
+      <h2>Authors you return to</h2>
+      <p class="muted small">At least two rated books. Sorted by average stars.</p>
+      <ul class="stat-bars">
+        {taste.authors.map((a) => (
+          <li>
+            <span class="stat-label wide">{a.label}</span>
+            <span class="stat-track">
+              <span class="stat-fill" style={`--w:${pct(a.n, maxAuthorN)}`}></span>
+            </span>
+            <span class="stat-value">{a.avg.toFixed(2)}★ · {a.n}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  <p class="muted small stats-footnote">
+    Pair with the raw distribution on <a href="/reading/stats/verdicts">Verdicts</a>,
+    or the year-by-year arc on <a href="/reading/stats/evolution">Evolution</a>.
+  </p>
+</Layout>

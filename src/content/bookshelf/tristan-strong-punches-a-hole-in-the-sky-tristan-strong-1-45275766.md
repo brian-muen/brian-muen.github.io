@@ -11,6 +11,6 @@ isbn: "9781368039932"
 genres: ["Fantasy", "Young Adult", "Adventure", "Fiction", "Science Fiction", "Classics"]
 subjects: ["Children's fiction", "Adventure and adventurers", "fiction", "Supernatural", "fiction", "Self-confidence", "fiction", "African americans", "fiction", "Science fiction", "nyt:childrens-middle-grade-hardcover=2019-11-03", "New York Times bestseller", "Self-confidence", "Juvenile fiction", "African Americans", "Adventure and adventurers", "Fiction", "Supernatural", "Characters in literature", "Legends", "Myths", "Fables"]
 places: ["Alabama"]
-coverColor: "#481818"
+coverColor: "#518ac8"
 fiction: true
 ---

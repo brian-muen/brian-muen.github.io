@@ -13,6 +13,6 @@ moods: ["Reflective", "Thought-provoking", "Emotional", "Tense", "Challenging"]
 genres: ["Short Stories", "Classics", "Fiction", "Literary Fiction", "Humor", "History"]
 subjects: ["Daily Express", "West Briton", "Three Graces", "The Lass of Aughrim", "alcoholism", "confessionals", "Jesuits", "fiction", "concerts", "piano", "Irish nationalism", "Conservative Party", "Roman Catholic Church", "Pottery", "Art pottery", "Modern Art"]
 places: ["Ireland", "Galway", "Jesuit church in Gardiner Street", "Committee Room", "Dublin", "Chapelizod", "Joe's house", "bakery"]
-coverColor: "#f0f0d8"
+coverColor: "#000000"
 fiction: true
 ---

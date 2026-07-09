@@ -12,6 +12,6 @@ moods: ["Adventurous", "Funny", "Tense", "Dark", "Lighthearted", "Mysterious", "
 genres: ["Science Fiction", "Fantasy", "Fiction", "Adventure", "Classics"]
 subjects: ["American Science fiction", "Open Library Staff Picks", "ready player one", "Fiction", "Science fiction", "Suspense", "open_syllabus_project", "American fiction", "general", "humorous", "Virtual reality", "hard science fiction", "fantasy", "Hackers", "Computer viruses"]
 places: ["Future America"]
-coverColor: "#1890a8"
+coverColor: "#7c81a4"
 fiction: true
 ---

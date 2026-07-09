@@ -12,6 +12,6 @@ moods: ["Reflective", "Hopeful", "Inspiring"]
 genres: ["Classics"]
 subjects: ["Biography", "Courage", "Legislators", "Politics and government", "United States", "United States. Congress. Senate", "United States. Congress. Senate Biography", "Politische Ethik", "Politische Verantwortung", "Politische Kultur", "Politiker", "Umschulungswerkstätten für Siedler und Auswanderer", "États-Unis", "Moral", "États-Unis. Congress. Senate", "Moed"]
 places: ["United States"]
-coverColor: "#f0f0d8"
+coverColor: "#f0f0de"
 fiction: false
 ---

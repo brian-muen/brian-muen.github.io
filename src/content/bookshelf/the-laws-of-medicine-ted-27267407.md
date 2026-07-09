@@ -7,12 +7,12 @@ rating: 4
 pages: 96
 pubYear: 2015
 readCount: 1
-cover: /covers/bookshelf/the-laws-of-medicine-ted-27267407.jpg?v=1783563197
+cover: "/covers/bookshelf/the-laws-of-medicine-ted-27267407.jpg?v=1783563197"
 isbn: "9781471141850"
 moods: ["Reflective"]
 genres: ["Philosophy"]
 subjects: ["Medicine", "Philosophy", "Medical Philosophy", "MEDICAL", "Healing"]
-coverColor: "#78c0c0"
+coverColor: "#77c3c4"
 fiction: false
 ---
 In this enjoyable book, Dr. Siddhartha Mukherjee establishes his three "laws of medicine." Medicine is what Dr. Mukherjee calls an "uncertain science," that is to say, it is not absolute. There are no "universal equations." This is one profession that will not soon be "taken over by robots." Medicine is a delicate profession, in that it can only be made "perfect" by the careful observations of imperfect doctors.

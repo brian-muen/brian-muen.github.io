@@ -12,6 +12,6 @@ isbn: "9780575103993"
 moods: ["Adventurous", "Funny", "Tense", "Dark", "Mysterious", "Hopeful", "Challenging", "Emotional"]
 genres: ["Young Adult", "Science Fiction", "Fantasy", "Fiction"]
 subjects: ["fantasy", "young adult", "urban", "Guerrilla warfare", "Science fiction", "Juvenile fiction", "Supervillains", "Fiction", "Children's fiction", "Adventure and adventurers", "fiction", "War", "fiction", "Assassins", "Action & Adventure", "Dystopian", "Vendetta", "Fathers and sons"]
-coverColor: "#d8d8d8"
+coverColor: "#c7c7c7"
 fiction: true
 ---

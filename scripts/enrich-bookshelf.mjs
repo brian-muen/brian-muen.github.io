@@ -663,76 +663,308 @@ function decodeCoverImage(buf) {
   }
 }
 
+function bucketTone(r, g, b) {
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const light = max / 255;
+  const sat = max === 0 ? 0 : (max - min) / max;
+  return { light, sat };
+}
+
+function isNearWhite(r, g, b) {
+  const { light, sat } = bucketTone(r, g, b);
+  return light > 0.78 && sat < 0.18;
+}
+
+function isNearBlack(r, g, b) {
+  return r + g + b < 48;
+}
+
+function quantizeKey(r, g, b) {
+  return `${Math.min(240, Math.round(r / 24) * 24)},${Math.min(240, Math.round(g / 24) * 24)},${Math.min(240, Math.round(b / 24) * 24)}`;
+}
+
+function winnerFromBuckets(buckets) {
+  let best = null;
+  let bestN = -1;
+  for (const [key, n] of buckets) {
+    if (n > bestN) {
+      bestN = n;
+      best = key;
+    }
+  }
+  if (!best) return null;
+  const [r, g, b] = best.split(',').map(Number);
+  return { r, g, b, n: bestN };
+}
+
 /**
- * Pick a spine-friendly "field" color: prefer large light/cream backgrounds
- * and chromatic midtones over black text, hair, and shadow.
+ * First column that is actually printed cover (opaque), including white.
+ * Do NOT skip white covers (Dance Dance Dance) — but do skip a thin white
+ * letterbox when non-white cover content starts immediately after.
+ */
+function findCoverLeftEdge(width, height, data) {
+  const y0 = Math.floor(height * 0.12);
+  const y1 = Math.floor(height * 0.88);
+  const yStep = Math.max(1, Math.floor(height / 64));
+  const maxScan = Math.min(width, Math.floor(width * 0.15));
+
+  const columnStats = (x) => {
+    let opaque = 0;
+    let white = 0;
+    let samples = 0;
+    for (let y = y0; y < y1; y += yStep) {
+      const i = (y * width + x) * 4;
+      samples += 1;
+      if (data[i + 3] < 200) continue;
+      opaque += 1;
+      if (isNearWhite(data[i], data[i + 1], data[i + 2])) white += 1;
+    }
+    return { opaque, white, samples };
+  };
+
+  let firstOpaque = 0;
+  for (let x = 0; x < maxScan; x++) {
+    const s = columnStats(x);
+    if (s.samples > 0 && s.opaque / s.samples > 0.6) {
+      firstOpaque = x;
+      break;
+    }
+  }
+
+  const first = columnStats(firstOpaque);
+  if (first.opaque > 0 && first.white / first.opaque > 0.7) {
+    const peek = Math.min(width, firstOpaque + Math.max(4, Math.round(width * 0.03)));
+    for (let x = firstOpaque + 1; x < peek; x++) {
+      const s = columnStats(x);
+      if (s.opaque / Math.max(1, s.samples) <= 0.6) continue;
+      if (s.white / Math.max(1, s.opaque) < 0.45) return x;
+    }
+  }
+  return firstOpaque;
+}
+
+function mergeEdgeBuckets(buckets) {
+  const merged = [];
+  const used = new Set();
+  const near = (a, b) => {
+    const [ar, ag, ab] = a.split(',').map(Number);
+    const [br, bg, bb] = b.split(',').map(Number);
+    return Math.max(Math.abs(ar - br), Math.abs(ag - bg), Math.abs(ab - bb)) <= 24;
+  };
+  for (const [key] of buckets) {
+    if (used.has(key)) continue;
+    let sumR = 0;
+    let sumG = 0;
+    let sumB = 0;
+    let mass = 0;
+    for (const [other, on] of buckets) {
+      if (used.has(other)) continue;
+      if (other !== key && !near(key, other)) continue;
+      used.add(other);
+      const [r, g, b] = other.split(',').map(Number);
+      sumR += r * on;
+      sumG += g * on;
+      sumB += b * on;
+      mass += on;
+    }
+    const r = Math.round(sumR / mass);
+    const g = Math.round(sumG / mass);
+    const b = Math.round(sumB / mass);
+    const { light, sat } = bucketTone(r, g, b);
+    merged.push({ r, g, b, mass, light, sat });
+  }
+  return merged;
+}
+
+function scoreEdgeColors(merged) {
+  return merged
+    .map((c) => {
+      let score = c.mass;
+      // Prefer real ink/cloth over paper white / crop black when both present.
+      if (c.sat >= 0.18 && c.light >= 0.12 && c.light <= 0.9) score *= 2.4 + c.sat;
+      else if (isNearWhite(c.r, c.g, c.b)) score *= 0.55;
+      else if (isNearBlack(c.r, c.g, c.b)) score *= 0.7;
+      return { ...c, score };
+    })
+    .sort((a, b) => b.score - a.score);
+}
+
+function sampleEdgeBand(width, height, data, x0, x1, y0, y1) {
+  const buckets = new Map();
+  let total = 0;
+  const xStart = Math.max(0, x0);
+  const xEnd = Math.min(width, x1);
+  for (let y = y0; y < y1; y++) {
+    for (let x = xStart; x < xEnd; x++) {
+      const i = (y * width + x) * 4;
+      if (data[i + 3] < 200) continue;
+      const key = quantizeKey(data[i], data[i + 1], data[i + 2]);
+      buckets.set(key, (buckets.get(key) || 0) + 1);
+      total += 1;
+    }
+  }
+  return { buckets, total };
+}
+
+/**
+ * Color of the strip that would abut a physical spine.
+ * Sample the center-third left edge, tally total presence (not longest run),
+ * and prefer chromatic colors when white/black share the edge with them —
+ * so Dance Dance Dance stays white, but Stamped's blue/red collage wins
+ * over fragmented title-band white.
+ *
+ * Thin black frames (Miso Soup) peek just inward for cloth color; deep black
+ * borders that meet cream fields (Dubliners) stay black.
+ */
+function extractEdgeColor(width, height, data) {
+  const left = findCoverLeftEdge(width, height, data);
+  const band = Math.max(2, Math.min(6, Math.round(width * 0.02)));
+  const y0 = Math.floor(height * 0.33);
+  const y1 = Math.floor(height * 0.67);
+
+  const { buckets, total } = sampleEdgeBand(width, height, data, left, left + band, y0, y1);
+  if (!total) return null;
+
+  const scored = scoreEdgeColors(mergeEdgeBuckets(buckets));
+  let best = scored[0];
+  if (!best) return null;
+
+  // Black only if it still owns a solid share after chroma preference.
+  if (isNearBlack(best.r, best.g, best.b) && best.mass < total * 0.35) {
+    const alt = scored.find(
+      (c) => !isNearBlack(c.r, c.g, c.b) && c.mass >= total * 0.12
+    );
+    if (alt) best = alt;
+    else return null;
+  }
+
+  // Thin black frame only (Miso Soup): peek just inside for cloth/ink.
+  // Deep black borders/covers (Dubliners, Persepolis) stay black.
+  if (isNearBlack(best.r, best.g, best.b)) {
+    const thinMax = Math.max(6, Math.round(width * 0.025));
+    let frameEnd = null;
+    for (let x = left; x < left + thinMax + 2 && x < width; x++) {
+      let black = 0;
+      let seen = 0;
+      for (let y = y0; y < y1; y++) {
+        const i = (y * width + x) * 4;
+        if (data[i + 3] < 200) continue;
+        seen += 1;
+        if (isNearBlack(data[i], data[i + 1], data[i + 2])) black += 1;
+      }
+      if (seen > 0 && black / seen < 0.45) {
+        frameEnd = x;
+        break;
+      }
+    }
+    if (frameEnd != null && frameEnd - left <= thinMax) {
+      const inward = sampleEdgeBand(
+        width,
+        height,
+        data,
+        frameEnd,
+        frameEnd + Math.max(band + 8, Math.round(width * 0.06)),
+        y0,
+        y1
+      );
+      if (inward.total > 0) {
+        const inwardScored = scoreEdgeColors(mergeEdgeBuckets(inward.buckets));
+        const cloth = inwardScored.find(
+          (c) =>
+            c.sat >= 0.2 &&
+            c.light >= 0.12 &&
+            c.light <= 0.9 &&
+            !isNearWhite(c.r, c.g, c.b) &&
+            !isNearBlack(c.r, c.g, c.b) &&
+            c.mass >= inward.total * 0.06
+        );
+        if (cloth) best = cloth;
+      }
+    }
+  }
+
+  return rgbToHex(best.r, best.g, best.b);
+}
+
+/**
+ * Fallback: field/accent color from the full cover when the left edge is
+ * blank or inconclusive.
+ */
+function extractFieldColor(width, height, data) {
+  const buckets = new Map();
+  let totalMass = 0;
+  const step = Math.max(1, Math.floor(Math.min(width, height) / 48));
+  const cx = width / 2;
+  const cy = height / 2;
+  for (let y = Math.floor(height * 0.06); y < height * 0.94; y += step) {
+    for (let x = Math.floor(width * 0.06); x < width * 0.94; x += step) {
+      const i = (y * width + x) * 4;
+      let r = data[i];
+      let g = data[i + 1];
+      let b = data[i + 2];
+      if (data[i + 3] < 200) continue;
+      const max = Math.max(r, g, b);
+      if (max < 12) continue;
+      const { light, sat } = bucketTone(r, g, b);
+      const dx = (x - cx) / (width / 2);
+      const dy = (y - cy) / (height / 2);
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const centerW = Math.max(0.4, 1 - dist * 0.5);
+      let toneW = 1;
+      if (light < 0.12) toneW = 0.04 + sat * 0.25;
+      else if (light < 0.2) toneW = 0.15 + sat * 0.4;
+      else if (light < 0.3 && sat < 0.15) toneW = 0.4;
+      if (light > 0.86 && sat < 0.12) toneW *= 0.35;
+      else if (light > 0.78 && sat < 0.15) toneW *= 0.55;
+      const w = centerW * toneW * (0.45 + sat * 2.8);
+      totalMass += w;
+      const key = quantizeKey(r, g, b);
+      buckets.set(key, (buckets.get(key) || 0) + w);
+    }
+  }
+  if (!buckets.size || totalMass <= 0) return null;
+
+  const ranked = [...buckets.entries()]
+    .map(([key, n]) => {
+      const [r, g, b] = key.split(',').map(Number);
+      const { light, sat } = bucketTone(r, g, b);
+      let score = n;
+      if (sat > 0.22 && light > 0.18 && light < 0.88) score *= 1.45 + sat;
+      if (sat > 0.4 && light > 0.25 && light < 0.8) score *= 1.25;
+      if (light > 0.86 && sat < 0.12) score *= 0.25;
+      else if (light > 0.78 && sat < 0.18) score *= 0.45;
+      if (light < 0.18 && sat < 0.2) score *= 0.4;
+      return { r, g, b, n, score, light, sat };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  const best = ranked[0];
+  if (!best) return null;
+  if (isNearWhite(best.r, best.g, best.b)) {
+    const accent = ranked.find(
+      (c) =>
+        c.sat >= 0.18 &&
+        c.light >= 0.12 &&
+        c.light <= 0.9 &&
+        c.n >= totalMass * 0.035 &&
+        c.score >= best.score * 0.18
+    );
+    if (accent) return rgbToHex(accent.r, accent.g, accent.b);
+  }
+  return rgbToHex(best.r, best.g, best.b);
+}
+
+/**
+ * Spine color from the cover image: prefer the left-edge strip that would
+ * abut a physical spine (e.g. Dubliners' black border), else field/accent.
  */
 function extractCoverColor(buf) {
   try {
     const img = decodeCoverImage(buf);
     if (!img) return null;
     const { width, height, data } = img;
-    const buckets = new Map();
-    let lightMass = 0;
-    let totalMass = 0;
-    const step = Math.max(1, Math.floor(Math.min(width, height) / 48));
-    const cx = width / 2;
-    const cy = height / 2;
-    for (let y = Math.floor(height * 0.06); y < height * 0.94; y += step) {
-      for (let x = Math.floor(width * 0.06); x < width * 0.94; x += step) {
-        const i = (y * width + x) * 4;
-        let r = data[i];
-        let g = data[i + 1];
-        let b = data[i + 2];
-        if (data[i + 3] < 200) continue;
-        const max = Math.max(r, g, b);
-        const min = Math.min(r, g, b);
-        // Only skip near-pure ink; keep cream/white fields
-        if (max < 12) continue;
-        const light = max / 255;
-        const sat = max === 0 ? 0 : (max - min) / max;
-        const dx = (x - cx) / (width / 2);
-        const dy = (y - cy) / (height / 2);
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        const centerW = Math.max(0.4, 1 - dist * 0.5);
-        // Heavy penalty for near-black (text / hair / shadow)
-        let toneW = 1;
-        if (light < 0.12) toneW = 0.04 + sat * 0.25;
-        else if (light < 0.2) toneW = 0.15 + sat * 0.4;
-        else if (light < 0.3 && sat < 0.15) toneW = 0.4;
-        const chromaW = 0.4 + sat * 2.4;
-        const w = centerW * toneW * chromaW;
-        totalMass += w;
-        if (light > 0.72) lightMass += w;
-        r = Math.min(240, Math.round(r / 24) * 24);
-        g = Math.min(240, Math.round(g / 24) * 24);
-        b = Math.min(240, Math.round(b / 24) * 24);
-        const key = `${r},${g},${b}`;
-        buckets.set(key, (buckets.get(key) || 0) + w);
-      }
-    }
-    const lightFrac = totalMass ? lightMass / totalMass : 0;
-    let best = null;
-    let bestN = -1;
-    for (const [key, n] of buckets) {
-      const [r, g, b] = key.split(',').map(Number);
-      const max = Math.max(r, g, b);
-      const min = Math.min(r, g, b);
-      const light = max / 255;
-      const sat = max === 0 ? 0 : (max - min) / max;
-      let score = n;
-      // Mostly-light covers → boost cream/white field colors
-      if (lightFrac > 0.32 && light > 0.7) score *= 1 + (lightFrac - 0.2) * 4;
-      if (sat > 0.35 && light > 0.25 && light < 0.85) score *= 1.35;
-      if (lightFrac > 0.35 && light < 0.35) score *= 0.35;
-      if (score > bestN) {
-        bestN = score;
-        best = key;
-      }
-    }
-    if (!best) return null;
-    const [r, g, b] = best.split(',').map(Number);
-    return rgbToHex(r, g, b);
+    return extractEdgeColor(width, height, data) || extractFieldColor(width, height, data);
   } catch {
     return null;
   }

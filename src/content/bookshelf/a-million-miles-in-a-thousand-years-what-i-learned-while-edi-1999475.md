@@ -12,6 +12,6 @@ isbn: "9780785213062"
 moods: ["Reflective"]
 genres: ["Biography"]
 subjects: ["Autobiography", "Christian biography", "Authorship", "Quality of life", "Christian life"]
-coverColor: "#f0a800"
+coverColor: "#d9c7a2"
 fiction: false
 ---

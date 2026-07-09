@@ -12,6 +12,6 @@ isbn: "9780006482802"
 moods: ["Dark", "Reflective", "Mysterious", "Tense", "Adventurous", "Emotional", "Sad", "Challenging"]
 genres: ["Science Fiction", "Fiction", "Adventure", "Classics"]
 subjects: ["Androids", "Fiction", "Rick Deckard (Fictitious character)", "Science Fiction", "Twenty-first century", "open_syllabus_project", "Bounty hunters", "general", "Large type books", "Movie-TV Tie-In", "Movies", "Motion Pictures", "Films", "Novelization", "American Science fiction", "PRO Adams"]
-coverColor: "#6060c0"
+coverColor: "#cb616c"
 fiction: true
 ---

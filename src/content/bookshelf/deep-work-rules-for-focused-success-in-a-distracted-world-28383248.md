@@ -12,7 +12,7 @@ isbn: "9781455586691"
 moods: ["Informative", "Inspiring", "Reflective", "Medium-paced", "Challenging", "Hopeful"]
 genres: ["Business", "Self-Help", "Psychology"]
 subjects: ["Mental work", "Distraction", "Success", "Cognition", "Mental fatigue", "BUSINESS & ECONOMICS / Time Management", "Labor productivity", "Employee motivation", "Attention", "Distraction (Psychology)", "Success in business", "Achievement", "Commerce", "Thinking", "Digitalisierung", "Aufmerksamkeit"]
-coverColor: "#f0c030"
+coverColor: "#d89026"
 fiction: false
 ---
 Shallow work: we do that a lot. Checking email, scrolling through Twitter. To mitigate the effects of the distractions around us, Cal Newport proposes Deep Work, defined as this: "Professional activities performed in a state of distraction-free concentration that pushes your cognitive capabilities to their limit"(3). In short, reading this book will enable you to have the time to read many more books in the future, which, if you're like me, is a wonderful idea.

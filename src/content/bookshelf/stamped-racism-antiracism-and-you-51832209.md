@@ -12,6 +12,6 @@ moods: ["Reflective", "Sad", "Challenging", "Informative", "Inspiring"]
 genres: ["Young Adult", "Nonfiction"]
 subjects: ["United states", "history", "juvenile literature", "race relations", "Prejudices", "nyt:young-adult-hardcover=2020-03-29", "New York Times bestseller", "young adult nonfiction", "Racism", "Teen & Young Adult", "Social Topics", "Prejudice & Racism", "nyt:childrens-middle-grade-hardcover=2021-05-30"]
 places: ["United States"]
-coverColor: "#00a8d8"
+coverColor: "#e41818"
 fiction: false
 ---

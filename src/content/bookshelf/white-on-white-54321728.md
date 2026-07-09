@@ -11,6 +11,6 @@ cover: "/covers/bookshelf/white-on-white-54321728.jpg?v=1783563202"
 isbn: "9780593330531"
 genres: ["Fiction"]
 subjects: ["English literature", "Art students", "Fiction", "Painters", "Creative ability", "Mental illness", "Étudiants en art", "Romans", "nouvelles", "Peintres", "Créativité", "Maladies mentales", "FICTION / Women", "FICTION / Friendship", "FICTION / World Literature / Turkey", "Women"]
-coverColor: "#f0f0f0"
+coverColor: "#e7eeef"
 fiction: true
 ---

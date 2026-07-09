@@ -11,6 +11,6 @@ cover: "/covers/bookshelf/dance-dance-dance-23687785.jpg?v=1783563185"
 isbn: "9780099448761"
 moods: ["Mysterious", "Dark", "Tense", "Adventurous", "Reflective", "Sad", "Challenging", "Relaxing"]
 genres: ["Fantasy", "Fiction", "Classics", "History"]
-coverColor: "#f0f0f0"
+coverColor: "#ececec"
 fiction: true
 ---

@@ -12,6 +12,6 @@ moods: ["Emotional"]
 genres: ["History", "Classics", "Literary Fiction"]
 subjects: ["Fiction", "Historical", "Expatriation", "Americans", "History", "Brett Ashley (Fictitious character)", "Ashley", "Brett (Fictitious character)", "Spain", "American fiction (fictional works by one author)", "American literature", "Classics", "Literary", "War & Military", "France", "Brett (Fictitious character) -- Fiction"]
 places: ["Paris", "France", "Pamplona", "Spain", "United States"]
-coverColor: "#0060a8"
+coverColor: "#0073ac"
 fiction: true
 ---

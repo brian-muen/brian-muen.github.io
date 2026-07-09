@@ -11,7 +11,7 @@ cover: "/covers/bookshelf/hello-habits-a-minimalist-s-guide-to-a-better-life-534
 isbn: "9781324005582"
 genres: ["Psychology"]
 subjects: ["Psychology"]
-coverColor: "#607878"
+coverColor: "#607886"
 fiction: false
 ---
 Every day is a battle between willpower and temptation. Willpower constantly defends us against the lures of temptation. And yet willpower often fails us; temptations surround us, chipping away at our willpower. Willpower, overwhelmed, slowly weakens; eventually, it breaks down. Some of us may feel as if we are perpetually stuck on the losing side of this greater war between temptation and willpower.

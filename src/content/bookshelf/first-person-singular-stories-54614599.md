@@ -11,6 +11,6 @@ cover: "/covers/bookshelf/first-person-singular-stories-54614599.jpg?v=178356318
 isbn: "9780593318072"
 moods: ["Reflective", "Mysterious", "Inspiring", "Relaxing", "Lighthearted"]
 genres: ["Fantasy", "Fiction", "Short Stories", "Nonfiction"]
-coverColor: "#486048"
+coverColor: "#5a655d"
 fiction: true
 ---

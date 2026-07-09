@@ -276,10 +276,14 @@ hr {
   margin-top: 0;
 }
 
-/* Virtual bookshelf */
+/* Virtual bookshelf — uniform colorful spines, flush row; scroll yourself */
 .shelf-scroller {
   overflow-x: auto;
-  border-bottom: 12px solid var(--text);
+  overflow-y: hidden;
+  /* Black plank + padding; page white is painted by .shelf-books::before. */
+  background: var(--text);
+  padding-bottom: 12px;
+  border-bottom: none;
   scrollbar-width: none;
   margin-top: 0.5rem;
 }
@@ -289,42 +293,55 @@ hr {
 }
 
 .shelf-books {
+  position: relative;
   display: flex;
+  flex-wrap: nowrap;
   align-items: flex-end;
-  gap: 2px;
-  min-height: 176px;
+  gap: 0;
+  min-height: 160px;
   padding-top: 10px;
   width: max-content;
+  background: transparent;
+}
+
+/* Page color stops 1px short of the plank so subpixel seams stay black. */
+.shelf-books::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 1px 0;
+  background: var(--bg);
+  pointer-events: none;
 }
 
 .spine {
+  --spine-face: #c8c2b4;
+  --spine-ink: rgba(20, 18, 16, 0.88);
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: rgba(255, 255, 255, 0.92);
+  width: 28px;
+  height: 140px;
+  background: var(--spine-face);
+  color: var(--spine-ink);
   text-decoration: none;
   writing-mode: vertical-rl;
   text-orientation: mixed;
-  transform: rotate(180deg);
   font-size: 0.7rem;
   line-height: 1.1;
   padding: 0.4rem 0.1rem;
   overflow: hidden;
   border-radius: 1px 1px 0 0;
-  background-image: linear-gradient(
-    to right,
-    rgba(0, 0, 0, 0.25),
-    rgba(255, 255, 255, 0.12) 12%,
-    rgba(0, 0, 0, 0) 30%,
-    rgba(0, 0, 0, 0.2)
-  );
+  /* Hairline so near-white spines stay visible on the page. */
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
 .spine:hover {
-  transform: translateY(-8px) rotate(180deg);
-  box-shadow: 2px 3px 4px rgba(0, 0, 0, 0.25);
+  transform: translateY(-8px);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1), 2px 3px 4px rgba(0, 0, 0, 0.25);
 }
 
 .spine-title {
@@ -333,6 +350,7 @@ hr {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transform: rotate(180deg);
 }
 
 /* Book detail */
@@ -1929,23 +1947,27 @@ html[data-theme='dark'] .gx-star {
   align-items: flex-end;
   gap: 2px;
   overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   min-height: 180px;
   padding-top: 12px;
-  border-bottom: 10px solid var(--text);
+  padding-bottom: 10px;
+  border-bottom: none;
+  background: var(--text);
 }
 
 .atlas-stage[data-layout='spine'] .atlas-card {
   flex-shrink: 0;
   width: var(--spine-w, 28px);
   height: var(--spine-h, 140px);
-  background: var(--spine-color, #333);
+  background-color: var(--spine-color, #333);
   text-decoration: none;
   display: flex;
   align-items: center;
   justify-content: center;
   writing-mode: vertical-rl;
   text-orientation: mixed;
-  transform: rotate(180deg);
   border-radius: 1px 1px 0 0;
   overflow: hidden;
   transition: transform 0.12s ease;
@@ -1958,8 +1980,15 @@ html[data-theme='dark'] .gx-star {
   );
 }
 
+.atlas-stage[data-layout='spine']::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
 .atlas-stage[data-layout='spine'] .atlas-card:hover {
-  transform: translateY(-6px) rotate(180deg);
+  transform: translateY(-6px);
 }
 
 .atlas-stage[data-layout='spine'] .atlas-card img,
@@ -1978,6 +2007,7 @@ html[data-theme='dark'] .gx-star {
   text-overflow: ellipsis;
   white-space: nowrap;
   padding: 0.35rem 0.05rem;
+  transform: rotate(180deg);
 }
 
 .atlas-stage[data-layout='stack'] {
@@ -2652,5 +2682,171 @@ html[data-theme='dark'] .morph-shift-delta.morph-delta-down {
 
   .morph-shift-pair {
     grid-template-columns: 2.25rem 1fr 2.5rem;
+  }
+}
+
+/* ── Verdicts / Taste (rating pages) ─────────────────────────────────────── */
+.verdict-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.verdict-list li {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.5rem 0.85rem;
+  align-items: baseline;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9375rem;
+}
+
+.verdict-list a {
+  text-decoration: none;
+}
+
+.verdict-list a:hover {
+  text-decoration: underline;
+}
+
+.verdict-star {
+  font-variant-numeric: tabular-nums;
+  min-width: 2.75rem;
+  text-align: right;
+}
+
+.verdict-generous {
+  margin-top: 1rem;
+}
+
+.taste-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.taste-split-card {
+  border: 1px solid var(--border);
+  padding: 1rem 1.1rem;
+}
+
+.taste-split-card h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+}
+
+.taste-split-avg {
+  margin: 0 0 0.25rem;
+  font-size: 1.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.taste-rank {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.taste-rank-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: baseline;
+  margin-bottom: 0.3rem;
+}
+
+.taste-rank-label {
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.taste-rank-bar-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.taste-rank-avg {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.875rem;
+  min-width: 6.5rem;
+  text-align: right;
+}
+
+.taste-rank-delta {
+  margin-left: 0.35rem;
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.taste-delta-up .taste-rank-delta {
+  color: color-mix(in srgb, #3d6b4f 70%, var(--text));
+}
+
+.taste-delta-down .taste-rank-delta {
+  color: color-mix(in srgb, #8a4a3a 65%, var(--text));
+}
+
+html[data-theme='dark'] .taste-delta-up .taste-rank-delta {
+  color: color-mix(in srgb, #7aab8a 55%, var(--text));
+}
+
+html[data-theme='dark'] .taste-delta-down .taste-rank-delta {
+  color: color-mix(in srgb, #c4897a 50%, var(--text));
+}
+
+.taste-rank-volume {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.75rem;
+}
+
+.taste-surprises {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.taste-surprises li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.25rem 1rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9375rem;
+}
+
+.taste-surprise-avg {
+  font-variant-numeric: tabular-nums;
+  grid-row: 1 / 3;
+  align-self: center;
+}
+
+.taste-surprises .muted {
+  grid-column: 1;
+}
+
+@media (max-width: 640px) {
+  .taste-split {
+    grid-template-columns: 1fr;
+  }
+
+  .verdict-list li {
+    grid-template-columns: 1fr auto;
+  }
+
+  .verdict-list .muted {
+    grid-column: 1 / -1;
   }
 }

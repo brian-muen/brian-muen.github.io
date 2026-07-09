@@ -11,6 +11,6 @@ isbn: "9780767922715"
 genres: ["Self-Help"]
 subjects: ["Study skills", "College student orientation", "EDUCATION", "REFERENCE", "Personal & Practical Guides", "SELF-HELP", "Personal Growth", "Success"]
 places: ["United States"]
-coverColor: "#d81818"
+coverColor: "#d91919"
 fiction: false
 ---

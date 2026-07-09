@@ -6,13 +6,13 @@ dateAdded: 2020-07-03
 pages: 369
 pubYear: 2011
 readCount: 1
-cover: /covers/bookshelf/the-martian-50868363.jpg?v=1783563198
+cover: "/covers/bookshelf/the-martian-50868363.jpg?v=1783563198"
 isbn: "9780804139021"
 moods: ["Adventurous", "Funny", "Tense", "Hopeful", "Inspiring", "Informative", "Emotional", "Lighthearted"]
 genres: ["Science Fiction", "Fiction", "Adventure", "Thriller"]
 subjects: ["Science-Fiction", "Science Fiction & Fantasy", "Suspense & Thriller", "Science fiction", "Amerikanisches Englisch", "Astronauts", "Survival", "Fiction", "Survival skills", "Supervivencia", "Novela", "Astronautas", "Reading Level-Grade 7", "Reading Level-Grade 9", "Reading Level-Grade 8", "Reading Level-Grade 11"]
 places: ["Mars (Planet)", "Earth", "Acidalia Planitia (Mars)", "Schiaparelli (Mars)", "Houston (Tex.)", "Cape Canaveral (Fla.)", "Chicago (Ill.)", "Marte (Planeta)"]
-coverColor: "#d89048"
+coverColor: "#d86630"
 fiction: true
 ---
 We are introduced to the the plight of astronaut Mark Watney, who was part of the Ares 3 mission to explore Mars. 

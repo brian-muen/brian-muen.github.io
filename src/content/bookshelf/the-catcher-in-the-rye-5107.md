@@ -13,6 +13,6 @@ moods: ["Reflective", "Emotional", "Sad", "Funny", "Challenging", "Dark", "Adven
 genres: ["Classics", "Fiction", "Philosophy", "Young Adult"]
 subjects: ["fictional works", "Runaway teenagers", "Fiction", "Adolescence", "teenage boys", "Runaway teenagers in literature", "Brothers and sisters", "Emotionally disturbed teenage boys", "Preparatory schools", "Open Library Staff Picks", "Bildungsromans", "Alienation in teenagers", "Interpersonal relations", "juvenile works", "juvenile fiction", "Fictional Works Publication Type"]
 places: ["New York (N.Y.)", "United States", "New York", "New York City", "Southern California", "Pencey Preparatory Academy", "Agerstown", "Central Park Zoo"]
-coverColor: "#d84830"
+coverColor: "#dd5943"
 fiction: true
 ---

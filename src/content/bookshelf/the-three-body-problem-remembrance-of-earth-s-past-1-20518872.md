@@ -13,6 +13,6 @@ moods: ["Mysterious", "Challenging", "Dark", "Adventurous", "Tense", "Reflective
 genres: ["Science Fiction", "Fiction", "Fantasy"]
 subjects: ["Hugo Award Winner", "award:hugo_award=2015", "award:hugo_award=novel", "Human-alien encounters", "Imaginary wars and battles", "Fiction", "Chinese fiction", "FICTION / Science Fiction / General", "Science fiction", "General", "Fiction", "science fiction", "general", "nyt:trade-fiction-paperback=2020-09-27", "New York Times bestseller", "Encuentros humanos con extraterrestres", "Guerras imaginarias", "Ciencia-ficción"]
 places: ["China"]
-coverColor: "#304860"
+coverColor: "#1e4569"
 fiction: true
 ---

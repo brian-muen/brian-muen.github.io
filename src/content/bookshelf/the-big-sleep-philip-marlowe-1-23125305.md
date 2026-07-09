@@ -13,6 +13,6 @@ moods: ["Mysterious", "Dark", "Tense", "Funny", "Challenging"]
 genres: ["Classics", "Fiction"]
 subjects: ["Fiction", "Philip Marlowe (Fictitious character)", "Private investigators", "Detective and mystery stories", "Women", "General", "mystery & detective", "hard-boiled", "Marlowe", "philip (fictitious character)", "California", "Los angeles (calif.)", "Mystery and detective stories", "English language", "textbooks for foreign speakers"]
 places: ["Los Angeles (Calif.)", "California", "Los Angeles"]
-coverColor: "#001818"
+coverColor: "#04191a"
 fiction: true
 ---

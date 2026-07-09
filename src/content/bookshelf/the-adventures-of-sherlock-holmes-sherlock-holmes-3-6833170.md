@@ -12,6 +12,6 @@ moods: ["Mysterious"]
 genres: ["Classics", "Mystery"]
 subjects: ["Classic Literature", "Murder", "Mystery", "Conclusions", "amorality", "Anglo-Saxons", "Apaces", "aristocracy", "banks", "barques", "beryls", "brain fever", "bushrangers", "cabinet cards", "carbuncles", "Christmas dinners"]
 places: ["Copper Beeches", "Hampshire", "Winchester", "Streetham", "Hyde Park", "Serpentine", "England", "London"]
-coverColor: "#f07830"
+coverColor: "#000100"
 fiction: true
 ---

@@ -11,6 +11,6 @@ moods: ["Challenging", "Reflective", "Mysterious", "Informative", "Inspiring", "
 genres: ["Short Stories", "Science Fiction", "Fiction"]
 subjects: ["American Science fiction", "Fiction", "science fiction", "short stories", "nyt:trade-fiction-paperback=2016-12-04", "New York Times bestseller", "Life change events", "Change (Psychology)", "Automation", "Human-alien encounters", "Adaptability (Psychology)", "FICTION / Science Fiction / General", "FICTION / Short Stories (single author)", "american", "Ps3603.h53 s76 2002"]
 places: ["Babylon", "Mei guo"]
-coverColor: "#183060"
+coverColor: "#163c6a"
 fiction: true
 ---

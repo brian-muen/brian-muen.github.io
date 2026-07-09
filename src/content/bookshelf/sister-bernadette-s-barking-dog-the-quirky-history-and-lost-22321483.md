@@ -11,6 +11,6 @@ cover: "/covers/bookshelf/sister-bernadette-s-barking-dog-the-quirky-history-and
 isbn: "9780156034432"
 genres: ["Classics"]
 subjects: ["Sentences", "Grammar", "English language", "Syntax"]
-coverColor: "#00c0f0"
+coverColor: "#16c0f0"
 fiction: false
 ---

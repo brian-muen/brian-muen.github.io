@@ -9,6 +9,6 @@ pubYear: 1958
 readCount: 1
 cover: "/covers/bookshelf/playback-philip-marlowe-7-153590.jpg?v=1783563192"
 genres: ["Classics", "Fiction", "Crime"]
-coverColor: "#489078"
+coverColor: "#000000"
 fiction: true
 ---

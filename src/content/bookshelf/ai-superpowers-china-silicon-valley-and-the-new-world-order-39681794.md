@@ -12,7 +12,7 @@ isbn: "9781328545862"
 genres: ["Science", "Business"]
 subjects: ["SOCIAL SCIENCE / Future Studies", "COMPUTERS / Social Aspects / General", "Economic aspects", "Artificial intelligence", "Technology", "nyt:business-books=2018-10-07", "New York Times bestseller", "Intelligence artificielle", "Aspect économique", "54.72 artificial intelligence", "89.94 international relations: other", "SOCIAL SCIENCE", "Future Studies", "COMPUTERS", "General", "Industry"]
 places: ["United States", "China"]
-coverColor: "#f01830"
+coverColor: "#f01829"
 fiction: false
 ---
 In[ ](https://www.google.com/url?q=https://uncannymagazine.com/article/folding-beijing-2/&sa=D&source=editors&ust=1619824720465000&usg=AOvVaw3abWR96pYGcrH44nUDM2_O)[Folding Beijing](https://www.google.com/url?q=https://uncannymagazine.com/article/folding-beijing-2/&sa=D&source=editors&ust=1619824720466000&usg=AOvVaw3xb7MSGhpFWFFV84oKtMot), economist and science fiction author Hao Jingfang imagines a future in which Beijing is split into three distinct social classes: First, Second, and Third Space. The three Spaces are physically divided, with each occupying part of the city. As if to divide the society even further, citizens from different Spaces never have to see each other. To achieve this strange feature, the cycle of day and night has been altered. The forty-eight hour day is split so that each Space gets a certain amount of time on the surface: twenty-four for First Space, sixteen for Second Space, and eight for Third Space. When a Space is not on the surface, it lies beneath the ground.

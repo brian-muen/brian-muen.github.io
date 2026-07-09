@@ -12,6 +12,6 @@ isbn: "9781984878403"
 moods: ["Reflective"]
 genres: ["Classics"]
 subjects: ["Literature", "New York Times reviewed", "Literature and society", "Social problems in literature"]
-coverColor: "#f0f0f0"
+coverColor: "#cda06b"
 fiction: false
 ---

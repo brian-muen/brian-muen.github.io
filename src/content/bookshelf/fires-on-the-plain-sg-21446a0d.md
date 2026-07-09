@@ -12,6 +12,6 @@ moods: ["Emotional"]
 genres: ["Fiction"]
 subjects: ["World War", "1939-1945", "Fiction", "1939-1945  -- Fiction.", "Japan", "general"]
 places: ["Japan"]
-coverColor: "#483018"
+coverColor: "#231207"
 fiction: true
 ---

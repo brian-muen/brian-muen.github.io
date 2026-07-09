@@ -13,6 +13,6 @@ moods: ["Adventurous", "Dark", "Tense", "Emotional", "Sad", "Mysterious", "Chall
 genres: ["Fantasy", "Fiction", "Adventure", "Science Fiction"]
 subjects: ["Adult", "Action & Adventure", "Fantasy", "High Fantasy", "Epic", "Epic Fantasy", "Epic Fiction", "Epic Literature", "Fiction", "general", "Science Fiction", "Fantastic Fiction", "Ficción", "Moral Ambiguity", "Betrayal"]
 places: ["Westeros", "Seven Kingdoms", "North", "Winterfell", "Winter town", "Karhold", "Last Hearth", "White Harbor"]
-coverColor: "#d8a848"
+coverColor: "#e5d4aa"
 fiction: true
 ---

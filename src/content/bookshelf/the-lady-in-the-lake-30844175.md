@@ -12,6 +12,6 @@ isbn: "9780241978931"
 moods: ["Mysterious"]
 genres: ["Fiction", "Mystery", "Classics", "Crime"]
 subjects: ["Fiction", "mystery & detective", "hard-boiled", "Private investigators", "Marlowe", "philip (fictitious character)", "Los angeles (calif.)"]
-coverColor: "#180000"
+coverColor: "#231a45"
 fiction: true
 ---

@@ -12,7 +12,7 @@ isbn: "052553654X"
 moods: ["Informative", "Inspiring", "Reflective", "Challenging", "Hopeful", "Thought-provoking", "Practical", "Thoughtful"]
 genres: ["Self-Help", "Business", "Nonfiction"]
 subjects: ["Information technology", "Internet addiction", "Technological innovations", "Internet", "social aspects", "Technology", "nyt:advice-how-to-and-miscellaneous=2019-02-24", "New York Times bestseller", "BUSINESS & ECONOMICS / Personal Success", "SELF-HELP / Personal Growth / Success", "TECHNOLOGY & ENGINEERING / Social Aspects"]
-coverColor: "#f0c000"
+coverColor: "#f0c801"
 fiction: false
 ---
 We live in a world of distractions. The Digital Age—which has provided us with vast resources—comes with its costs. When's the last time you impulsively checked Facebook or instinctively Googled something while you were supposed to be focused on your work? Yeah, we get distracted easily. Although digital devices can be very useful, instead of making us more productive, we often find them making an entirely opposite effect on our lives. Instead of enhancing our lives, they often send individuals into a swirl of meaningless activity: refreshing Twitter, liking something on . . . something. In fact, if you’re the average user, you spend two hours on social media every day. But do we feel any better after having our time wasted in a low-quality lifestyle. Probably not. In Digital Minimalism, Cal Newport explains why we often fall for digital traps and what we can do to become digital minimalists. 

@@ -13,6 +13,6 @@ moods: ["Mysterious", "Reflective"]
 genres: ["Mystery", "Classics", "Fiction", "Biography"]
 subjects: ["Private investigators", "Open Library Staff Picks", "Fiction in English", "Fiction", "Philip Marlowe (Fictitious character)", "Large type books", "Mystery & Detective", "Hard-Boiled", "LITERARY CRITICISM", "American", "General", "Biography", "juvenile literature", "California", "Los angeles (calif.)", "Marlowe"]
 places: ["Los Angeles (Calif.)", "California", "Los Angeles"]
-coverColor: "#483030"
+coverColor: "#314e3c"
 fiction: true
 ---

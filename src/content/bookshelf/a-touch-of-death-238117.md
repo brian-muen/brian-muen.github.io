@@ -9,6 +9,6 @@ pubYear: 1953
 readCount: 1
 cover: "/covers/bookshelf/a-touch-of-death-238117.jpg?v=1783563181"
 isbn: "9780843955880"
-coverColor: "#c04818"
+coverColor: "#b64719"
 fiction: true
 ---

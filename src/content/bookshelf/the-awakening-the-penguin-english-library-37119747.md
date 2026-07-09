@@ -13,6 +13,6 @@ moods: ["Reflective", "Sad", "Inspiring", "Dark"]
 genres: ["Fiction", "Classics", "Young Adult", "History"]
 subjects: ["Adultery", "American literature", "Classic Literature", "Criticism and interpretation", "feminist fiction", "feminist literature", "Fiction", "History", "Interpersonal attraction", "Interpersonal relations", "literary fiction", "Louisiana Creoles", "Man-woman relationships", "manners and customs", "Marriage", "Married people"]
 places: ["New Orleans (La.)", "Louisiana", "New Orleans", "Grand Isle", "Chênière Caminada", "Gulf of Mexico", "Mexico", "New York City"]
-coverColor: "#183060"
+coverColor: "#a8d8d8"
 fiction: true
 ---

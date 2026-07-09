@@ -10,7 +10,7 @@ readCount: 1
 cover: "/covers/bookshelf/the-dark-forest-remembrance-of-earth-s-past-2-23168817.jpg?v=1783563196"
 moods: ["Dark", "Tense", "Mysterious", "Challenging", "Adventurous", "Reflective", "Emotional", "Informative"]
 genres: ["Science Fiction", "Fiction", "Fantasy"]
-coverColor: "#300000"
+coverColor: "#040206"
 fiction: true
 pace: "slow"
 ---

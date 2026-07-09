@@ -8,6 +8,6 @@ pages: 336
 pubYear: 2023
 cover: "/covers/bookshelf/the-worlds-i-see-curiosity-exploration-and-discovery-at-the-sg-da300d35.jpg?v=1783563201"
 isbn: "9781250897947"
-coverColor: "#003048"
+coverColor: "#072b43"
 fiction: false
 ---

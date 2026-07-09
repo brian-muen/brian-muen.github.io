@@ -13,7 +13,7 @@ moods: ["Educational"]
 genres: ["History"]
 subjects: ["genetics", "history", "heredity", "genes", "family", "medical ethics", "health", "abortion", "prenatal tests", "AIDS", "acquired immunodeficiency syndrome", "ADA deficiency", "ADA gene mutations", "ADCY5", "addiction", "adenine"]
 places: ["Calcutta", "Delhi"]
-coverColor: "#f0f0f0"
+coverColor: "#a71817"
 fiction: false
 ---
 [b:The Gene: An Intimate History|27276428|The Gene  An Intimate History|Siddhartha Mukherjee|https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1463591739l/27276428._SY75_.jpg|46190748] elegantly traces the history of genetics. Inside is the story of the gene.

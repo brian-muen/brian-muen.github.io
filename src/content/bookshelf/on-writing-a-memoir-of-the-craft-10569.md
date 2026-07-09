@@ -13,6 +13,6 @@ moods: ["Informative", "Inspiring", "Reflective", "Funny", "Emotional", "Hopeful
 genres: ["Memoir", "Nonfiction", "Classics", "Fiction"]
 subjects: ["writing", "Salem’s Lot", "science fiction", "Happy Stamps", "The Elements of Style", "drinking", "adverbs", "Horror tales--Authorship", "Locus Award winner", "Bram Stoker Award winner", "biography", "Arte de escribir", "Novelistas estadounidenses", "Biografía", "Autores estadounidenses", "American Novelists"]
 places: ["Lisbon Falls", "Maine"]
-coverColor: "#304848"
+coverColor: "#0a0f0e"
 fiction: true
 ---

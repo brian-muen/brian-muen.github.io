@@ -13,7 +13,7 @@ moods: ["Hopeful", "Inspiring", "Funny", "Informative", "Reflective", "Emotional
 genres: ["Nonfiction", "Philosophy", "Biography", "History", "Science", "Adventure"]
 subjects: ["Space flight", "Conduct of life", "Astronauts", "Anecdotes", "Canada", "biography", "United States", "United States. National Aeronautics and Space Administration", "Exploration", "History", "Biographies", "Manned space flight", "nyt:science=2013-12-08", "New York Times bestseller", "Transportation", "nyt:science=2015-05-10"]
 places: ["Canada", "Outer space"]
-coverColor: "#183048"
+coverColor: "#0d1b28"
 fiction: false
 ---
 A look at life from the view of an astronaut — this is essentially the basis of this book. Chris Hadfield, growing up in Canada, had dreams of becoming an astronaut ever since he was a child watching Neil Armstrong step onto the moon. This was dream unheard of at that time — there wasn't even a Canadian space agency — but Hadfield constantly worked towards it without making his goal of becoming an astronaut determine his self-worth. Chris Hadfield eventually achieved his dream, and even became the first Canadian space walker along the way. I learned various invaluable lessons from this book, but the ones that stood out to me were (1) to always be prepared, (2) to be faithful in the small things, and (3) to learn to take criticism.

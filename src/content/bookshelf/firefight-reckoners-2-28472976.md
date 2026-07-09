@@ -11,6 +11,6 @@ cover: "/covers/bookshelf/firefight-reckoners-2-28472976.jpg?v=1783563187"
 isbn: "9780385743587"
 moods: ["Adventurous", "Funny", "Tense", "Inspiring", "Dark", "Challenging", "Mysterious", "Emotional"]
 genres: ["Young Adult", "Fantasy", "Science Fiction", "Adventure", "Fiction"]
-coverColor: "#d8a830"
+coverColor: "#853323"
 fiction: true
 ---

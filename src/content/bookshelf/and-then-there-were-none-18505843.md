@@ -13,7 +13,7 @@ moods: ["Mysterious", "Tense", "Dark", "Adventurous", "Challenging", "Dark Atmos
 genres: ["Mystery", "Fiction", "Thriller", "Crime", "Classics"]
 subjects: ["Roman policier", "French language materials", "Français (langue)", "Lectures et morceaux choisis", "cyanide poisoning", "chloral hydrate", "potassium cyanide", "Scotland Yard", "coroners", "message in a bottle", "Detective and mystery stories", "Mystery fiction", "murder", "Fiction", "Millionaires", "Murder victims"]
 places: ["Devon (England)", "Devon", "England"]
-coverColor: "#d83030"
+coverColor: "#4d4848"
 fiction: true
 ---
 There was something magical about an island—the mere word suggested fantasy. You lost touch with the world—an island was a world of its own. A world, perhaps, from which you might never return.

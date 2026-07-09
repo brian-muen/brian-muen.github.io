@@ -11,6 +11,6 @@ isbn: "9780374173401"
 moods: ["Challenging", "Funny", "Informative", "Lighthearted"]
 genres: ["Fiction", "History"]
 subjects: ["Fiction", "Authorship", "Technique", "History and criticism", "New York Times reviewed", "Pn3331 .w67 2008", "808.3"]
-coverColor: "#f06060"
+coverColor: "#e86c60"
 fiction: true
 ---

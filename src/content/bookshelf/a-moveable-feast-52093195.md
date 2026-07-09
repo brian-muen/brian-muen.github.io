@@ -13,7 +13,7 @@ moods: ["Reflective", "Informative", "Lighthearted", "Emotional", "Inspiring", "
 genres: ["Biography", "Fiction", "Memoir", "History", "Classics"]
 subjects: ["Correspondence", "Autobiography", "American Novelists", "Novelists", "American", "Intellectual life", "20th century", "Vida social y costumbres", "American Authors", "France", "Homes and haunts", "Americans", "Authors", "Social life and customs", "Biography", "History"]
 places: ["France", "Paris", "Paris (France)", "París (Francia)"]
-coverColor: "#183060"
+coverColor: "#181825"
 fiction: true
 ---
 I sat down at my desk and opened my Kindle to do some reading before I went bed. I have developed a routine that involves reading some of Hemingway’s A Moveable Feast each night. I can’t remember when exactly I started doing this. The thing that happens when you’re at home all the time and never go outside is that the weeks fly by and yet the months are unbearably long. I knew that I would eventually finish the book and it would all be over, but the routine would be good while it lasted.

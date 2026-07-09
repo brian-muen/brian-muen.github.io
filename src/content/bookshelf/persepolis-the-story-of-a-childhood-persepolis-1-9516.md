@@ -12,6 +12,6 @@ isbn: "9780375714573"
 moods: ["Emotional", "Reflective", "Informative", "Challenging", "Sad", "Funny", "Adventurous"]
 genres: ["Nonfiction", "History", "Biography"]
 subjects: ["Comics & graphic novels", "nonfiction", "biography & memoir", "Iran", "biography", "Girls", "Authors", "general", "Women", "nyt:paperback-graphic-books=2013-02-03", "New York Times bestseller", "Comic books", "strips", "Fiction", "Teens - biography", "Teens - life & relationships"]
-coverColor: "#d80048"
+coverColor: "#000000"
 fiction: false
 ---

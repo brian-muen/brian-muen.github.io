@@ -11,6 +11,6 @@ isbn: "9780771089312"
 moods: ["Romantic"]
 genres: ["Fiction"]
 subjects: ["England", "fiction", "romance", "contemporary", "Brothers and sisters", "psychological"]
-coverColor: "#604848"
+coverColor: "#b5592f"
 fiction: true
 ---

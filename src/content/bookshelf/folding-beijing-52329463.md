@@ -7,7 +7,7 @@ pages: 49
 pubYear: 2014
 readCount: 1
 cover: "/covers/bookshelf/folding-beijing-52329463.jpg?v=1783563187"
-coverColor: "#180030"
+coverColor: "#000001"
 fiction: true
 ---
 In   Folding Beijing ,  economist and science fiction author Hao Jingfang imagines a future in which Beijing is split into three distinct social classes: First, Second, and Third Space. The three Spaces are physically divided, with each occupying part of the city. As if to divide the society even further, citizens from different Spaces never have to see each other. To achieve this strange feature, the cycle of day and night has been altered. The forty-eight hour day is split so that each Space gets a certain amount of time on the surface: twenty-four for First Space, sixteen for Second Space, and eight for Third Space. When a Space is not on the surface, it lies beneath the ground.

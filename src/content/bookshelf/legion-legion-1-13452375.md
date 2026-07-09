@@ -11,6 +11,6 @@ isbn: "9781596064850"
 moods: ["Adventurous", "Funny", "Emotional", "Mysterious", "Challenging", "Dark", "Tense", "Sad"]
 genres: ["Fantasy", "Science Fiction", "Mystery", "Fiction", "Young Adult", "Adventure"]
 subjects: ["Hallucinations and illusions", "Fiction", "Multiple personality", "Gifted persons", "Genius", "science fiction", "short stories", "fantasy", "general"]
-coverColor: "#f0f0f0"
+coverColor: "#717c9c"
 fiction: true
 ---

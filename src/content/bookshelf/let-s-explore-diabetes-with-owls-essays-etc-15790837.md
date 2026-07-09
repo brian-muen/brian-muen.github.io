@@ -12,6 +12,6 @@ moods: ["Witty", "Funny"]
 genres: ["Nonfiction", "Memoir", "Essays", "Humor", "Short Stories", "Biography"]
 subjects: ["American humorous stories", "20th century", "American wit and humor", "United States", "American humorists", "Social life and customs", "Humor", "Biography", "Anecdotes", "American essays", "Essays", "Travel", "Wit and humor", "Amerikanisches Englisch", "Manners and customs", "form"]
 places: ["Beijing", "Raleigh", "Australia"]
-coverColor: "#d8c090"
+coverColor: "#be8e54"
 fiction: false
 ---
