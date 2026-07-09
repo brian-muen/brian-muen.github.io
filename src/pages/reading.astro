@@ -63,14 +63,15 @@ spines.push({
   {spines.length > 0 && (
     <div class="shelf-scroller" id="shelf-scroller" aria-label="Virtual bookshelf">
       <div class="shelf-books">
-        {[0, 1].map((copy) =>
+        {/* Three identical runs so the shelf can loop both ways without a hard left stop. */}
+        {[0, 1, 2].map((copy) =>
           spines.map((sp) => (
             <a
               class="spine"
               href={sp.href}
               title={`${sp.title} — ${sp.author}`}
-              aria-hidden={copy === 1 ? 'true' : undefined}
-              tabindex={copy === 1 ? -1 : undefined}
+              aria-hidden={copy !== 1 ? 'true' : undefined}
+              tabindex={copy !== 1 ? -1 : undefined}
               style={`--spine-face:${sp.color};--spine-ink:${sp.ink}`}
             >
               <span class="spine-title">{sp.title}</span>
@@ -104,21 +105,61 @@ spines.push({
 </Layout>
 
 <script>
-  // Manual horizontal scroll only — duplicated spines wrap for an endless shelf.
+  // Manual horizontal scroll — three identical spine runs. Start in the middle
+  // run so left and right both have a full segment of runway; wrap near the
+  // native edges so the shelf never hard-stops (and hover doesn't jitter).
   const scroller = document.getElementById('shelf-scroller');
   if (scroller) {
-    let half = 0;
-    const measure = () => {
-      half = scroller.scrollWidth - scroller.clientWidth > 0 ? scroller.scrollWidth / 2 : 0;
-    };
-    measure();
-    addEventListener('resize', measure);
+    let segment = 0;
+    let wrapping = false;
+    // Stay a few px inside the scrollable range so trackpads never pin at 0 / max.
+    const EDGE = 2;
 
-    scroller.scrollLeft = 1;
-    scroller.addEventListener('scroll', () => {
-      if (half <= 0) return;
-      if (scroller.scrollLeft >= half) scroller.scrollLeft -= half;
-      else if (scroller.scrollLeft < 1) scroller.scrollLeft += half;
+    const measure = () => {
+      segment =
+        scroller.scrollWidth > scroller.clientWidth ? scroller.scrollWidth / 3 : 0;
+    };
+
+    const settleInBand = (x) => {
+      if (segment <= 0) return 0;
+      let next = x;
+      while (next < segment) next += segment;
+      while (next >= segment * 2) next -= segment;
+      return next;
+    };
+
+    const normalize = () => {
+      if (segment <= 0 || wrapping) return;
+      const x = scroller.scrollLeft;
+      const max = scroller.scrollWidth - scroller.clientWidth;
+      let next = x;
+      // Prefer wrapping inside the middle band; also catch the true right edge
+      // when a single run is shorter than the viewport.
+      if (x >= Math.min(segment * 2 - EDGE, max - EDGE)) next = x - segment;
+      else if (x <= EDGE) next = x + segment;
+      else return;
+      if (Math.abs(next - x) < 0.5) return;
+
+      wrapping = true;
+      scroller.classList.add('is-wrapping');
+      scroller.scrollLeft = next;
+      // Clear after the browser has applied the jump (and any synthetic scroll).
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          scroller.classList.remove('is-wrapping');
+          wrapping = false;
+        });
+      });
+    };
+
+    measure();
+    scroller.scrollLeft = segment;
+    scroller.addEventListener('scroll', normalize, { passive: true });
+    addEventListener('resize', () => {
+      const before = segment;
+      const ratio = before > 0 ? scroller.scrollLeft / before : 1;
+      measure();
+      if (segment > 0) scroller.scrollLeft = settleInBand(ratio * segment);
     });
   }
 </script>
