@@ -195,13 +195,15 @@ hr {
 }
 
 .archive summary {
-  cursor: pointer;
-  color: #fff;
+  cursor: default;
+  color: var(--bg);
   list-style: none;
+  user-select: none;
+  width: fit-content;
 }
 
 .archive summary:hover {
-  color: #ddd;
+  color: var(--bg);
 }
 
 .archive summary::-webkit-details-marker {
@@ -209,11 +211,7 @@ hr {
 }
 
 .archive summary::before {
-  content: '+ ';
-}
-
-.archive[open] summary::before {
-  content: '− ';
+  content: none;
 }
 
 .archive .post-list {

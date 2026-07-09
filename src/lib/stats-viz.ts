@@ -698,16 +698,17 @@ export function buildEvolution(books: BookRow[]): EvolutionPayload {
     authorGrowth.push({ year: y, unique: seen.size });
   }
 
-  // Genre share for top genres across years
+  // Genre mix for top genres across years.
+  // Books can carry multiple genres, so raw "share of books tagged X" can sum well
+  // over 100%. Normalize within each year so the river is a relative mix of top tags.
   const globalGenres = countMap(books.flatMap((b) => b.genres)).slice(0, 7).map(([g]) => g);
   const genreShare = {
     genres: globalGenres,
     rows: yearsAsc.map((year) => {
       const list = byYear.get(year)!;
-      const shares = globalGenres.map((g) => {
-        const n = list.filter((b) => b.genres.includes(g)).length;
-        return round2(n / Math.max(1, list.length));
-      });
+      const raw = globalGenres.map((g) => list.filter((b) => b.genres.includes(g)).length);
+      const total = raw.reduce((s, n) => s + n, 0);
+      const shares = raw.map((n) => (total > 0 ? round2(n / total) : 0));
       return { year, shares };
     }),
   };
