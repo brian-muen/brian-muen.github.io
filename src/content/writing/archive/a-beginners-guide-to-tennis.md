@@ -3,7 +3,7 @@ title: "a beginner’s guide to tennis"
 date: 2022-09-03
 ---
 
-Spinning dizzily, a fuzzy, neon-green ball shoots through the air like a star as a vague and woozy outline of a net passes beneath. It collides with the ground and bounces up again. A web of wire comes to meet in the air, making an agitated *whooshing*as it warps the air around it. They impact, sending shockwaves through the very core of the ball. The ball shoots in the other direction and it all starts over again. This is tennis, and rackets and balls and nets are the ingredients of this game.
+Spinning dizzily, a fuzzy, neon-green ball shoots through the air like a star as a vague and woozy outline of a net passes beneath. It collides with the ground and bounces up again. A web of wire comes to meet in the air, making an agitated *whooshing* as it warps the air around it. They impact, sending shockwaves through the very core of the ball. The ball shoots in the other direction and it all starts over again. This is tennis, and rackets and balls and nets are the ingredients of this game.
 
 The ball is the essence of tennis, and its composition is simple. It is slightly smaller than a baseball, and slightly softer too. It is fuzzy and green, like a wad of baby hair, dyed. In a swirly loop that covers the whole ball is a line of what looks like Wite-Out. Without it, tennis would be impossible to play. If you do not have rackets, you can use your hands. If you do not have a net, no problem. If you do not have a ball, what to do? 
 
