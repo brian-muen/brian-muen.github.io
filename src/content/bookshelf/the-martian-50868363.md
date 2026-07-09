@@ -15,7 +15,7 @@ places: ["Mars (Planet)", "Earth", "Acidalia Planitia (Mars)", "Schiaparelli (Ma
 coverColor: "#d86630"
 fiction: true
 ---
-We are introduced to the the plight of astronaut Mark Watney, who was part of the Ares 3 mission to explore Mars. 
+We are introduced to the plight of astronaut Mark Watney, who was part of the Ares 3 mission to explore Mars. 
 I'm pretty much screwed ... If the oxygenator breaks down, I'll suffocate. If the water reclaimer breaks down, I'll die of thirst. If the Hab breaches, I'll just explode. If none of those things happen, I'll eventually run out of food and starve to death. So yeah. I'm screwed. (1-7) 
 Set in the near future, Mark Watney is stranded on Mars as a result of a mission gone wrong, and everyone thinks he's dead. His situation is worsened by the fact that there is no way for him to communicate with anybody else. While others may have given up, Watney is determined not to die on Mars.
 

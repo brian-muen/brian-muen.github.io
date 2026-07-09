@@ -19,7 +19,7 @@ The book starts by mentioning the bias in the field of science. Women and minori
 
 The book then gives a brief overview of recent discoveries that have changed science. From gravitational waves to CRISPR, many recent breakthroughs will change the way science is done.
 
-A formidable obstacle in current science is the spread of fake news and information. Many times, reports are often biased and manipulated to support a cause. People also fall victim to the the promises of quacks who claim to benefit others when its clear they aren't scientists in the first place. The book resolves this issue by noting that the only way we can only destroy information by attacking its root: we must prevent it from spreading in the first place.
+A formidable obstacle in current science is the spread of fake news and information. Many times, reports are often biased and manipulated to support a cause. People also fall victim to the promises of quacks who claim to benefit others when its clear they aren't scientists in the first place. The book resolves this issue by noting that the only way we can only destroy information by attacking its root: we must prevent it from spreading in the first place.
 
 The book then comments on the future of science. We must encourage the advancement of science, but we must also be careful with it. Carelessness will result in individuals exploiting science for evil causes. However, this must not dampen are enthusiasm for science. It is something that should be supported. It is only human nature to advance, which we have done throughout the course of history.
 
