@@ -1,5 +1,5 @@
 ---
-title: "Dance Dance Dance"
+title: "Dance Dance Dance (The Rat, #4)"
 author: "Haruki Murakami"
 dateRead: 2024-07-01
 dateAdded: 2024-08-14
