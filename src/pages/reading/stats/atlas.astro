@@ -221,7 +221,7 @@ const payload = {
     status.textContent = `${list.length} book${list.length === 1 ? '' : 's'}`;
     stage.dataset.layout = state.layout;
 
-    stage.innerHTML = list
+    const cards = list
       .map((b) => {
         const cover = safeCoverSrc(b.cover);
         const color = safeHex(b.color);
@@ -239,6 +239,11 @@ const payload = {
         </a>`;
       })
       .join('');
+
+    // Spine mode needs a max-content row so the white shelf paint spans the
+    // full scroll width (a stage ::before only covers the viewport).
+    stage.innerHTML =
+      state.layout === 'spine' ? `<div class="atlas-spine-row">${cards}</div>` : cards;
 
     requestAnimationFrame(() => flip(before));
   }

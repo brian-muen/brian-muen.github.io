@@ -1943,21 +1943,42 @@ html[data-theme='dark'] .gx-star {
 }
 
 .atlas-stage[data-layout='spine'] {
-  display: flex;
-  align-items: flex-end;
-  gap: 2px;
+  display: block;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
   -ms-overflow-style: none;
   min-height: 180px;
-  padding-top: 12px;
   padding-bottom: 10px;
   border-bottom: none;
+  /* Black plank; page color is on .atlas-spine-row::before (full scroll width). */
   background: var(--text);
 }
 
+.atlas-spine-row {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  width: max-content;
+  min-width: 100%;
+  min-height: 170px;
+  padding-top: 12px;
+  background: transparent;
+}
+
+/* Page color stops 1px short of the plank so the shelf line stays black. */
+.atlas-spine-row::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 1px 0;
+  background: var(--bg);
+  pointer-events: none;
+}
+
 .atlas-stage[data-layout='spine'] .atlas-card {
+  position: relative;
+  z-index: 1;
   flex-shrink: 0;
   width: var(--spine-w, 28px);
   height: var(--spine-h, 140px);
@@ -1970,14 +1991,8 @@ html[data-theme='dark'] .gx-star {
   text-orientation: mixed;
   border-radius: 1px 1px 0 0;
   overflow: hidden;
-  transition: transform 0.12s ease;
-  background-image: linear-gradient(
-    to right,
-    rgba(0, 0, 0, 0.25),
-    rgba(255, 255, 255, 0.12) 12%,
-    rgba(0, 0, 0, 0) 30%,
-    rgba(0, 0, 0, 0.2)
-  );
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
 }
 
 .atlas-stage[data-layout='spine']::-webkit-scrollbar {
@@ -1989,6 +2004,7 @@ html[data-theme='dark'] .gx-star {
 
 .atlas-stage[data-layout='spine'] .atlas-card:hover {
   transform: translateY(-6px);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1), 2px 3px 4px rgba(0, 0, 0, 0.25);
 }
 
 .atlas-stage[data-layout='spine'] .atlas-card img,
