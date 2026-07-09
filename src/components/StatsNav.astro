@@ -1,0 +1,19 @@
+---
+import { STATS_LINKS } from '../lib/bookshelf-stats';
+
+interface Props {
+  current?: string;
+}
+
+const { current } = Astro.props;
+const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+---
+
+<nav class="stats-subnav" aria-label="Reading stats sections">
+  {STATS_LINKS.map((l) => {
+    const active = current ? current === l.href : path === l.href;
+    return (
+      <a href={l.href} aria-current={active ? 'page' : undefined}>{l.label}</a>
+    );
+  })}
+</nav>

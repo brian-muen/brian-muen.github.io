@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Unpushed change analysis — site</title>
+<style>
+  :root {
+    --bg: #f7f5f0;
+    --ink: #1a1a1a;
+    --muted: #6a655c;
+    --line: #d9d4c8;
+    --card: #fffef9;
+    --accent: #2c4a3e;
+    --bar: #1a1a1a;
+    --code: #e8e2d4;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+  }
+  .wrap { max-width: 52rem; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+  h1 { font-size: 2rem; font-weight: 600; margin: 0 0 0.35rem; letter-spacing: -0.02em; }
+  h2 { font-size: 1.25rem; margin: 2.25rem 0 0.75rem; font-weight: 600; }
+  h3 { font-size: 1.05rem; margin: 0 0 0.35rem; font-weight: 600; }
+  .sub { color: var(--muted); font-size: 0.95rem; margin: 0 0 1.75rem; }
+  .verdict {
+    background: var(--card);
+    border: 1px solid var(--line);
+    padding: 1.1rem 1.25rem;
+    font-size: 1.05rem;
+  }
+  .verdict strong { color: var(--accent); }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin: 1.25rem 0 0;
+  }
+  @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+  .stat {
+    background: var(--card);
+    border: 1px solid var(--line);
+    padding: 0.9rem 1rem;
+  }
+  .stat .n { font-size: 1.75rem; font-variant-numeric: tabular-nums; font-weight: 600; line-height: 1.1; }
+  .stat .l { color: var(--muted); font-size: 0.8rem; margin-top: 0.25rem; }
+  .bar-row {
+    display: grid;
+    grid-template-columns: 11rem 1fr 4.5rem;
+    gap: 0.6rem;
+    align-items: center;
+    margin: 0.4rem 0;
+    font-size: 0.875rem;
+  }
+  .bar-row .label { color: var(--muted); }
+  .track { height: 0.7rem; background: var(--line); overflow: hidden; }
+  .fill { height: 100%; background: var(--bar); }
+  .val { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .layer {
+    background: var(--card);
+    border: 1px solid var(--line);
+    padding: 1rem 1.15rem;
+    margin: 0.75rem 0;
+  }
+  .layer p { margin: 0.35rem 0 0.7rem; color: var(--muted); font-size: 0.95rem; }
+  .layer .loc {
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.35rem 0.4rem;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  th { color: var(--muted); font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.8em;
+    background: var(--code);
+    padding: 0.05em 0.3em;
+  }
+  ul.plain { margin: 0.4rem 0 0; padding-left: 1.1rem; color: var(--muted); font-size: 0.95rem; }
+  .footnote { margin-top: 2.5rem; font-size: 0.8rem; color: var(--muted); }
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+  @media (max-width: 640px) { .split { grid-template-columns: 1fr; } }
+  .pill {
+    display: inline-block;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border: 1px solid var(--line);
+    padding: 0.15rem 0.45rem;
+    color: var(--muted);
+    margin-left: 0.4rem;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Unpushed change analysis</h1>
+  <p class="sub">
+    Compared to last push on <code>origin/main</code>
+    (<code>ae9a8eb02a</code>, 2026-07-07) —
+    “Refine site layout with archive, social links, and Garamond typography.”.
+    Nothing committed since; this is the whole dirty worktree.
+  </p>
+
+  <div class="verdict">
+    <strong>Verdict: mostly code + binary assets, not prose.</strong>
+    The interesting LOC is the reading-stats observatory (pages + CSS + viz helpers)
+    and import scripts. Bookshelf markdown is structured frontmatter for ~131 books,
+    not long essays. The biggest byte count is cover JPEGs (~7&nbsp;MB) and one PDF (~22&nbsp;MB).
+  </div>
+
+  <div class="grid">
+    <div class="stat">
+      <div class="n">8,597</div>
+      <div class="l">non-blank lines of real code<br/>(excl. package-lock)</div>
+    </div>
+    <div class="stat">
+      <div class="n">2,497</div>
+      <div class="l">non-blank content lines<br/>(bookshelf + writing md)</div>
+    </div>
+    <div class="stat">
+      <div class="n">131</div>
+      <div class="l">cover images · 6.6 MB<br/>+ 1 PDF · 22 MB</div>
+    </div>
+  </div>
+
+  <h2>Where the lines live</h2>
+  <p class="sub" style="margin-top:-0.4rem">Non-blank lines in the worktree (excluding lockfile &amp; binaries).</p>
+  <div class="bar-row">
+    <span class="label">reading/stats UI (pages)</span>
+    <span class="track"><span class="fill" style="width:100.0%"></span></span>
+    <span class="val">3,674</span>
+  </div>
+  <div class="bar-row">
+    <span class="label">bookshelf content (markdown)</span>
+    <span class="track"><span class="fill" style="width:61.6%"></span></span>
+    <span class="val">2,263</span>
+  </div>
+  <div class="bar-row">
+    <span class="label">import/tooling scripts</span>
+    <span class="track"><span class="fill" style="width:55.4%"></span></span>
+    <span class="val">2,036</span>
+  </div>
+  <div class="bar-row">
+    <span class="label">styles (CSS)</span>
+    <span class="track"><span class="fill" style="width:49.9%"></span></span>
+    <span class="val">1,834</span>
+  </div>
+  <div class="bar-row">
+    <span class="label">shared lib / data helpers</span>
+    <span class="track"><span class="fill" style="width:22.5%"></span></span>
+    <span class="val">828</span>
+  </div>
+  <div class="bar-row">
+    <span class="label">writing archive (markdown)</span>
+    <span class="track"><span class="fill" style="width:6.4%"></span></span>
+    <span class="val">234</span>
+  </div>
+  <div class="bar-row">
+    <span class="label">docs / config</span>
+    <span class="track"><span class="fill" style="width:2.1%"></span></span>
+    <span class="val">78</span>
+  </div>
+  <div class="bar-row">
+    <span class="label">other pages / layout</span>
+    <span class="track"><span class="fill" style="width:1.8%"></span></span>
+    <span class="val">65</span>
+  </div>
+  <div class="bar-row">
+    <span class="label">content schema</span>
+    <span class="track"><span class="fill" style="width:1.2%"></span></span>
+    <span class="val">44</span>
+  </div>
+  <div class="bar-row">
+    <span class="label">UI components</span>
+    <span class="track"><span class="fill" style="width:0.4%"></span></span>
+    <span class="val">16</span>
+  </div>
+  <div class="bar-row">
+    <span class="label">images (other)</span>
+    <span class="track"><span class="fill" style="width:0.0%"></span></span>
+    <span class="val">0</span>
+  </div>
+  <div class="bar-row">
+    <span class="label">other markdown</span>
+    <span class="track"><span class="fill" style="width:0.0%"></span></span>
+    <span class="val">0</span>
+  </div>
+
+  <h2>What the code actually does</h2>
+  <div class="layer">
+    <div class="loc">2,036 non-blank lines</div>
+    <h3>Data pipeline (scripts/)</h3>
+    <p>Turn Goodreads CSV + StoryGraph scrape into markdown bookshelf entries, download covers, enrich moods/genres from Hardcover/Open Library, and restore preferred StoryGraph edition covers.</p>
+    <table>
+      <thead><tr><th>File</th><th>Role</th></tr></thead>
+      <tbody>
+        <tr><td><code>import-goodreads.mjs</code></td><td>Parse Goodreads export → frontmatter + Open Library covers</td></tr>
+        <tr><td><code>import-storygraph.mjs</code></td><td>Import missing books from StoryGraph scrape JSON</td></tr>
+        <tr><td><code>enrich-bookshelf.mjs</code></td><td>Add moods, genres, fiction flag, coverColor</td></tr>
+        <tr><td><code>restore-covers-from-storygraph.*</code></td><td>Overwrite covers with cdn.thestorygraph.com editions</td></tr>
+        <tr><td><code>restore-covers-from-csv.*</code></td><td>ISBN-based cover restore (superseded for preferred art)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="layer">
+    <div class="loc">828 non-blank lines</div>
+    <h3>Stats data layer (src/lib/)</h3>
+    <p>Normalize bookshelf entries into rows, parse series, aggregate counts, and precompute viz payloads (galaxy, orbits, rhythm) as JSON-serializable build-time data.</p>
+    <table>
+      <thead><tr><th>File</th><th>Role</th></tr></thead>
+      <tbody>
+        <tr><td><code>bookshelf-stats.ts</code></td><td>BookRow type, series parse, loadBooks, count helpers</td></tr>
+        <tr><td><code>stats-viz.ts</code></td><td>buildGalaxy / orbits / rhythm layouts</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="layer">
+    <div class="loc">3,674 non-blank lines</div>
+    <h3>Reading + stats UI (pages)</h3>
+    <p>Interactive observatory: filterable hub, cover atlas, author constellation, mood river, time-lag scatter, review language, plus galaxy/orbits/rhythm deep dives. Client JS wires click-to-filter.</p>
+    <table>
+      <thead><tr><th>File</th><th>Role</th></tr></thead>
+      <tbody>
+        <tr><td><code>reading.astro</code></td><td>Horizontal looping spine shelf + review list</td></tr>
+        <tr><td><code>stats.astro</code></td><td>Hub: timeline, heatmap, scatter, velocity, filters</td></tr>
+        <tr><td><code>stats/atlas.astro</code></td><td>Cover grid / spines / stack-height explorer</td></tr>
+        <tr><td><code>stats/constellation.astro</code></td><td>Author network sky</td></tr>
+        <tr><td><code>stats/mood|lag|words|…</code></td><td>Niche viz pages</td></tr>
+        <tr><td><code>books/[slug].astro</code></td><td>Per-book detail from bookshelf collection</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="layer">
+    <div class="loc">1,834 non-blank lines</div>
+    <h3>Visual system (CSS)</h3>
+    <p>Almost all of the new look: shelf spines, heatmap, scatter, velocity bars, filtered list, atlas layouts, constellation, mood river, orbits — EB Garamond monochrome site language.</p>
+    <table>
+      <thead><tr><th>File</th><th>Role</th></tr></thead>
+      <tbody>
+        <tr><td><code>global.css</code></td><td>2163 lines — largest single code file</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Content &amp; assets (not “logic”)</h2>
+  <div class="split">
+    <div class="layer">
+      <h3>Bookshelf markdown <span class="pill">131 · 2,390 lines</span></h3>
+      <p>One .md per book: title, dates, rating, pages, ISBN, cover, moods/genres, optional review body</p>
+    </div>
+    <div class="layer">
+      <h3>Cover JPEGs <span class="pill">131 · binary</span></h3>
+      <p>6.6 MB binary — StoryGraph CDN editions under public/covers/bookshelf/</p>
+    </div>
+    <div class="layer">
+      <h3>Writing archive <span class="pill">18 · 386 lines</span></h3>
+      <p>Imported older posts into writing/archive/</p>
+    </div>
+    <div class="layer">
+      <h3>PDF asset <span class="pill">1 · binary</span></h3>
+      <p>22 MB — the-ridley-review.pdf</p>
+    </div>
+
+  </div>
+
+  <h2>Tracked vs untracked</h2>
+  <ul class="plain">
+    <li><strong>Tracked edits vs origin/main:</strong> +2,170 / −78
+      (dominated by <code>global.css</code> +1,918 and <code>reading.astro</code>).</li>
+    <li><strong>Untracked bulk:</strong> <code>src/content/bookshelf/</code> (131), <code>public/covers/bookshelf/</code> (131),
+      <code>src/pages/reading/</code> stats pages, <code>scripts/</code>, <code>src/lib/</code>, writing archive posts.</li>
+    <li><strong>No commits ahead of origin</strong> — <code>main...origin/main</code> is even; all of this is uncommitted.</li>
+  </ul>
+
+  <h2>Top code files by size</h2>
+  <table>
+    <thead><tr><th>Lines</th><th>Path</th><th>Bucket</th></tr></thead>
+    <tbody>
+      <tr><td>2,163</td><td><code>src/styles/global.css</code></td><td>styles (CSS)</td></tr>
+      <tr><td>1,014</td><td><code>src/pages/reading/stats.astro</code></td><td>reading/stats UI (pages)</td></tr>
+      <tr><td>856</td><td><code>scripts/enrich-bookshelf.mjs</code></td><td>import/tooling scripts</td></tr>
+      <tr><td>724</td><td><code>src/lib/stats-viz.ts</code></td><td>shared lib / data helpers</td></tr>
+      <tr><td>382</td><td><code>scripts/restore-covers-from-csv.mjs</code></td><td>import/tooling scripts</td></tr>
+      <tr><td>353</td><td><code>src/pages/reading/stats/constellation.astro</code></td><td>reading/stats UI (pages)</td></tr>
+      <tr><td>343</td><td><code>src/pages/reading/stats/orbit.astro</code></td><td>reading/stats UI (pages)</td></tr>
+      <tr><td>341</td><td><code>src/pages/reading/stats/galaxy.astro</code></td><td>reading/stats UI (pages)</td></tr>
+      <tr><td>296</td><td><code>src/pages/reading/stats/mood.astro</code></td><td>reading/stats UI (pages)</td></tr>
+      <tr><td>284</td><td><code>src/pages/reading/stats/words.astro</code></td><td>reading/stats UI (pages)</td></tr>
+      <tr><td>281</td><td><code>src/pages/reading/stats/lag.astro</code></td><td>reading/stats UI (pages)</td></tr>
+      <tr><td>319</td><td><code>scripts/restore-covers-from-csv.py</code></td><td>import/tooling scripts</td></tr>
+      <tr><td>285</td><td><code>src/pages/reading/stats/rhythm.astro</code></td><td>reading/stats UI (pages)</td></tr>
+      <tr><td>273</td><td><code>src/pages/reading/stats/atlas.astro</code></td><td>reading/stats UI (pages)</td></tr>
+      <tr><td>267</td><td><code>scripts/import-goodreads.mjs</code></td><td>import/tooling scripts</td></tr>
+      <tr><td>195</td><td><code>src/lib/bookshelf-stats.ts</code></td><td>shared lib / data helpers</td></tr>
+      <tr><td>172</td><td><code>src/pages/reading.astro</code></td><td>reading/stats UI (pages)</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Ratio cheat-sheet</h2>
+  <ul class="plain">
+    <li>If you ignore images/PDF/lockfile: <strong>~85% code / tooling / CSS</strong>, <strong>~15% markdown content</strong>.</li>
+    <li>If you count bytes on disk: <strong>overwhelmingly binaries</strong> (covers + one PDF).</li>
+    <li>Bookshelf “text” is mostly YAML frontmatter fields (dates, ratings, tags), not long reviews — only ~32 books have substantial review bodies.</li>
+  </ul>
+
+  <p class="footnote">
+    Generated from the dirty worktree against origin/main. Open via
+    <code>file://</code> or drop this file under <code>public/</code> and hit the local Astro server.
+  </p>
+</div>
+</body>
+</html>

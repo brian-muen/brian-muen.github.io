@@ -1,0 +1,285 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import StatsNav from '../../../components/StatsNav.astro';
+import { loadBooks } from '../../../lib/bookshelf-stats';
+import { buildRhythm } from '../../../lib/stats-viz';
+
+const books = await loadBooks();
+const { years, stream, stats } = buildRhythm(books);
+
+const MONTHS = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+const MONTH_FULL = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+// ─── Pulse grid geometry ─────────────────────────────────────────────────────
+const CELL = 30;
+const LABEL_W = 46;
+const TOP = 26;
+const PW = LABEL_W + 12 * CELL;
+const PH = TOP + years.length * CELL + 6;
+const maxMonth = Math.max(1, ...years.flatMap((y) => y.months));
+
+function dotR(count: number) {
+  if (count <= 0) return 1.6;
+  return +(4 + (count / maxMonth) * (CELL * 0.42 - 4)).toFixed(1);
+}
+
+const pulseCells = years.flatMap((y, yi) =>
+  y.months.map((count, m) => ({
+    year: y.year,
+    month: m,
+    count,
+    pages: y.pages[m],
+    cx: LABEL_W + m * CELL + CELL / 2,
+    cy: TOP + yi * CELL + CELL / 2,
+    r: dotR(count),
+    busy: y.year === stats.busiestMonth.year && m === stats.busiestMonth.month && count > 0,
+  }))
+);
+
+// ─── Streamgraph geometry ────────────────────────────────────────────────────
+const SW = 720;
+const SH = 300;
+const S_PAD = 10;
+const S_TOP = 16;
+const S_INNER_H = 236;
+const centerY = S_TOP + S_INNER_H / 2;
+const bins = stream.bins;
+const B = bins.length;
+const stepX = B > 1 ? (SW - S_PAD * 2) / (B - 1) : 0;
+const binX = bins.map((_, i) => +(S_PAD + i * stepX).toFixed(1));
+
+const totals = bins.map((_, i) => stream.series.reduce((s, ser) => s + ser.values[i], 0));
+const maxTotal = Math.max(1, ...totals);
+const scale = S_INNER_H / maxTotal;
+
+// Silhouette baseline: each column centered on centerY.
+const layerTop: number[][] = [];
+const layerBot: number[][] = [];
+stream.series.forEach(() => {
+  layerTop.push(new Array(B).fill(0));
+  layerBot.push(new Array(B).fill(0));
+});
+for (let i = 0; i < B; i++) {
+  let running = -totals[i] / 2; // value units, positive = up
+  for (let j = 0; j < stream.series.length; j++) {
+    const v = stream.series[j].values[i];
+    layerBot[j][i] = running;
+    running += v;
+    layerTop[j][i] = running;
+  }
+}
+
+function yPx(v: number) {
+  return +(centerY - v * scale).toFixed(1);
+}
+
+// Catmull-rom → bezier segments (no leading moveto).
+function segs(pts: { x: number; y: number }[]) {
+  if (pts.length < 2) return '';
+  let d = '';
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] ?? pts[i];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[i + 2] ?? p2;
+    const c1x = p1.x + (p2.x - p0.x) / 6;
+    const c1y = p1.y + (p2.y - p0.y) / 6;
+    const c2x = p2.x - (p3.x - p1.x) / 6;
+    const c2y = p2.y - (p3.y - p1.y) / 6;
+    d += ` C ${c1x.toFixed(1)} ${c1y.toFixed(1)} ${c2x.toFixed(1)} ${c2y.toFixed(1)} ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+  }
+  return d;
+}
+
+const STREAM_COLORS = [
+  '#8fa9c4',
+  '#b08fc4',
+  '#c49a8f',
+  '#8fc4a3',
+  '#c4b98f',
+  '#c48fa9',
+  '#8fc0c4',
+  '#a3b08f',
+  '#b8b0a0',
+];
+
+const bands = stream.series.map((ser, j) => {
+  const topPts = binX.map((x, i) => ({ x, y: yPx(layerTop[j][i]) }));
+  const botPts = binX.map((x, i) => ({ x, y: yPx(layerBot[j][i]) })).reverse();
+  const d =
+    `M ${topPts[0].x} ${topPts[0].y}` +
+    segs(topPts) +
+    ` L ${botPts[0].x} ${botPts[0].y}` +
+    segs(botPts) +
+    ' Z';
+  return { genre: ser.genre, d, color: STREAM_COLORS[j % STREAM_COLORS.length] };
+});
+
+// Year ticks at the first (Jan–Jun) bin of each year.
+const yearTicks = bins
+  .map((b, i) => ({ ...b, i }))
+  .filter((b) => b.half === 1)
+  .map((b) => ({ year: b.year, x: binX[b.i] }));
+
+const busiestLabel = `${MONTH_FULL[stats.busiestMonth.month]} ${stats.busiestMonth.year}`;
+---
+
+<Layout title="Rhythm — Brian" description="The cadence of a reading life">
+  <p class="muted small"><a href="/reading">← Reading</a></p>
+  <h1>Rhythm</h1>
+  <StatsNav current="/reading/stats/rhythm" />
+  <p class="taste-fingerprint">
+    When you read, and how hard. A heartbeat of months — some swollen, some nearly
+    flat — and beneath it the slow tide of what genres carried you through each half-year.
+  </p>
+
+  <section class="stats-section">
+    <h2>The pulse</h2>
+    <p class="muted small">Each dot is a month; the bigger it beats, the more you finished. Hover for the count.</p>
+    <div class="pulse-readout muted small" id="rh-readout">&nbsp;</div>
+    <div class="pulse-wrap">
+      <svg id="pulse" class="pulse-grid" viewBox={`0 0 ${PW} ${PH}`} role="img" aria-label="Books finished per month, by year">
+        {MONTHS.map((mm, m) => (
+          <text class="pulse-month" x={LABEL_W + m * CELL + CELL / 2} y={16} text-anchor="middle">{mm}</text>
+        ))}
+        {years.map((y, yi) => (
+          <text class="pulse-year" x={0} y={TOP + yi * CELL + CELL / 2 + 4} text-anchor="start">{y.year}</text>
+        ))}
+        {pulseCells.map((c) => (
+          <g
+            class="pulse-cell"
+            data-year={c.year}
+            data-month={c.month}
+            data-count={c.count}
+            data-pages={c.pages}
+            tabindex="0"
+            role="button"
+            aria-label={`${MONTH_FULL[c.month]} ${c.year}: ${c.count} ${c.count === 1 ? 'book' : 'books'}, ${c.pages} pages`}
+          >
+            <rect class="pulse-hit" x={c.cx - CELL / 2} y={c.cy - CELL / 2} width={CELL} height={CELL} />
+            {c.busy && <circle class="pulse-busy" cx={c.cx} cy={c.cy} r={c.r + 4} />}
+            <circle class:list={['pulse-dot', { 'is-empty': c.count === 0 }]} cx={c.cx} cy={c.cy} r={c.r} />
+          </g>
+        ))}
+      </svg>
+    </div>
+    <p class="muted small">The ringed dot is your busiest month: <em>{busiestLabel}</em>, {stats.busiestMonth.count} books.</p>
+  </section>
+
+  <section class="stats-section">
+    <h2>The tide</h2>
+    <p class="muted small">Genres stacked across half-year bins. Hover a name to follow its band through time.</p>
+    <div class="stream-wrap">
+      <svg id="stream" class="streamgraph" viewBox={`0 0 ${SW} ${SH}`} role="img" aria-label="Genre streamgraph over half-year bins">
+        {bands.map((b) => (
+          <path class="stream-band" d={b.d} style={`fill:${b.color}`} data-genre={b.genre}>
+            <title>{b.genre}</title>
+          </path>
+        ))}
+        {yearTicks.map((t) => (
+          <text class="stream-tick" x={t.x} y={SH - 4} text-anchor="middle">{t.year}</text>
+        ))}
+      </svg>
+    </div>
+    <div class="stream-legend" id="rh-legend">
+      {bands.map((b) => (
+        <button class="stream-legend-item" data-genre={b.genre} aria-pressed="false">
+          <span class="stream-legend-dot" style={`background:${b.color}`}></span>
+          <span>{b.genre}</span>
+        </button>
+      ))}
+    </div>
+  </section>
+
+  <section class="stats-section">
+    <h2>The measures</h2>
+    <div class="stat-cards streak-cards">
+      <div class="stat-card">
+        <span class="stat-big">{busiestLabel}</span>
+        <span class="stat-sub">busiest month · {stats.busiestMonth.count} books</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-big">{stats.medianGapDays} days</span>
+        <span class="stat-sub">typical gap between finishes</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-big">{stats.longestGapDays} days</span>
+        <span class="stat-sub">longest drought</span>
+      </div>
+    </div>
+  </section>
+
+  <p class="muted small stats-footnote">
+    Gaps are measured between consecutive finish dates. The streamgraph attributes each book to its first
+    top genre. More cuts of the same data live on the <a href="/reading/stats">overview</a>.
+  </p>
+</Layout>
+
+<script>
+  const pulse = document.getElementById('pulse');
+  const readout = document.getElementById('rh-readout');
+  const stream = document.getElementById('stream');
+  const legend = document.getElementById('rh-legend');
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  function pulseText(g) {
+    const c = Number(g.dataset.count);
+    const m = MONTHS[Number(g.dataset.month)];
+    readout.textContent = `${m} ${g.dataset.year} — ${c} ${c === 1 ? 'book' : 'books'} · ${g.dataset.pages} pages`;
+  }
+
+  pulse.addEventListener('pointerover', (e) => {
+    const g = e.target.closest?.('.pulse-cell');
+    if (g) pulseText(g);
+  });
+  pulse.addEventListener('pointerout', (e) => {
+    if (e.target.closest?.('.pulse-cell')) readout.innerHTML = '&nbsp;';
+  });
+  pulse.addEventListener('focusin', (e) => {
+    const g = e.target.closest?.('.pulse-cell');
+    if (g) pulseText(g);
+  });
+
+  function setGenre(genre) {
+    for (const b of stream.querySelectorAll('.stream-band')) {
+      const on = !genre || b.dataset.genre === genre;
+      b.classList.toggle('is-dim', !!(genre && !on));
+      b.classList.toggle('is-lit', !!(genre && on));
+    }
+    for (const li of legend.querySelectorAll('.stream-legend-item')) {
+      li.setAttribute('aria-pressed', String(!!genre && li.dataset.genre === genre));
+    }
+  }
+
+  let pinnedGenre = null;
+
+  stream.addEventListener('pointerover', (e) => {
+    const b = e.target.closest?.('.stream-band');
+    if (b && !pinnedGenre) setGenre(b.dataset.genre);
+  });
+  stream.addEventListener('pointerout', (e) => {
+    if (e.target.closest?.('.stream-band') && !pinnedGenre) setGenre(null);
+  });
+
+  legend.addEventListener('pointerover', (e) => {
+    const li = e.target.closest?.('.stream-legend-item');
+    if (li && !pinnedGenre) setGenre(li.dataset.genre);
+  });
+  legend.addEventListener('pointerout', () => {
+    if (!pinnedGenre) setGenre(null);
+  });
+
+  function toggleGenre(genre) {
+    pinnedGenre = pinnedGenre === genre ? null : genre;
+    setGenre(pinnedGenre);
+  }
+
+  legend.addEventListener('click', (e) => {
+    const li = e.target.closest?.('.stream-legend-item');
+    if (li) toggleGenre(li.dataset.genre);
+  });
+  stream.addEventListener('click', (e) => {
+    const b = e.target.closest?.('.stream-band');
+    if (b) toggleGenre(b.dataset.genre);
+  });
+</script>

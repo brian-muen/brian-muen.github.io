@@ -1,0 +1,342 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import StatsNav from '../../../components/StatsNav.astro';
+import { loadBooks, safeJsonForScript} from '../../../lib/bookshelf-stats';
+import { buildOrbits } from '../../../lib/stats-viz';
+
+const books = await loadBooks();
+const { years, planets } = buildOrbits(books);
+
+const CX = 500;
+const CY = 500;
+const DEFAULT_BODY = '#f3ead6';
+
+const radiusByYear = new Map(years.map((y) => [y.year, y.radius]));
+
+// Jan at top, sweeping clockwise: x = cx + R·sin θ, y = cy − R·cos θ.
+type Placed = {
+  id: string;
+  title: string;
+  author: string;
+  year: number;
+  rating: number | null;
+  dateRead: number;
+  r: number;
+  color: string | null;
+  x: number;
+  y: number;
+};
+
+const placedByYear = new Map<number, Placed[]>();
+for (const p of planets) {
+  const R = radiusByYear.get(p.year);
+  if (R == null) continue;
+  const x = +(CX + R * Math.sin(p.angle)).toFixed(1);
+  const y = +(CY - R * Math.cos(p.angle)).toFixed(1);
+  const list = placedByYear.get(p.year) ?? [];
+  list.push({
+    id: p.id,
+    title: p.title,
+    author: p.author,
+    year: p.year,
+    rating: p.rating,
+    dateRead: p.dateRead,
+    r: p.r,
+    color: p.color,
+    x,
+    y,
+  });
+  placedByYear.set(p.year, list);
+}
+
+// Inner rings drift faster than outer ones.
+const spinYears = years.map((y, i) => ({
+  ...y,
+  dur: 150 + i * 32,
+  planets: placedByYear.get(y.year) ?? [],
+}));
+
+const seasons = [
+  { label: 'Jan', x: CX, y: 44, anchor: 'middle' },
+  { label: 'Apr', x: 968, y: CY + 4, anchor: 'end' },
+  { label: 'Jul', x: CX, y: 972, anchor: 'middle' },
+  { label: 'Oct', x: 32, y: CY + 4, anchor: 'start' },
+];
+
+const payload = {
+  planets: planets.map((p) => ({
+    id: p.id,
+    title: p.title,
+    author: p.author,
+    year: p.year,
+    rating: p.rating,
+    dateRead: p.dateRead,
+  })),
+  years,
+};
+---
+
+<Layout title="Orbits — Brian" description="Reading years as a solar system">
+  <p class="muted small"><a href="/reading">← Reading</a></p>
+  <h1>Orbits</h1>
+  <StatsNav current="/reading/stats/orbit" />
+  <p class="taste-fingerprint">
+    Every year of reading is an orbit, oldest closest to the sun. Each book is a
+    planet dropped onto its year's ring at the day you finished it — January at the
+    crown, spinning slowly clockwise through the seasons.
+  </p>
+
+  <section class="stats-section">
+    <h2>The system</h2>
+    <p class="muted small">Hover a planet for its details. Click to pin it; click a year to weigh the whole ring.</p>
+    <div class="orbit-wrap">
+      <div class="orbit-readout muted small" id="orbit-readout">&nbsp;</div>
+      <svg id="orbit" class="orbit-sky" viewBox="0 0 1000 1000" role="img" aria-label="Reading years drawn as a solar system">
+        <defs>
+          <radialGradient id="orbit-sun" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#fff6df" stop-opacity="0.95" />
+            <stop offset="55%" stop-color="#ffd98a" stop-opacity="0.5" />
+            <stop offset="100%" stop-color="#ffb347" stop-opacity="0" />
+          </radialGradient>
+        </defs>
+
+        <g class="orbit-seasons" aria-hidden="true">
+          {seasons.map((s) => (
+            <text class="orbit-season" x={s.x} y={s.y} text-anchor={s.anchor}>{s.label}</text>
+          ))}
+        </g>
+
+        <g class="orbit-rings">
+          {spinYears.map((y) => (
+            <circle class="orbit-ring" cx={CX} cy={CY} r={y.radius} />
+          ))}
+        </g>
+
+        <circle class="orbit-sun-glow" cx={CX} cy={CY} r={54} fill="url(#orbit-sun)" aria-hidden="true" />
+        <circle class="orbit-sun" cx={CX} cy={CY} r={7} aria-hidden="true" />
+
+        <g class="orbit-year-labels">
+          {spinYears.map((y) => (
+            <text
+              class="orbit-year"
+              data-year={y.year}
+              x={CX + 3}
+              y={CY - y.radius - 5}
+              text-anchor="start"
+              tabindex="0"
+              role="button"
+              aria-label={`${y.year}: ${y.count} books, ${y.pages} pages`}
+            >{y.year}</text>
+          ))}
+        </g>
+
+        {spinYears.map((y) => (
+          <g class="orbit-spin" data-year={y.year} style={`--dur:${y.dur}s`}>
+            {y.planets.map((p) => {
+              const fill = p.color ?? DEFAULT_BODY;
+              return (
+                <g
+                  class="orbit-planet"
+                  data-id={p.id}
+                  data-year={p.year}
+                  tabindex="0"
+                  role="button"
+                  aria-label={`${p.title} by ${p.author}`}
+                >
+                  <circle class="orbit-halo" cx={p.x} cy={p.y} r={p.r + 5} style={`fill:${fill}`} />
+                  <circle class="orbit-body" cx={p.x} cy={p.y} r={p.r} style={`fill:${fill}`} />
+                </g>
+              );
+            })}
+          </g>
+        ))}
+      </svg>
+    </div>
+
+    <div class="heatmap-detail" id="orbit-detail" hidden></div>
+  </section>
+
+  <p class="muted small stats-footnote">
+    {planets.length} planets across {years.length} orbits. Planet size scales with page count; a book's
+    place on its ring is the day of the year you finished it. Full list on the
+    <a href="/reading/stats">overview</a>.
+  </p>
+
+  <script type="application/json" id="orbit-data" set:html={safeJsonForScript(payload)} />
+</Layout>
+
+<script>
+  import { esc, bookHref, bookId, safeCoverSrc, safeHex } from '../../../lib/dom-safe';
+
+  const data = JSON.parse(document.getElementById('orbit-data').textContent);
+  const svg = document.getElementById('orbit');
+  const readout = document.getElementById('orbit-readout');
+  const detail = document.getElementById('orbit-detail');
+  const byId = new Map(data.planets.map((p) => [p.id, p]));
+  const yearInfo = new Map(data.years.map((y) => [y.year, y]));
+  const planetsByYear = new Map();
+  for (const p of data.planets) {
+    if (!planetsByYear.has(p.year)) planetsByYear.set(p.year, []);
+    planetsByYear.get(p.year).push(p);
+  }
+
+  const fmtDate = new Intl.DateTimeFormat('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+  const fmtMonthYear = new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric' });
+  let pinned = null; // { kind:'planet'|'year', key }
+
+
+  function clearFocus() {
+    svg.classList.remove('is-focused');
+    for (const g of svg.querySelectorAll('.orbit-planet')) {
+      g.classList.remove('is-active', 'is-dim');
+      g.removeAttribute('aria-pressed');
+    }
+    for (const r of svg.querySelectorAll('.orbit-ring')) r.classList.remove('is-on');
+    for (const t of svg.querySelectorAll('.orbit-year')) {
+      t.classList.remove('is-on');
+      t.removeAttribute('aria-pressed');
+    }
+  }
+
+  function focusPlanet(id) {
+    svg.classList.add('is-focused');
+    for (const g of svg.querySelectorAll('.orbit-planet')) {
+      const on = g.dataset.id === id;
+      g.classList.toggle('is-active', on);
+      g.classList.toggle('is-dim', !on);
+      if (on) g.setAttribute('aria-pressed', 'true');
+      else g.removeAttribute('aria-pressed');
+    }
+  }
+
+  function focusYear(year) {
+    svg.classList.add('is-focused');
+    for (const g of svg.querySelectorAll('.orbit-planet')) {
+      const on = String(g.dataset.year) === String(year);
+      g.classList.toggle('is-active', on);
+      g.classList.toggle('is-dim', !on);
+      g.removeAttribute('aria-pressed');
+    }
+    const rings = svg.querySelectorAll('.orbit-ring');
+    const idx = data.years.findIndex((y) => String(y.year) === String(year));
+    if (idx >= 0 && rings[idx]) rings[idx].classList.add('is-on');
+    for (const t of svg.querySelectorAll('.orbit-year')) {
+      const on = String(t.dataset.year) === String(year);
+      t.classList.toggle('is-on', on);
+      t.setAttribute('aria-pressed', String(on));
+    }
+  }
+
+  function showPlanetDetail(id) {
+    const p = byId.get(id);
+    if (!p) return;
+    const rating = p.rating != null ? ` · ${p.rating}★` : '';
+    detail.innerHTML =
+      `<p class="heatmap-detail-title">${esc(p.title)} <span class="muted small">— ${esc(p.author)}</span></p>` +
+      `<p class="muted small">Finished ${fmtDate.format(p.dateRead)}${rating} · <a href="${bookHref(p.id)}">open →</a></p>`;
+    detail.hidden = false;
+  }
+
+  function showYearDetail(year) {
+    const info = yearInfo.get(Number(year)) || yearInfo.get(year);
+    const list = (planetsByYear.get(Number(year)) || planetsByYear.get(year) || [])
+      .slice()
+      .sort((a, b) => a.dateRead - b.dateRead);
+    if (!info) return;
+    detail.innerHTML =
+      `<p class="heatmap-detail-title">${year} <span class="muted small">— ${info.count} ${info.count === 1 ? 'book' : 'books'}, ${info.pages} pages</span></p>` +
+      '<ul class="const-book-list">' +
+      list
+        .map((p) => {
+          const rating = p.rating != null ? ` · ${p.rating}★` : '';
+          return (
+            `<li><a href="${bookHref(p.id)}">${esc(p.title)}</a>` +
+            `<span class="muted small">${fmtMonthYear.format(p.dateRead)}${rating}</span></li>`
+          );
+        })
+        .join('') +
+      '</ul>';
+    detail.hidden = false;
+  }
+
+  svg.addEventListener('pointerover', (e) => {
+    const g = e.target.closest?.('.orbit-planet');
+    if (g) {
+      const p = byId.get(g.dataset.id);
+      if (!p) return;
+      const rating = p.rating != null ? ` · ${p.rating}★` : '';
+      readout.textContent = `${p.title} — ${p.author} · ${fmtMonthYear.format(p.dateRead)}${rating}`;
+      if (!pinned) focusPlanet(p.id);
+      return;
+    }
+    const t = e.target.closest?.('.orbit-year');
+    if (t) {
+      const info = yearInfo.get(Number(t.dataset.year));
+      if (info) readout.textContent = `${info.year} — ${info.count} books · ${info.pages} pages`;
+      if (!pinned) focusYear(t.dataset.year);
+    }
+  });
+
+  svg.addEventListener('pointerout', (e) => {
+    if ((e.target.closest?.('.orbit-planet') || e.target.closest?.('.orbit-year')) && !pinned) {
+      readout.innerHTML = '&nbsp;';
+      clearFocus();
+    }
+  });
+
+  function togglePlanet(id) {
+    if (pinned && pinned.kind === 'planet' && pinned.key === id) {
+      pinned = null;
+      detail.hidden = true;
+      readout.innerHTML = '&nbsp;';
+      clearFocus();
+      return;
+    }
+    pinned = { kind: 'planet', key: id };
+    clearFocus();
+    focusPlanet(id);
+    const p = byId.get(id);
+    if (p) {
+      const rating = p.rating != null ? ` · ${p.rating}★` : '';
+      readout.textContent = `${p.title} — ${p.author} · ${fmtMonthYear.format(p.dateRead)}${rating}`;
+    }
+    showPlanetDetail(id);
+  }
+
+  function toggleYear(year) {
+    if (pinned && pinned.kind === 'year' && String(pinned.key) === String(year)) {
+      pinned = null;
+      detail.hidden = true;
+      readout.innerHTML = '&nbsp;';
+      clearFocus();
+      return;
+    }
+    pinned = { kind: 'year', key: year };
+    clearFocus();
+    focusYear(year);
+    const info = yearInfo.get(Number(year));
+    if (info) readout.textContent = `${info.year} — ${info.count} books · ${info.pages} pages`;
+    showYearDetail(year);
+  }
+
+  svg.addEventListener('click', (e) => {
+    const g = e.target.closest?.('.orbit-planet');
+    if (g) return togglePlanet(g.dataset.id);
+    const t = e.target.closest?.('.orbit-year');
+    if (t) return toggleYear(t.dataset.year);
+  });
+
+  svg.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const g = e.target.closest?.('.orbit-planet');
+    if (g) {
+      e.preventDefault();
+      return togglePlanet(g.dataset.id);
+    }
+    const t = e.target.closest?.('.orbit-year');
+    if (t) {
+      e.preventDefault();
+      return toggleYear(t.dataset.year);
+    }
+  });
+</script>

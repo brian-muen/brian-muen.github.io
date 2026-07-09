@@ -1,0 +1,953 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import StatsNav from '../../components/StatsNav.astro';
+import { readingStreaks, safeJsonForScript, sanitizeCoverColor } from '../../lib/bookshelf-stats';
+
+const books = await getCollection('bookshelf');
+
+type Row = {
+  id: string;
+  t: string;
+  a: string;
+  d: number; // dateRead ms
+  p: number; // pages
+  r: number | null; // rating
+  y: number; // pubYear
+  genres: string[];
+  subjects: string[];
+  places: string[];
+  color: string | null;
+  fiction: boolean | null;
+  added: number | null;
+};
+
+const rows: Row[] = books.map((b) => ({
+  id: b.id,
+  t: b.data.title,
+  a: b.data.author,
+  d: b.data.dateRead.valueOf(),
+  p: b.data.pages ?? 0,
+  r: b.data.rating && b.data.rating > 0 ? b.data.rating : null,
+  y: b.data.pubYear ?? 0,
+  genres: b.data.genres ?? [],
+  subjects: b.data.subjects ?? [],
+  places: b.data.places ?? [],
+  color: sanitizeCoverColor(b.data.coverColor),
+  fiction: typeof b.data.fiction === 'boolean' ? b.data.fiction : null,
+  added: b.data.dateAdded ? b.data.dateAdded.valueOf() : null,
+}));
+
+rows.sort((a, b) => a.d - b.d);
+
+const totalPages = rows.reduce((s, b) => s + b.p, 0);
+const rated = rows.filter((b) => b.r != null);
+const avgRating = rated.length ? rated.reduce((s, b) => s + (b.r ?? 0), 0) / rated.length : 0;
+const estWords = totalPages * 275;
+const estHours = Math.round(estWords / 250 / 60);
+const stackM = totalPages * 0.0001;
+const stackNote =
+  stackM >= 2.5 ? 'taller than a moose' : stackM >= 1.6 ? 'about as tall as you' : 'growing steadily';
+
+function countMap(items: string[]) {
+  const m = new Map<string, number>();
+  for (const x of items) m.set(x, (m.get(x) ?? 0) + 1);
+  return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+}
+
+const genreCounts = countMap(rows.flatMap((b) => b.genres)).slice(0, 18);
+const placeCounts = countMap(rows.flatMap((b) => b.places)).slice(0, 12);
+const authorCounts = countMap(rows.map((b) => b.a)).slice(0, 12);
+const maxGenre = Math.max(...genreCounts.map(([, n]) => n), 1);
+
+const ficN = rows.filter((b) => b.fiction === true).length;
+const nonN = rows.filter((b) => b.fiction === false).length;
+const unkN = rows.length - ficN - nonN;
+
+const years = [...new Set(rows.map((b) => new Date(b.d).getFullYear()))].sort((a, b) => a - b);
+
+// Seasonality (month of year, ignoring year)
+const season = Array(12).fill(0);
+for (const b of rows) season[new Date(b.d).getMonth()] += 1;
+const maxSeason = Math.max(...season, 1);
+
+// Velocity: pages per calendar month key
+const velMap = new Map<string, number>();
+for (const b of rows) {
+  const dt = new Date(b.d);
+  const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
+  velMap.set(key, (velMap.get(key) ?? 0) + b.p);
+}
+const velKeys = [...velMap.keys()].sort();
+const velMax = Math.max(...velMap.values(), 1);
+let fastestMonth = { key: '', pages: 0 };
+for (const [k, v] of velMap) if (v > fastestMonth.pages) fastestMonth = { key: k, pages: v };
+
+// Superlatives
+let longest = rows[0];
+let shortest = rows.filter((b) => b.p > 0)[0] || rows[0];
+let oldest = rows.filter((b) => b.y > 0).sort((a, b) => a.y - b.y)[0];
+let marinated: { b: Row; days: number } | null = null;
+let quickest: { b: Row; days: number } | null = null;
+for (const b of rows) {
+  if (b.p > (longest?.p ?? 0)) longest = b;
+  if (b.p > 0 && b.p < (shortest?.p ?? Infinity)) shortest = b;
+  if (b.added != null) {
+    const days = Math.round((b.d - b.added) / 86400000);
+    if (days >= 0) {
+      if (!marinated || days > marinated.days) marinated = { b, days };
+      if (!quickest || days < quickest.days) quickest = { b, days };
+    }
+  }
+}
+let dry = { days: 0, from: 0, to: 0 };
+for (let i = 1; i < rows.length; i++) {
+  const days = Math.round((rows[i].d - rows[i - 1].d) / 86400000);
+  if (days > dry.days) dry = { days, from: rows[i - 1].d, to: rows[i].d };
+}
+
+const [favAuthor, favCount] = authorCounts[0] ?? ['', 0];
+
+const palette = rows.filter((b) => b.color).map((b) => ({ id: b.id, t: b.t, c: b.color!, d: b.d }));
+
+const fmtShort = new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric' });
+const monthLetters = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+const monthNames = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+function pct(n: number, max: number) {
+  return `${Math.max(2, Math.round((n / max) * 100))}%`;
+}
+
+function fmtYear(y: number) {
+  return y < 0 ? `${-y} BC` : `${y}`;
+}
+
+// Precompute heatmap for initial render
+const monthMatrix = new Map<number, number[]>();
+for (const b of rows) {
+  const y = new Date(b.d).getFullYear();
+  const m = new Date(b.d).getMonth();
+  const arr = monthMatrix.get(y) ?? Array(12).fill(0);
+  arr[m] += 1;
+  monthMatrix.set(y, arr);
+}
+const maxMonth = Math.max(...[...monthMatrix.values()].flat(), 1);
+function heatShade(count: number) {
+  if (count === 0) return '';
+  const light = Math.max(12, 88 - (count / maxMonth) * 76);
+  return `background:hsl(0 0% ${light}%);border-color:hsl(0 0% ${light}%);`;
+}
+
+// Timeline
+const W = 640;
+const H = 170;
+const PAD = { l: 34, r: 10, t: 10, b: 22 };
+const t0 = rows[0].d;
+const t1 = rows[rows.length - 1].d;
+const xOf = (t: number) => PAD.l + ((t - t0) / (t1 - t0 || 1)) * (W - PAD.l - PAD.r);
+const yOf = (c: number) => H - PAD.b - (c / rows.length) * (H - PAD.t - PAD.b);
+const timelinePts = rows.map((b, i) => ({
+  x: +xOf(b.d).toFixed(1),
+  y: +yOf(i + 1).toFixed(1),
+  t: b.d,
+  c: i + 1,
+}));
+const polyline = timelinePts.map((p) => `${p.x},${p.y}`).join(' ');
+const yearTicks: { x: number; label: number }[] = [];
+for (let y = new Date(t0).getFullYear() + 1; y <= new Date(t1).getFullYear(); y++) {
+  const t = new Date(y, 0, 1).valueOf();
+  if (t >= t0 && t <= t1) yearTicks.push({ x: +xOf(t).toFixed(1), label: y });
+}
+
+// Scatter bounds
+const scatterBooks = rows.filter((b) => b.p > 0 && b.r != null);
+const SW = 640;
+const SH = 220;
+const SP = { l: 36, r: 12, t: 12, b: 28 };
+const maxP = Math.max(...scatterBooks.map((b) => b.p), 1);
+
+const byDecade = new Map<number, number>();
+for (const b of rows) {
+  if (!b.y) continue;
+  const d = Math.floor(b.y / 10) * 10;
+  byDecade.set(d, (byDecade.get(d) ?? 0) + 1);
+}
+const decades = [...byDecade.keys()].sort((a, b) => a - b);
+const maxDecade = Math.max(...byDecade.values(), 1);
+
+const streaks = readingStreaks(rows.map((b) => b.d));
+
+const payload = {
+  books: rows,
+  timeline: timelinePts.map((p) => [p.x, p.y, p.t, p.c]),
+  years,
+  monthNames,
+};
+---
+
+<Layout title="Reading stats — Brian" description="Personal reading observatory">
+  <p class="muted small"><a href="/reading">← Reading</a></p>
+  <div class="stats-title-row">
+    <h1>Reading stats</h1>
+    <button id="random-book" class="ghost-button" type="button">surprise me →</button>
+  </div>
+  <StatsNav current="/reading/stats" />
+
+  <p class="muted small filter-status" id="filter-status" hidden></p>
+  <button type="button" class="filter-clear" id="filter-clear" hidden>clear filters</button>
+
+  <div class="stat-cards" id="hero-cards">
+    <div class="stat-card">
+      <span class="stat-big" data-hero="count">{rows.length}</span>
+      <span class="stat-sub">books finished</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-big" data-hero="pages">{totalPages.toLocaleString()}</span>
+      <span class="stat-sub">pages</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-big" data-hero="words">≈{(estWords / 1e6).toFixed(1)}M</span>
+      <span class="stat-sub">words read</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-big" data-hero="hours">≈{estHours}</span>
+      <span class="stat-sub">hours with a book</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-big" data-hero="stack">{stackM.toFixed(1)} m</span>
+      <span class="stat-sub">stacked height — {stackNote}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-big" data-hero="avg">{avgRating.toFixed(2)}</span>
+      <span class="stat-sub">average rating</span>
+    </div>
+  </div>
+
+  <section class="stats-section">
+    <h2>The whole journey</h2>
+    <p class="muted small">Every book, cumulatively. Run your cursor along it.</p>
+    <div class="timeline-wrap">
+      <div class="timeline-readout muted small" id="timeline-readout">&nbsp;</div>
+      <svg id="timeline" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Cumulative books read over time">
+        {yearTicks.map((tk) => (
+          <g>
+            <line x1={tk.x} y1={PAD.t} x2={tk.x} y2={H - PAD.b} class="tl-grid" />
+            <text x={tk.x} y={H - 6} class="tl-tick" text-anchor="middle">{tk.label}</text>
+          </g>
+        ))}
+        <text x={PAD.l - 6} y={yOf(rows.length) + 3} class="tl-tick" text-anchor="end">{rows.length}</text>
+        <text x={PAD.l - 6} y={yOf(Math.round(rows.length / 2)) + 3} class="tl-tick" text-anchor="end">{Math.round(rows.length / 2)}</text>
+        <polyline id="tl-line" points={polyline} class="tl-line" />
+        <line id="tl-cursor" x1="0" y1={PAD.t} x2="0" y2={H - PAD.b} class="tl-cursor" visibility="hidden" />
+        <circle id="tl-dot" r="3.5" class="tl-dot" visibility="hidden" />
+      </svg>
+    </div>
+  </section>
+
+  {palette.length > 0 && (
+    <section class="stats-section">
+      <h2>Cover palette</h2>
+      <p class="muted small">Dominant colors from your covers, in the order you finished them.</p>
+      <div class="cover-palette" id="cover-palette" aria-label="Cover color timeline">
+        {palette.map((sw) => (
+          <a
+            class="palette-swatch"
+            href={'/reading/books/' + sw.id}
+            title={sw.t}
+            style={'background:' + sw.c}
+            data-id={sw.id}
+          >&nbsp;</a>
+        ))}
+      </div>
+    </section>
+  )}
+
+  {genreCounts.length > 0 && (
+    <section class="stats-section">
+      <h2>Genre map</h2>
+      <p class="muted small">Click a genre to filter — matching books appear in the list below.</p>
+      <ul class="stat-bars" id="genre-bars">
+        {genreCounts.map(([name, n]) => (
+          <li>
+            <button type="button" class="stat-label wide genre-btn" data-genre={name}>{name}</button>
+            <span class="stat-track"><span class="stat-fill" style={'--w:' + pct(n, maxGenre)}></span></span>
+            <span class="stat-value">{n}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  <section class="stats-section">
+    <h2>Fiction vs nonfiction</h2>
+    <p class="muted small">Click a row to filter — matching books appear in the list below.</p>
+    <div class="split-bars" id="fiction-split">
+      <button type="button" class="split-row split-btn" data-filter="fiction">
+        <span class="stat-label">Fiction</span>
+        <span class="stat-track"><span class="stat-fill" id="fic-fill" style={'--w:' + pct(ficN, Math.max(ficN + nonN, 1))}></span></span>
+        <span class="stat-value" id="fic-n">{ficN}</span>
+      </button>
+      <button type="button" class="split-row split-btn" data-filter="nonfiction">
+        <span class="stat-label">Nonfiction</span>
+        <span class="stat-track"><span class="stat-fill" id="non-fill" style={'--w:' + pct(nonN, Math.max(ficN + nonN, 1))}></span></span>
+        <span class="stat-value" id="non-n">{nonN}</span>
+      </button>
+      {unkN > 0 && <p class="muted small" id="unk-n">{unkN} still unclassified</p>}
+    </div>
+  </section>
+
+  <section class="stats-section">
+    <h2>Every month, every year</h2>
+    <p class="muted small">Darker means more books. Click a square to see what was read.</p>
+    <div class="heatmap" id="heatmap">
+      <div class="heatmap-row heatmap-head">
+        <span class="heatmap-label"></span>
+        {monthLetters.map((m) => <span class="heatmap-month">{m}</span>)}
+      </div>
+      {years.map((y) => (
+        <div class="heatmap-row" data-year={y}>
+          <span class="heatmap-label">{y}</span>
+          {(monthMatrix.get(y) ?? Array(12).fill(0)).map((n, m) => (
+            <button
+              type="button"
+              class="heatmap-cell"
+              style={heatShade(n)}
+              data-ym={n > 0 ? `${y}-${m}` : undefined}
+              disabled={n === 0}
+              title={`${monthNames[m]} ${y}: ${n} book${n === 1 ? '' : 's'}`}
+            ></button>
+          ))}
+        </div>
+      ))}
+    </div>
+    <div class="heatmap-detail" id="heatmap-detail" hidden></div>
+  </section>
+
+  <section class="stats-section">
+    <h2>Rating × length</h2>
+    <p class="muted small">Each dot is a book. Hover for the title; click to open it.</p>
+    <div class="scatter-wrap">
+      <div class="scatter-readout muted small" id="scatter-readout">&nbsp;</div>
+      <svg id="scatter" viewBox={`0 0 ${SW} ${SH}`} role="img" aria-label="Rating versus page count">
+        {[1, 2, 3, 4, 5].map((r) => {
+          const y = SP.t + ((5 - r) / 4) * (SH - SP.t - SP.b);
+          return (
+            <g>
+              <line x1={SP.l} y1={y} x2={SW - SP.r} y2={y} class="tl-grid" />
+              <text x={SP.l - 6} y={y + 3} class="tl-tick" text-anchor="end">{r}</text>
+            </g>
+          );
+        })}
+        {[0, 0.25, 0.5, 0.75, 1].map((f) => {
+          const x = SP.l + f * (SW - SP.l - SP.r);
+          const pages = Math.round(f * maxP);
+          return (
+            <text x={x} y={SH - 6} class="tl-tick" text-anchor="middle">{pages}</text>
+          );
+        })}
+        <g id="scatter-dots">
+          {scatterBooks.map((b) => {
+            const x = SP.l + (b.p / maxP) * (SW - SP.l - SP.r);
+            const y = SP.t + ((5 - (b.r ?? 0)) / 4) * (SH - SP.t - SP.b);
+            return (
+              <a href={`/reading/books/${b.id}`}>
+                <circle
+                  class="scatter-dot"
+                  cx={x.toFixed(1)}
+                  cy={y.toFixed(1)}
+                  r="4"
+                  data-id={b.id}
+                  data-title={b.t}
+                  data-pages={b.p}
+                  data-rating={b.r}
+                />
+              </a>
+            );
+          })}
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <section class="stats-section">
+    <h2>Reading velocity</h2>
+    <p class="muted small">
+      Pages finished per month. Click a bar to see that month’s books.
+      {fastestMonth.key && (
+        <span>
+          {' '}Peak: {fastestMonth.pages.toLocaleString()} pages in {fastestMonth.key}.
+        </span>
+      )}
+    </p>
+    <div class="velocity" id="velocity">
+      {velKeys.map((k) => (
+        <button
+          type="button"
+          class="vel-bar"
+          title={`${k}: ${velMap.get(k)} pages`}
+          style={'height:' + (Math.max(4, Math.round(((velMap.get(k) ?? 0) / velMax) * 100))) + '%'}
+          data-ym={k}
+          aria-label={`${k}: ${velMap.get(k)} pages`}
+        ></button>
+      ))}
+    </div>
+  </section>
+
+  <section class="stats-section">
+    <h2>Seasonality</h2>
+    <p class="muted small">Which months of the year you finish books, across all years. Click a month to filter.</p>
+    <ul class="stat-bars" id="season-bars">
+      {season.map((n, m) => (
+        <li>
+          <button type="button" class="stat-row-btn" data-month={String(m)}>
+            <span class="stat-label">{monthLetters[m]}</span>
+            <span class="stat-track"><span class="stat-fill" style={'--w:' + pct(n, maxSeason)}></span></span>
+            <span class="stat-value">{n}</span>
+          </button>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section class="stats-section">
+    <h2>Top authors</h2>
+    <p class="muted small">Click a row to filter.</p>
+    <ul class="stat-bars" id="author-bars">
+      {authorCounts.map(([name, n]) => (
+        <li class="author-row">
+          <button type="button" class="stat-row-btn author-btn" data-author={name}>
+            <span class="stat-label wide">{name}</span>
+            <span class="stat-track"><span class="stat-fill" style={'--w:' + pct(n, authorCounts[0][1])}></span></span>
+            <span class="stat-value">{n}</span>
+          </button>
+        </li>
+      ))}
+    </ul>
+    <div class="heatmap-detail" id="author-detail" hidden></div>
+  </section>
+
+  {placeCounts.length > 0 && (
+    <section class="stats-section">
+      <h2>Places in the books</h2>
+      <p class="muted small">Settings and subject places from Open Library. Hover or click for the full name.</p>
+      <ul class="stat-bars" id="place-bars">
+        {placeCounts.map(([name, n]) => (
+          <li class="place-row">
+            <button type="button" class="stat-row-btn place-btn" data-place={name} title={name}>
+              <span class="stat-label wide">{name}</span>
+              <span class="stat-track"><span class="stat-fill" style={'--w:' + pct(n, placeCounts[0][1])}></span></span>
+              <span class="stat-value">{n}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  <section class="stats-section">
+    <h2>Publication decade</h2>
+    <p class="muted small">Click a decade to filter.</p>
+    <ul class="stat-bars" id="decade-bars">
+      {decades.map((d) => (
+        <li>
+          <button type="button" class="stat-row-btn decade-btn" data-decade={String(d)}>
+            <span class="stat-label">{d < 0 ? (-d + 's BC') : (d + 's')}</span>
+            <span class="stat-track"><span class="stat-fill" style={'--w:' + pct(byDecade.get(d) ?? 0, maxDecade)}></span></span>
+            <span class="stat-value">{byDecade.get(d)}</span>
+          </button>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section class="filtered-list-wrap stats-section" id="filtered-list-wrap" hidden>
+    <h2>Matching books <span class="muted small" id="filtered-count"></span></h2>
+    <p class="muted small">Everything that matches the current filters. Click a title to open it.</p>
+    <ul class="filtered-list" id="filtered-list"></ul>
+  </section>
+
+  <section class="stats-section">
+    <h2>Reading streaks</h2>
+    <p class="muted small">
+      A streak counts finishes within 14 days of each other — a run of books, not calendar days.
+    </p>
+    <div class="stat-cards streak-cards">
+      <div class="stat-card">
+        <span class="stat-big">{streaks.longest}</span>
+        <span class="stat-sub">
+          longest run
+          {streaks.longestEnd
+            ? ` · ended ${fmtShort.format(streaks.longestEnd)}`
+            : ''}
+        </span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-big">{streaks.current}</span>
+        <span class="stat-sub">current run (from latest finish)</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-big">{dry.days > 0 ? dry.days.toLocaleString() : '—'}</span>
+        <span class="stat-sub">
+          longest dry spell
+          {dry.from > 0 ? ` · ${fmtShort.format(dry.from)} → ${fmtShort.format(dry.to)}` : ''}
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="stats-section">
+    <h2>Shelf archaeology</h2>
+    <ul class="archaeology" id="archaeology">
+      {longest && (
+        <li>
+          <a href={`/reading/books/${longest.id}`}>Longest</a>
+          <span><em>{longest.t}</em> — {longest.p} pages</span>
+        </li>
+      )}
+      {shortest && (
+        <li>
+          <a href={`/reading/books/${shortest.id}`}>Shortest</a>
+          <span><em>{shortest.t}</em> — {shortest.p} pages</span>
+        </li>
+      )}
+      {oldest && (
+        <li>
+          <a href={`/reading/books/${oldest.id}`}>Oldest</a>
+          <span><em>{oldest.t}</em> — {fmtYear(oldest.y)}</span>
+        </li>
+      )}
+      {marinated && marinated.days > 0 && (
+        <li>
+          <a href={`/reading/books/${marinated.b.id}`}>Longest TBR</a>
+          <span><em>{marinated.b.t}</em> — {marinated.days.toLocaleString()} days</span>
+        </li>
+      )}
+      {quickest && (
+        <li>
+          <a href={`/reading/books/${quickest.b.id}`}>Fastest turnaround</a>
+          <span>
+            <em>{quickest.b.t}</em> —
+            {quickest.days === 0 ? ' finished the day it was added' : ` ${quickest.days} days`}
+          </span>
+        </li>
+      )}
+      {dry.from > 0 && (
+        <li>
+          <span class="arch-label">Longest dry spell</span>
+          <span>
+            {dry.days.toLocaleString()} days ({fmtShort.format(dry.from)} to {fmtShort.format(dry.to)})
+          </span>
+        </li>
+      )}
+      {favAuthor && favCount > 1 && (
+        <li>
+          <span class="arch-label">Gravity well</span>
+          <span><em>{favAuthor}</em> — {favCount} books</span>
+        </li>
+      )}
+    </ul>
+  </section>
+
+  <p class="muted small stats-footnote">
+    Words, hours, and stack height are rough estimates (~275 words per page, ~250 words per
+    minute, ~0.1&nbsp;mm per page). Genres come from Hardcover when available,
+    otherwise Open Library subjects, Google Books categories, and Storygraph tags.
+  </p>
+
+  <script type="application/json" id="stats-data" set:html={safeJsonForScript(payload)} />
+</Layout>
+
+  <script>
+  import { esc, bookHref, bookId, safeCoverSrc, safeHex } from '../../lib/dom-safe';
+
+  const payload = JSON.parse(document.getElementById('stats-data').textContent);
+  const allBooks = payload.books;
+  const MONTHS = payload.monthNames;
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const state = {
+    genre: null,
+    author: null,
+    place: null,
+    month: null,
+    decade: null,
+    ym: null,
+    filters: new Set(),
+  };
+
+  function applyFilters(books) {
+    return books.filter((b) => {
+      if (state.genre && !b.genres.includes(state.genre)) return false;
+      if (state.author && b.a !== state.author) return false;
+      if (state.place && !(b.places || []).includes(state.place)) return false;
+      if (state.month != null && new Date(b.d).getMonth() !== state.month) return false;
+      if (state.decade != null) {
+        if (!b.y) return false;
+        if (Math.floor(b.y / 10) * 10 !== state.decade) return false;
+      }
+      if (state.ym) {
+        const dt = new Date(b.d);
+        const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
+        if (key !== state.ym) return false;
+      }
+      if (state.filters.has('fiction') && b.fiction !== true) return false;
+      if (state.filters.has('nonfiction') && b.fiction !== false) return false;
+      return true;
+    });
+  }
+
+
+  function updateHero(books) {
+    const pages = books.reduce((s, b) => s + b.p, 0);
+    const rated = books.filter((b) => b.r != null);
+    const avg = rated.length ? rated.reduce((s, b) => s + b.r, 0) / rated.length : 0;
+    const words = pages * 275;
+    const hours = Math.round(words / 250 / 60);
+    const stack = pages * 0.0001;
+    const set = (k, v) => {
+      const el = document.querySelector(`[data-hero="${k}"]`);
+      if (el) el.textContent = v;
+    };
+    set('count', String(books.length));
+    set('pages', pages.toLocaleString());
+    set('words', `≈${(words / 1e6).toFixed(1)}M`);
+    set('hours', `≈${hours}`);
+    set('stack', `${stack.toFixed(1)} m`);
+    set('avg', avg ? avg.toFixed(2) : '—');
+  }
+
+  const fmtShort = new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric' });
+
+  function updateFilteredList(books) {
+    const wrap = document.getElementById('filtered-list-wrap');
+    const list = document.getElementById('filtered-list');
+    const count = document.getElementById('filtered-count');
+    const active =
+      state.genre ||
+      state.author ||
+      state.place ||
+      state.month != null ||
+      state.decade != null ||
+      state.ym ||
+      state.filters.size > 0;
+    if (!active) {
+      wrap.hidden = true;
+      return;
+    }
+    wrap.hidden = false;
+    count.textContent = `(${books.length})`;
+    list.innerHTML = books
+      .slice()
+      .sort((a, b) => b.d - a.d)
+      .map((b) => {
+        const meta = [
+          esc(b.a),
+          b.r != null ? `${b.r}★` : null,
+          b.p > 0 ? `${b.p}p` : null,
+          fmtShort.format(new Date(b.d)),
+          b.fiction === true ? 'fiction' : b.fiction === false ? 'nonfiction' : null,
+        ]
+          .filter(Boolean)
+          .join(' · ');
+        return `<li><a href="${bookHref(b.id)}">${esc(b.t)}</a> <span class="muted small">${meta}</span></li>`;
+      })
+      .join('');
+  }
+
+  function updateStatus() {
+    const el = document.getElementById('filter-status');
+    const bits = [];
+    if (state.genre) bits.push(`genre: ${state.genre}`);
+    if (state.author) bits.push(`author: ${state.author}`);
+    if (state.place) bits.push(`place: ${state.place}`);
+    if (state.month != null) bits.push(`month: ${MONTHS[state.month]}`);
+    if (state.decade != null) {
+      bits.push(state.decade < 0 ? `decade: ${-state.decade}s BC` : `decade: ${state.decade}s`);
+    }
+    if (state.ym) bits.push(`finished: ${state.ym}`);
+    for (const f of state.filters) bits.push(f);
+    const clear = document.getElementById('filter-clear');
+    if (bits.length) {
+      el.hidden = false;
+      el.textContent = `Showing ${bits.join(' · ')}`;
+      if (clear) clear.hidden = false;
+    } else {
+      el.hidden = true;
+      el.textContent = '';
+      if (clear) clear.hidden = true;
+    }
+  }
+
+  function updateHeatmap(books) {
+    const matrix = new Map();
+    for (const b of books) {
+      const y = new Date(b.d).getFullYear();
+      const m = new Date(b.d).getMonth();
+      const arr = matrix.get(y) || Array(12).fill(0);
+      arr[m] += 1;
+      matrix.set(y, arr);
+    }
+    const max = Math.max(...[...matrix.values()].flat(), 1);
+    for (const cell of document.querySelectorAll('.heatmap-cell')) {
+      const row = cell.closest('[data-year]');
+      if (!row) continue;
+      const y = +row.dataset.year;
+      const cells = [...row.querySelectorAll('.heatmap-cell')];
+      const m = cells.indexOf(cell);
+      const n = (matrix.get(y) || [])[m] || 0;
+      if (n === 0) {
+        cell.style.background = '';
+        cell.style.borderColor = '';
+        cell.disabled = true;
+        cell.removeAttribute('data-ym');
+        cell.title = `${MONTHS[m]} ${y}: 0 books`;
+      } else {
+        const light = Math.max(12, 88 - (n / max) * 76);
+        cell.style.background = `hsl(0 0% ${light}%)`;
+        cell.style.borderColor = `hsl(0 0% ${light}%)`;
+        cell.disabled = false;
+        cell.dataset.ym = `${y}-${m}`;
+        cell.title = `${MONTHS[m]} ${y}: ${n} book${n === 1 ? '' : 's'}`;
+      }
+    }
+  }
+
+  function updateFiction(books) {
+    const fic = books.filter((b) => b.fiction === true).length;
+    const non = books.filter((b) => b.fiction === false).length;
+    const denom = Math.max(fic + non, 1);
+    const ficFill = document.getElementById('fic-fill');
+    const nonFill = document.getElementById('non-fill');
+    if (ficFill) ficFill.style.setProperty('--w', `${Math.max(2, Math.round((fic / denom) * 100))}%`);
+    if (nonFill) nonFill.style.setProperty('--w', `${Math.max(2, Math.round((non / denom) * 100))}%`);
+    const ficN = document.getElementById('fic-n');
+    const nonN = document.getElementById('non-n');
+    if (ficN) ficN.textContent = String(fic);
+    if (nonN) nonN.textContent = String(non);
+  }
+
+  function updateScatter(books) {
+    const ids = new Set(books.map((b) => b.id));
+    for (const dot of document.querySelectorAll('.scatter-dot')) {
+      const on = ids.has(dot.dataset.id);
+      dot.style.opacity = on ? '1' : '0.12';
+      const parent = dot.closest('a');
+      if (parent) parent.style.pointerEvents = on ? '' : 'none';
+    }
+  }
+
+  function updatePalette(books) {
+    const ids = new Set(books.map((b) => b.id));
+    for (const sw of document.querySelectorAll('.palette-swatch')) {
+      sw.style.opacity = ids.has(sw.dataset.id) ? '1' : '0.15';
+    }
+  }
+
+  function refresh() {
+    const books = applyFilters(allBooks);
+    updateHero(books);
+    updateFilteredList(books);
+    updateStatus();
+    updateHeatmap(books);
+    updateFiction(books);
+    updateScatter(books);
+    updatePalette(books);
+    for (const btn of document.querySelectorAll('.genre-btn')) {
+      btn.classList.toggle('active', btn.dataset.genre === state.genre);
+    }
+    for (const btn of document.querySelectorAll('.author-btn')) {
+      btn.classList.toggle('active', btn.dataset.author === state.author);
+    }
+    for (const btn of document.querySelectorAll('.place-btn')) {
+      btn.classList.toggle('active', btn.dataset.place === state.place);
+    }
+    for (const btn of document.querySelectorAll('#season-bars [data-month]')) {
+      btn.classList.toggle('active', Number(btn.dataset.month) === state.month);
+    }
+    for (const btn of document.querySelectorAll('.decade-btn')) {
+      btn.classList.toggle('active', Number(btn.dataset.decade) === state.decade);
+    }
+    for (const btn of document.querySelectorAll('#velocity .vel-bar')) {
+      btn.classList.toggle('active', btn.dataset.ym === state.ym);
+    }
+    for (const btn of document.querySelectorAll('#fiction-split .split-btn')) {
+      btn.classList.toggle('active', state.filters.has(btn.dataset.filter));
+    }
+  }
+
+  document.getElementById('genre-bars')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-genre]');
+    if (!btn) return;
+    state.genre = state.genre === btn.dataset.genre ? null : btn.dataset.genre;
+    refresh();
+  });
+
+  document.getElementById('author-bars')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-author]');
+    if (!btn) return;
+    const name = btn.dataset.author;
+    state.author = state.author === name ? null : name;
+    const detail = document.getElementById('author-detail');
+    if (!state.author) {
+      detail.hidden = true;
+    } else {
+      const list = allBooks.filter((b) => b.a === name).sort((a, b) => b.d - a.d);
+      detail.innerHTML =
+        `<p class="heatmap-detail-title">${esc(name)} — ${list.length}</p><ul>` +
+        list.map((b) => `<li><a href="${bookHref(b.id)}">${esc(b.t)}</a></li>`).join('') +
+        '</ul>';
+      detail.hidden = false;
+    }
+    refresh();
+  });
+
+  document.getElementById('place-bars')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-place]');
+    if (!btn) return;
+    state.place = state.place === btn.dataset.place ? null : btn.dataset.place;
+    refresh();
+  });
+
+  document.getElementById('season-bars')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-month]');
+    if (!btn) return;
+    const m = Number(btn.dataset.month);
+    state.month = state.month === m ? null : m;
+    refresh();
+  });
+
+  document.getElementById('decade-bars')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-decade]');
+    if (!btn) return;
+    const d = Number(btn.dataset.decade);
+    state.decade = state.decade === d ? null : d;
+    refresh();
+  });
+
+  document.getElementById('velocity')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-ym]');
+    if (!btn) return;
+    const ym = btn.dataset.ym;
+    state.ym = state.ym === ym ? null : ym;
+    refresh();
+  });
+
+  function clearAllFilters() {
+    state.filters.clear();
+    state.genre = null;
+    state.author = null;
+    state.place = null;
+    state.month = null;
+    state.decade = null;
+    state.ym = null;
+    const authorDetail = document.getElementById('author-detail');
+    if (authorDetail) authorDetail.hidden = true;
+  }
+
+  function toggleFilter(f) {
+    if (f === 'fiction') state.filters.delete('nonfiction');
+    if (f === 'nonfiction') state.filters.delete('fiction');
+    if (state.filters.has(f)) state.filters.delete(f);
+    else state.filters.add(f);
+  }
+
+  document.getElementById('filter-clear')?.addEventListener('click', () => {
+    clearAllFilters();
+    refresh();
+  });
+
+  document.getElementById('fiction-split')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-filter]');
+    if (!btn) return;
+    toggleFilter(btn.dataset.filter);
+    refresh();
+  });
+
+  const detail = document.getElementById('heatmap-detail');
+  let activeYm = null;
+  document.getElementById('heatmap').addEventListener('click', (e) => {
+    const cell = e.target.closest('[data-ym]');
+    if (!cell) return;
+    const ym = cell.dataset.ym;
+    if (activeYm === ym) {
+      detail.hidden = true;
+      activeYm = null;
+      return;
+    }
+    activeYm = ym;
+    const [y, m] = ym.split('-').map(Number);
+    const books = applyFilters(allBooks).filter((b) => {
+      const dt = new Date(b.d);
+      return dt.getFullYear() === y && dt.getMonth() === m;
+    });
+    detail.innerHTML =
+      `<p class="heatmap-detail-title">${MONTHS[m]} ${y} — ${books.length} book${books.length === 1 ? '' : 's'}</p>` +
+      '<ul>' +
+      books.map((b) => `<li><a href="${bookHref(b.id)}">${esc(b.t)}</a></li>`).join('') +
+      '</ul>';
+    detail.hidden = false;
+  });
+
+  const svg = document.getElementById('timeline');
+  if (svg) {
+    const pts = payload.timeline;
+    const cursor = document.getElementById('tl-cursor');
+    const dot = document.getElementById('tl-dot');
+    const readout = document.getElementById('timeline-readout');
+    const fmt = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    svg.addEventListener('pointermove', (e) => {
+      const rect = svg.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 640;
+      let best = pts[0];
+      for (const p of pts) if (Math.abs(p[0] - x) < Math.abs(best[0] - x)) best = p;
+      cursor.setAttribute('x1', String(best[0]));
+      cursor.setAttribute('x2', String(best[0]));
+      cursor.setAttribute('visibility', 'visible');
+      dot.setAttribute('cx', String(best[0]));
+      dot.setAttribute('cy', String(best[1]));
+      dot.setAttribute('visibility', 'visible');
+      readout.textContent = `${fmt.format(new Date(best[2]))} — book #${best[3]}`;
+    });
+    svg.addEventListener('pointerleave', () => {
+      cursor.setAttribute('visibility', 'hidden');
+      dot.setAttribute('visibility', 'hidden');
+      readout.innerHTML = '&nbsp;';
+    });
+  }
+
+  const scatterReadout = document.getElementById('scatter-readout');
+  document.getElementById('scatter')?.addEventListener('pointerover', (e) => {
+    const dot = e.target.closest?.('circle.scatter-dot');
+    if (!dot) return;
+    scatterReadout.textContent = `${dot.dataset.title} — ${dot.dataset.pages}p · ${dot.dataset.rating}★`;
+  });
+  document.getElementById('scatter')?.addEventListener('pointerout', () => {
+    scatterReadout.innerHTML = '&nbsp;';
+  });
+
+  document.getElementById('random-book')?.addEventListener('click', () => {
+    const pool = applyFilters(allBooks);
+    if (!pool.length) return;
+    location.href = bookHref(pool[Math.floor(Math.random() * pool.length)].id);
+  });
+
+  if (!reduceMotion && 'IntersectionObserver' in window) {
+    const fills = document.querySelectorAll('.stat-fill');
+    for (const f of fills) f.style.width = '0';
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            e.target.style.width = '';
+            io.unobserve(e.target);
+          }
+        }
+      },
+      { threshold: 0.4 }
+    );
+    for (const f of fills) io.observe(f);
+  }
+</script>

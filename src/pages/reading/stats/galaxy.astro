@@ -1,0 +1,432 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import StatsNav from '../../../components/StatsNav.astro';
+import { loadBooks, safeJsonForScript} from '../../../lib/bookshelf-stats';
+import { buildGalaxy } from '../../../lib/stats-viz';
+
+const books = await loadBooks();
+const galaxy = buildGalaxy(books);
+const { width: W, height: H, nodes, edges, clusters } = galaxy;
+
+const nodeById = new Map(nodes.map((n) => [n.id, n]));
+
+// Warm default star tint for books without an extracted cover color.
+const DEFAULT_STAR = '#f3ead6';
+
+// Legend: clusters big enough to be worth naming, largest first.
+const legend = [...clusters]
+  .filter((c) => c.count > 0)
+  .sort((a, b) => b.count - a.count);
+
+// Deterministic-ish twinkle spread so the sky doesn't pulse in unison.
+function twinkle(i: number) {
+  return {
+    delay: +(((i * 37) % 100) / 100 * 6).toFixed(2),
+    dur: +(3.4 + ((i * 53) % 100) / 100 * 3.2).toFixed(2),
+  };
+}
+
+const payload = { nodes, edges, clusters };
+---
+
+<Layout title="Galaxy — Brian" description="Every book I've read, drawn as a knowledge-graph galaxy">
+  <p class="muted small"><a href="/reading">← Reading</a></p>
+  <h1>Galaxy</h1>
+  <StatsNav current="/reading/stats/galaxy" />
+  <p class="taste-fingerprint">
+    The whole library at once — every book a star, pulled into genre nebulae and
+    threaded to its kin. Some lines are shared authors; others are books you read
+    within a season of each other. Wander in. Touch a star to see who it keeps company with.
+  </p>
+
+  <section class="stats-section">
+    <h2>The sky</h2>
+    <p class="muted small">
+      Hover a star for its title. Click to pin it. Scroll to zoom; drag to pan.
+    </p>
+    <div class="galaxy-wrap">
+      <div class="galaxy-readout muted small" id="gx-readout">&nbsp;</div>
+      <div class="galaxy-viewport" id="gx-viewport">
+        <svg
+          id="galaxy"
+          class="galaxy-sky"
+          viewBox={`0 0 ${W} ${H}`}
+          role="img"
+          aria-label="A galaxy of every book, clustered by genre"
+        >
+          <defs>
+            {clusters.map((c, i) => (
+              <radialGradient id={`neb-${i}`} cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color={`hsl(${c.hue}, 72%, 58%)`} stop-opacity="0.55" />
+                <stop offset="45%" stop-color={`hsl(${c.hue}, 68%, 52%)`} stop-opacity="0.22" />
+                <stop offset="100%" stop-color={`hsl(${c.hue}, 60%, 48%)`} stop-opacity="0" />
+              </radialGradient>
+            ))}
+          </defs>
+
+          <g class="gx-nebulae" aria-hidden="true">
+            {clusters.map((c, i) => {
+              const rr = Math.max(90, Math.min(300, 60 + c.count * 14));
+              return (
+                <ellipse
+                  class="gx-neb"
+                  data-cluster={c.label}
+                  cx={c.x}
+                  cy={c.y}
+                  rx={rr}
+                  ry={rr * 0.82}
+                  fill={`url(#neb-${i})`}
+                />
+              );
+            })}
+          </g>
+
+          <g class="gx-edges">
+            {edges.map((e) => {
+              const a = nodeById.get(e.a);
+              const b = nodeById.get(e.b);
+              if (!a || !b) return null;
+              return (
+                <line
+                  class="gx-edge"
+                  x1={a.x}
+                  y1={a.y}
+                  x2={b.x}
+                  y2={b.y}
+                  data-a={e.a}
+                  data-b={e.b}
+                  style={`stroke-opacity:${Math.min(0.22, 0.05 + e.w * 0.04)}`}
+                />
+              );
+            })}
+          </g>
+
+          <g class="gx-labels" aria-hidden="true">
+            {clusters
+              .filter((c) => c.count >= 3)
+              .map((c) => (
+                <text class="gx-cluster-label" data-cluster={c.label} x={c.x} y={c.y} text-anchor="middle">
+                  {c.label}
+                </text>
+              ))}
+          </g>
+
+          <g class="gx-stars">
+            {nodes.map((n, i) => {
+              const t = twinkle(i);
+              const fill = n.color ?? DEFAULT_STAR;
+              return (
+                <g
+                  class="gx-node"
+                  data-id={n.id}
+                  data-cluster={n.cluster}
+                  tabindex="0"
+                  role="button"
+                  aria-label={`${n.title} by ${n.author}`}
+                >
+                  <circle class="gx-halo" cx={n.x} cy={n.y} r={n.r + 6} style={`fill:${fill}`} />
+                  <circle
+                    class="gx-star"
+                    cx={n.x}
+                    cy={n.y}
+                    r={n.r}
+                    style={`fill:${fill};--d:${t.delay}s;--tw:${t.dur}s`}
+                  />
+                </g>
+              );
+            })}
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="galaxy-legend" id="gx-legend" role="list" aria-label="Genre clusters">
+      {legend.map((c) => (
+        <button class="gx-legend-item" role="listitem" data-cluster={c.label} aria-pressed="false">
+          <span class="gx-legend-dot" style={`background:hsl(${c.hue}, 62%, 55%)`}></span>
+          <span class="gx-legend-label">{c.label}</span>
+          <span class="muted small gx-legend-count">{c.count}</span>
+        </button>
+      ))}
+    </div>
+
+    <div class="heatmap-detail" id="gx-detail" hidden></div>
+  </section>
+
+  <p class="muted small stats-footnote">
+    {nodes.length} books, {edges.length} threads, {clusters.length} nebulae. Threads are capped to the
+    strongest few per book so the sky stays legible — the full shelf lives on the
+    <a href="/reading/stats">overview</a>.
+  </p>
+
+  <script type="application/json" id="gx-data" set:html={safeJsonForScript(payload)} />
+</Layout>
+
+<script>
+  import { esc, bookHref, bookId, safeCoverSrc, safeHex } from '../../../lib/dom-safe';
+
+  const el = document.getElementById('gx-data');
+  const data = JSON.parse(el.textContent);
+  const svg = document.getElementById('galaxy');
+  const readout = document.getElementById('gx-readout');
+  const detail = document.getElementById('gx-detail');
+  const legend = document.getElementById('gx-legend');
+  const byId = new Map(data.nodes.map((n) => [n.id, n]));
+
+  // adjacency: id -> [{id, reason, w}]
+  const adj = new Map();
+  for (const e of data.edges) {
+    if (!adj.has(e.a)) adj.set(e.a, []);
+    if (!adj.has(e.b)) adj.set(e.b, []);
+    adj.get(e.a).push({ id: e.b, reason: e.reason, w: e.w });
+    adj.get(e.b).push({ id: e.a, reason: e.reason, w: e.w });
+  }
+
+  let pinned = null; // { kind: 'node'|'cluster', key }
+
+
+  function clearFocus() {
+    svg.classList.remove('is-focused');
+    for (const g of svg.querySelectorAll('.gx-node')) {
+      g.classList.remove('is-active', 'is-neighbor', 'is-dim');
+      g.removeAttribute('aria-pressed');
+    }
+    for (const e of svg.querySelectorAll('.gx-edge')) e.classList.remove('is-lit', 'is-dim');
+    for (const l of svg.querySelectorAll('.gx-cluster-label')) l.classList.remove('is-dim', 'is-on');
+    for (const b of legend.querySelectorAll('.gx-legend-item')) b.setAttribute('aria-pressed', 'false');
+  }
+
+  function focusNode(id) {
+    svg.classList.add('is-focused');
+    const neighbors = new Set((adj.get(id) || []).map((x) => x.id));
+    for (const g of svg.querySelectorAll('.gx-node')) {
+      const gid = g.dataset.id;
+      const isActive = gid === id;
+      const isNeighbor = neighbors.has(gid);
+      g.classList.toggle('is-active', isActive);
+      g.classList.toggle('is-neighbor', !isActive && isNeighbor);
+      g.classList.toggle('is-dim', !isActive && !isNeighbor);
+      if (isActive) g.setAttribute('aria-pressed', 'true');
+      else g.removeAttribute('aria-pressed');
+    }
+    for (const e of svg.querySelectorAll('.gx-edge')) {
+      const on = e.dataset.a === id || e.dataset.b === id;
+      e.classList.toggle('is-lit', on);
+      e.classList.toggle('is-dim', !on);
+    }
+    for (const l of svg.querySelectorAll('.gx-cluster-label')) l.classList.add('is-dim');
+  }
+
+  function focusCluster(label) {
+    svg.classList.add('is-focused');
+    for (const g of svg.querySelectorAll('.gx-node')) {
+      const on = g.dataset.cluster === label;
+      g.classList.toggle('is-neighbor', on);
+      g.classList.toggle('is-dim', !on);
+      g.classList.remove('is-active');
+      g.removeAttribute('aria-pressed');
+    }
+    for (const e of svg.querySelectorAll('.gx-edge')) {
+      const a = byId.get(e.dataset.a);
+      const b = byId.get(e.dataset.b);
+      const on = a && b && a.cluster === label && b.cluster === label;
+      e.classList.toggle('is-lit', on);
+      e.classList.toggle('is-dim', !on);
+    }
+    for (const l of svg.querySelectorAll('.gx-cluster-label')) {
+      const on = l.dataset.cluster === label;
+      l.classList.toggle('is-on', on);
+      l.classList.toggle('is-dim', !on);
+    }
+    for (const b of legend.querySelectorAll('.gx-legend-item')) {
+      b.setAttribute('aria-pressed', String(b.dataset.cluster === label));
+    }
+  }
+
+  function showNodeDetail(id) {
+    const n = byId.get(id);
+    if (!n) return;
+    const links = (adj.get(id) || []).slice().sort((a, b) => b.w - a.w);
+    const rating = n.rating != null ? ` · ${n.rating}★` : '';
+    const genres = n.genres && n.genres.length ? esc(n.genres.join(', ')) : '';
+    let html =
+      `<p class="heatmap-detail-title">${esc(n.title)} <span class="muted small">— ${esc(n.author)}${rating}</span></p>` +
+      `<p class="muted small">${n.year}${genres ? ` · ${genres}` : ''} · <a href="${bookHref(n.id)}">open →</a></p>`;
+    if (links.length) {
+      html +=
+        `<p class="muted small gx-detail-sub">Threaded to ${links.length} ${links.length === 1 ? 'book' : 'books'}:</p>` +
+        '<ul class="const-book-list">' +
+        links
+          .map((l) => {
+            const nb = byId.get(l.id);
+            if (!nb) return '';
+            return (
+              `<li><a href="${bookHref(nb.id)}">${esc(nb.title)}</a>` +
+              `<span class="muted small">${esc(l.reason)}</span></li>`
+            );
+          })
+          .join('') +
+        '</ul>';
+    } else {
+      html += '<p class="muted small gx-detail-sub">A lone star — no strong threads to its neighbors.</p>';
+    }
+    detail.innerHTML = html;
+    detail.hidden = false;
+  }
+
+  svg.addEventListener('pointerover', (e) => {
+    const g = e.target.closest?.('.gx-node');
+    if (!g) return;
+    const n = byId.get(g.dataset.id);
+    if (!n) return;
+    readout.textContent = `${n.title} — ${n.author}`;
+    if (!pinned) focusNode(n.id);
+  });
+
+  svg.addEventListener('pointerout', (e) => {
+    if (e.target.closest?.('.gx-node') && !pinned) {
+      readout.innerHTML = '&nbsp;';
+      clearFocus();
+    }
+  });
+
+  function toggleNode(id) {
+    if (pinned && pinned.kind === 'node' && pinned.key === id) {
+      pinned = null;
+      detail.hidden = true;
+      readout.innerHTML = '&nbsp;';
+      clearFocus();
+      return;
+    }
+    pinned = { kind: 'node', key: id };
+    clearFocus();
+    focusNode(id);
+    const n = byId.get(id);
+    if (n) readout.textContent = `${n.title} — ${n.author}`;
+    showNodeDetail(id);
+  }
+
+  svg.addEventListener('click', (e) => {
+    const g = e.target.closest?.('.gx-node');
+    if (!g) return;
+    toggleNode(g.dataset.id);
+  });
+
+  svg.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const g = e.target.closest?.('.gx-node');
+    if (!g) return;
+    e.preventDefault();
+    toggleNode(g.dataset.id);
+  });
+
+  function toggleCluster(label) {
+    if (pinned && pinned.kind === 'cluster' && pinned.key === label) {
+      pinned = null;
+      detail.hidden = true;
+      readout.innerHTML = '&nbsp;';
+      clearFocus();
+      return;
+    }
+    pinned = { kind: 'cluster', key: label };
+    detail.hidden = true;
+    clearFocus();
+    focusCluster(label);
+    const c = data.clusters.find((x) => x.label === label);
+    readout.textContent = `${label} — ${c ? c.count : 0} ${c && c.count === 1 ? 'book' : 'books'}`;
+  }
+
+  legend.addEventListener('click', (e) => {
+    const b = e.target.closest?.('.gx-legend-item');
+    if (!b) return;
+    toggleCluster(b.dataset.cluster);
+  });
+
+  // ── Zoom + pan ────────────────────────────────────────────────────────────
+  const viewport = document.getElementById('gx-viewport');
+  const VB_W = Number(svg.viewBox.baseVal.width) || 960;
+  const VB_H = Number(svg.viewBox.baseVal.height) || 640;
+  const MIN_Z = 1;
+  const MAX_Z = 4.5;
+  const view = { x: 0, y: 0, w: VB_W, h: VB_H };
+  let scale = 1;
+  let pan = null;
+
+  function applyView() {
+    svg.setAttribute('viewBox', `${view.x} ${view.y} ${view.w} ${view.h}`);
+  }
+
+  function zoomAt(factor, clientX, clientY) {
+    const next = Math.min(MAX_Z, Math.max(MIN_Z, scale * factor));
+    if (Math.abs(next - scale) < 0.001) return;
+    const rect = svg.getBoundingClientRect();
+    const px = ((clientX - rect.left) / Math.max(rect.width, 1)) * view.w + view.x;
+    const py = ((clientY - rect.top) / Math.max(rect.height, 1)) * view.h + view.y;
+    const ratio = scale / next;
+    view.w = VB_W / next;
+    view.h = VB_H / next;
+    view.x = px - (px - view.x) * ratio;
+    view.y = py - (py - view.y) * ratio;
+    // clamp pan so we don't drift into empty void too far
+    view.x = Math.min(VB_W - view.w * 0.15, Math.max(-view.w * 0.15, view.x));
+    view.y = Math.min(VB_H - view.h * 0.15, Math.max(-view.h * 0.15, view.y));
+    scale = next;
+    applyView();
+  }
+
+  viewport?.addEventListener(
+    'wheel',
+    (e) => {
+      e.preventDefault();
+      const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+      zoomAt(factor, e.clientX, e.clientY);
+    },
+    { passive: false }
+  );
+
+  viewport?.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    if (e.target.closest?.('.gx-node')) return;
+    pan = {
+      id: e.pointerId,
+      x: e.clientX,
+      y: e.clientY,
+      vx: view.x,
+      vy: view.y,
+      moved: false,
+    };
+    viewport.setPointerCapture?.(e.pointerId);
+    viewport.classList.add('is-panning');
+  });
+
+  viewport?.addEventListener('pointermove', (e) => {
+    if (!pan || e.pointerId !== pan.id) return;
+    const rect = svg.getBoundingClientRect();
+    const dx = ((e.clientX - pan.x) / Math.max(rect.width, 1)) * view.w;
+    const dy = ((e.clientY - pan.y) / Math.max(rect.height, 1)) * view.h;
+    if (Math.abs(e.clientX - pan.x) + Math.abs(e.clientY - pan.y) > 4) pan.moved = true;
+    view.x = pan.vx - dx;
+    view.y = pan.vy - dy;
+    applyView();
+  });
+
+  function endPan(e) {
+    if (!pan || (e && e.pointerId !== pan.id)) return;
+    const wasDrag = pan.moved;
+    pan = null;
+    viewport?.classList.remove('is-panning');
+    if (wasDrag) {
+      // swallow the click that follows a drag so we don't toggle stars accidentally
+      const swallow = (ev) => {
+        ev.stopPropagation();
+        viewport?.removeEventListener('click', swallow, true);
+      };
+      viewport?.addEventListener('click', swallow, true);
+    }
+  }
+
+  viewport?.addEventListener('pointerup', endPan);
+  viewport?.addEventListener('pointercancel', endPan);
+
+  applyView();
+</script>

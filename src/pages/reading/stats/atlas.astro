@@ -1,0 +1,283 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import StatsNav from '../../../components/StatsNav.astro';
+import { loadBooks, shortTitle, countMap, colorFamily, safeJsonForScript} from '../../../lib/bookshelf-stats';
+
+const books = await loadBooks();
+const genres = countMap(books.flatMap((b) => b.genres)).slice(0, 20).map(([g]) => g);
+const years = [...new Set(books.map((b) => new Date(b.dateRead).getFullYear()))].sort((a, b) => b - a);
+
+const payload = {
+  books: books.map((b) => ({
+    id: b.id,
+    t: shortTitle(b.title),
+    a: b.author,
+    d: b.dateRead,
+    y: new Date(b.dateRead).getFullYear(),
+    p: b.pages,
+    r: b.rating,
+    pub: b.pubYear,
+    cover: b.cover,
+    color: b.coverColor,
+    family: b.coverColor ? colorFamily(b.coverColor) : null,
+    genres: b.genres,
+    fiction: b.fiction,
+    moods: b.moods,
+  })),
+};
+---
+
+<Layout title="Cover atlas — Brian" description="Interactive explorer of every cover on the shelf">
+  <p class="muted small"><a href="/reading">← Reading</a></p>
+  <h1>Atlas</h1>
+  <StatsNav current="/reading/stats/atlas" />
+  <p class="taste-fingerprint">
+    Every cover, rearrangeable. Sort, filter, and watch the shelf reshuffle.
+  </p>
+
+  <div class="atlas-controls" id="atlas-controls">
+    <div class="atlas-row">
+      <label class="muted small" for="atlas-sort">Sort</label>
+      <select id="atlas-sort" class="atlas-select">
+        <option value="date-desc">Finished (newest)</option>
+        <option value="date-asc">Finished (oldest)</option>
+        <option value="rating-desc">Rating (high → low)</option>
+        <option value="pages-desc">Pages (long → short)</option>
+        <option value="pages-asc">Pages (short → long)</option>
+        <option value="title">Title</option>
+        <option value="author">Author</option>
+        <option value="color">Cover color</option>
+        <option value="pub-desc">Published (newest)</option>
+        <option value="pub-asc">Published (oldest)</option>
+      </select>
+    </div>
+    <div class="atlas-row">
+      <label class="muted small" for="atlas-fiction">Type</label>
+      <select id="atlas-fiction" class="atlas-select">
+        <option value="all">All</option>
+        <option value="fiction">Fiction</option>
+        <option value="nonfiction">Nonfiction</option>
+      </select>
+    </div>
+    <div class="atlas-row">
+      <label class="muted small" for="atlas-year">Year finished</label>
+      <select id="atlas-year" class="atlas-select">
+        <option value="all">All years</option>
+        {years.map((y) => <option value={y}>{y}</option>)}
+      </select>
+    </div>
+    <div class="atlas-row">
+      <label class="muted small" for="atlas-genre">Genre</label>
+      <select id="atlas-genre" class="atlas-select">
+        <option value="all">All genres</option>
+        {genres.map((g) => <option value={g}>{g}</option>)}
+      </select>
+    </div>
+    <div class="atlas-row atlas-search-row">
+      <label class="muted small" for="atlas-q">Search</label>
+      <input id="atlas-q" class="atlas-input" type="search" placeholder="title or author" autocomplete="off" />
+    </div>
+  </div>
+  <p class="muted small filter-status" id="atlas-status">{books.length} books</p>
+
+  <div class="atlas-layout-toggle what-if" role="group" aria-label="Layout">
+    <span class="what-if-label">Layout</span>
+    <button type="button" class="chip active" data-layout="grid">grid</button>
+    <button type="button" class="chip" data-layout="spine">spines</button>
+    <button type="button" class="chip" data-layout="stack">stack height</button>
+  </div>
+
+  <div class="atlas-stage" id="atlas-stage" data-layout="grid">
+    <!-- filled by script for FLIP animation support; SSR fallback below -->
+    {books
+      .slice()
+      .reverse()
+      .map((b) => (
+        <a
+          class="atlas-card"
+          href={`/reading/books/${b.id}`}
+          data-id={b.id}
+          title={`${shortTitle(b.title)} — ${b.author}`}
+        >
+          {b.cover ? (
+            <img src={b.cover} alt="" loading="lazy" />
+          ) : (
+            <span class="atlas-fallback" style={b.coverColor ? `background:${b.coverColor}` : ''}>{shortTitle(b.title)}</span>
+          )}
+          <span class="atlas-caption">
+            <span class="atlas-title">{shortTitle(b.title)}</span>
+            <span class="atlas-author muted">{b.author}</span>
+          </span>
+        </a>
+      ))}
+  </div>
+
+  <p class="muted small stats-footnote">
+    Tip: try sorting by cover color, then switch to spines — a chromatic bookshelf.
+  </p>
+
+  <script type="application/json" id="atlas-data" set:html={safeJsonForScript(payload)} />
+</Layout>
+
+<script>
+  import { esc, bookHref, bookId, safeCoverSrc, safeHex } from '../../../lib/dom-safe';
+
+  const data = JSON.parse(document.getElementById('atlas-data').textContent);
+  const stage = document.getElementById('atlas-stage');
+  const status = document.getElementById('atlas-status');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const state = {
+    sort: 'date-desc',
+    fiction: 'all',
+    year: 'all',
+    genre: 'all',
+    q: '',
+    layout: 'grid',
+  };
+
+  function familyHue(family) {
+    const order = ['red', 'orange', 'yellow', 'green', 'teal', 'blue', 'purple', 'pink', 'brown', 'gray', 'black', 'white', 'unknown'];
+    const i = order.indexOf(family || 'unknown');
+    return i < 0 ? 99 : i;
+  }
+
+  function filtered() {
+    const q = state.q.trim().toLowerCase();
+    let list = data.books.filter((b) => {
+      if (state.fiction === 'fiction' && b.fiction !== true) return false;
+      if (state.fiction === 'nonfiction' && b.fiction !== false) return false;
+      if (state.year !== 'all' && b.y !== +state.year) return false;
+      if (state.genre !== 'all' && !b.genres.includes(state.genre)) return false;
+      if (q && !(b.t.toLowerCase().includes(q) || b.a.toLowerCase().includes(q))) return false;
+      return true;
+    });
+    const sorters = {
+      'date-desc': (a, b) => b.d - a.d,
+      'date-asc': (a, b) => a.d - b.d,
+      'rating-desc': (a, b) => (b.r ?? -1) - (a.r ?? -1) || b.d - a.d,
+      'pages-desc': (a, b) => b.p - a.p,
+      'pages-asc': (a, b) => (a.p || 9999) - (b.p || 9999),
+      title: (a, b) => a.t.localeCompare(b.t),
+      author: (a, b) => a.a.localeCompare(b.a) || a.t.localeCompare(b.t),
+      color: (a, b) => familyHue(a.family) - familyHue(b.family) || a.t.localeCompare(b.t),
+      'pub-desc': (a, b) => (b.pub || 0) - (a.pub || 0),
+      'pub-asc': (a, b) => (a.pub || 9999) - (b.pub || 9999),
+    };
+    list.sort(sorters[state.sort] || sorters['date-desc']);
+    return list;
+  }
+
+  function spineWidth(p) {
+    const pages = p > 0 ? p : 250;
+    return Math.max(18, Math.min(48, Math.round(14 + pages / 30)));
+  }
+
+  function spineInkFor(hex) {
+    if (!hex || hex.length < 7) return 'rgba(20,18,16,0.88)';
+    const r = parseInt(hex.slice(1, 3), 16) / 255;
+    const g = parseInt(hex.slice(3, 5), 16) / 255;
+    const b = parseInt(hex.slice(5, 7), 16) / 255;
+    const f = (c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+    const lum = 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+    return lum > 0.45 ? 'rgba(20,18,16,0.88)' : 'rgba(255,255,255,0.92)';
+  }
+
+  function capturePositions(cards) {
+    const map = new Map();
+    for (const el of cards) {
+      const r = el.getBoundingClientRect();
+      map.set(el.dataset.id, r);
+    }
+    return map;
+  }
+
+  function flip(before) {
+    if (reduceMotion || !before) return;
+    const cards = [...stage.querySelectorAll('.atlas-card')];
+    for (const el of cards) {
+      const prev = before.get(el.dataset.id);
+      if (!prev) {
+        el.animate([{ opacity: 0, transform: 'scale(0.92)' }, { opacity: 1, transform: 'scale(1)' }], {
+          duration: 280,
+          easing: 'ease-out',
+        });
+        continue;
+      }
+      const next = el.getBoundingClientRect();
+      const dx = prev.left - next.left;
+      const dy = prev.top - next.top;
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) continue;
+      el.animate(
+        [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'translate(0, 0)' }],
+        { duration: 420, easing: 'cubic-bezier(.2,.7,.2,1)' }
+      );
+    }
+  }
+
+  function render() {
+    const list = filtered();
+    const before = capturePositions(stage.querySelectorAll('.atlas-card'));
+    status.textContent = `${list.length} book${list.length === 1 ? '' : 's'}`;
+    stage.dataset.layout = state.layout;
+
+    stage.innerHTML = list
+      .map((b) => {
+        const cover = safeCoverSrc(b.cover);
+        const color = safeHex(b.color);
+        const img = cover
+          ? `<img src="${esc(cover)}" alt="" loading="lazy" />`
+          : `<span class="atlas-fallback" style="${color ? `background:${color}` : ''}">${esc(b.t)}</span>`;
+        const w = spineWidth(b.p);
+        const h = 110 + ((b.p || 200) % 40);
+        const spineColor = color || '#c8c2b4';
+        const spineInk = spineInkFor(spineColor);
+        return `<a class="atlas-card" href="${bookHref(b.id)}" data-id="${bookId(b.id)}" data-pages="${b.p}" title="${esc(b.t)} — ${esc(b.a)}" style="--spine-w:${w}px;--spine-h:${h}px;--spine-color:${spineColor};--spine-ink:${spineInk}">
+          ${img}
+          <span class="atlas-caption"><span class="atlas-title">${esc(b.t)}</span><span class="atlas-author muted">${esc(b.a)}</span></span>
+          <span class="atlas-spine-label">${esc(b.t)}</span>
+        </a>`;
+      })
+      .join('');
+
+    requestAnimationFrame(() => flip(before));
+  }
+
+
+  document.getElementById('atlas-sort').addEventListener('change', (e) => {
+    state.sort = e.target.value;
+    render();
+  });
+  document.getElementById('atlas-fiction').addEventListener('change', (e) => {
+    state.fiction = e.target.value;
+    render();
+  });
+  document.getElementById('atlas-year').addEventListener('change', (e) => {
+    state.year = e.target.value;
+    render();
+  });
+  document.getElementById('atlas-genre').addEventListener('change', (e) => {
+    state.genre = e.target.value;
+    render();
+  });
+  let qTimer = 0;
+  document.getElementById('atlas-q').addEventListener('input', (e) => {
+    clearTimeout(qTimer);
+    qTimer = setTimeout(() => {
+      state.q = e.target.value;
+      render();
+    }, 120);
+  });
+
+  document.querySelector('.atlas-layout-toggle')?.addEventListener('click', (e) => {
+    const btn = e.target.closest?.('[data-layout]');
+    if (!btn) return;
+    state.layout = btn.dataset.layout;
+    for (const c of document.querySelectorAll('.atlas-layout-toggle .chip')) {
+      c.classList.toggle('active', c.dataset.layout === state.layout);
+    }
+    render();
+  });
+
+  render();
+</script>

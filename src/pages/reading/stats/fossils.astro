@@ -1,0 +1,114 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import StatsNav from '../../../components/StatsNav.astro';
+import { loadBooks } from '../../../lib/bookshelf-stats';
+import { buildFossils } from '../../../lib/stats-viz';
+
+const books = await loadBooks();
+const { fossils, revivals } = buildFossils(books);
+
+const byKind = {
+  genre: fossils.filter((f) => f.kind === 'genre'),
+  mood: fossils.filter((f) => f.kind === 'mood'),
+  author: fossils.filter((f) => f.kind === 'author'),
+};
+
+const kindLabel = { genre: 'Genre', mood: 'Mood', author: 'Author' } as const;
+const deepest = fossils[0];
+const extinctN = fossils.length;
+---
+
+<Layout title="Fossils — Brian" description="Tastes that went quiet on the shelf">
+  <p class="muted small"><a href="/reading">← Reading</a></p>
+  <h1>Fossils</h1>
+  <StatsNav current="/reading/stats/fossils" />
+  <p class="taste-fingerprint">
+    Not every taste survives. {extinctN} specimens went dormant —
+    {deepest
+      ? ` the deepest sleep is ${deepest.label} (${deepest.dormantYears} years quiet)`
+      : ' the dig is empty for now'}
+    . Below: extinct genres, moods, and authors, plus a few that clawed back.
+  </p>
+
+  {fossils.length === 0 ? (
+    <p class="muted">Nothing dormant enough to catalog yet — keep reading, or wait a few years.</p>
+  ) : (
+    (['genre', 'mood', 'author'] as const).map((kind) => {
+      const list = byKind[kind];
+      if (!list.length) return null;
+      return (
+        <section class="stats-section">
+          <h2>
+            {kind === 'genre' ? 'Extinct genres' : kind === 'mood' ? 'Buried moods' : 'Abandoned authors'}
+          </h2>
+          <p class="muted small">
+            {kind === 'genre'
+              ? 'Tags that once marked the shelf, then stopped appearing.'
+              : kind === 'mood'
+                ? 'Emotional weather that blew through and never returned.'
+                : 'Writers you finished more than once, then left behind.'}
+          </p>
+          <ol class="fossil-dig">
+            {list.map((f) => (
+              <li class="fossil-specimen">
+                <div class="fossil-age" title={`${f.dormantYears} years dormant`}>
+                  <span class="fossil-age-n">{f.dormantYears}</span>
+                  <span class="fossil-age-unit muted small">y quiet</span>
+                </div>
+                <div class="fossil-body">
+                  <div class="fossil-head">
+                    <span class="fossil-kind">{kindLabel[f.kind]}</span>
+                    <h3 class="fossil-label">{f.label}</h3>
+                  </div>
+                  <p class="fossil-blurb muted small">{f.blurb}</p>
+                  <p class="fossil-span muted small">
+                    {f.firstYear === f.lastYear ? f.firstYear : `${f.firstYear}–${f.lastYear}`}
+                    {' · '}
+                    {f.count} book{f.count === 1 ? '' : 's'}
+                  </p>
+                  {f.samples.length > 0 && (
+                    <ul class="fossil-samples">
+                      {f.samples.map((s) => (
+                        <li>
+                          <a href={`/reading/books/${s.id}`}>{s.title}</a>
+                          <span class="muted small">{s.year}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+      );
+    })
+  )}
+
+  {revivals.length > 0 && (
+    <section class="stats-section">
+      <h2>Revivals</h2>
+      <p class="muted small">Genres that vanished for years, then resurfaced — Lazarus tags.</p>
+      <ul class="fossil-revivals">
+        {revivals.map((r) => (
+          <li>
+            <span class="fossil-revival-label">{r.label}</span>
+            <span class="fossil-revival-gap">
+              <span class="stat-big">{r.gap}</span>
+              <span class="stat-sub">year gap</span>
+            </span>
+            <span class="muted small">
+              first {r.first} · returned {r.returnYear}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  <p class="muted small stats-footnote">
+    A fossil is a taste with a real run that went quiet for at least two years.
+    See the full arc on <a href="/reading/stats/evolution">Evolution</a>,
+    or the midpoint cut on <a href="/reading/stats/metamorphosis">Metamorphosis</a>.
+  </p>
+</Layout>

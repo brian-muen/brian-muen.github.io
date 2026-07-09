@@ -2,36 +2,164 @@
 import { getCollection, render } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
 
-const books = (await getCollection('reading')).sort((a, b) => {
+const reviews = (await getCollection('reading')).sort((a, b) => {
   const da = a.data.dateRead?.valueOf() ?? 0;
   const db = b.data.dateRead?.valueOf() ?? 0;
   return db - da;
 });
 
 const rendered = await Promise.all(
-  books.map(async (book) => ({ book, Content: (await render(book)).Content }))
+  reviews.map(async (book) => ({ book, Content: (await render(book)).Content }))
 );
+
+const shelf = (await getCollection('bookshelf')).sort(
+  (a, b) => b.data.dateRead.valueOf() - a.data.dateRead.valueOf()
+);
+
+function spineWidth(pages?: number) {
+  const p = pages && pages > 0 ? pages : 250;
+  return Math.max(20, Math.min(52, Math.round(16 + p / 28)));
+}
+
+function shortTitle(title: string) {
+  return title.replace(/\s*\([^)]*\)\s*$/, '').replace(/:.*$/, '').trim();
+}
+
+function hash(s: string) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h;
+}
+
+const palette = [
+  '#722f37',
+  '#33465e',
+  '#44573f',
+  '#b08d4f',
+  '#b45f3c',
+  '#4d7c74',
+  '#6d4a5d',
+  '#5a6e8c',
+  '#7a7440',
+  '#5c4433',
+  '#a65a4e',
+  '#41414b',
+];
+
+const spines = shelf.map((b) => {
+  const h = hash(b.data.title);
+  return {
+    id: b.id,
+    title: shortTitle(b.data.title),
+    author: b.data.author,
+    w: spineWidth(b.data.pages),
+    h: 128 + (h % 38),
+    color: palette[h % palette.length],
+    href: `/reading/books/${b.id}`,
+  };
+});
+
+// Easter egg: a fake spine that opens reading stats
+{
+  const title = 'How to Lie';
+  const h = hash(title);
+  spines.push({
+    id: 'how-to-lie',
+    title,
+    author: 'Darrell Huff',
+    w: spineWidth(142),
+    h: 128 + (h % 38),
+    color: palette[h % palette.length],
+    href: '/reading/stats',
+  });
+}
 ---
 
 <Layout title="Reading — Brian" description="Books I've read">
   <h1>Reading</h1>
-  {books.length === 0 && <p class="muted">No books yet.</p>}
-  <ul class="book-list">
-    {rendered.map(({ book, Content }) => (
-      <li class="book">
-        {book.data.cover ? (
-          <img src={book.data.cover} alt={`Cover of ${book.data.title}`} loading="lazy" />
-        ) : (
-          <div class="book-cover-placeholder">{book.data.title}</div>
+
+  {spines.length > 0 && (
+    <div class="shelf-scroller" id="shelf-scroller" aria-label="Virtual bookshelf">
+      <div class="shelf-books">
+        {[0, 1].map((copy) =>
+          spines.map((sp) => (
+            <a
+              class="spine"
+              href={sp.href}
+              title={`${sp.title} — ${sp.author}`}
+              aria-hidden={copy === 1 ? 'true' : undefined}
+              tabindex={copy === 1 ? -1 : undefined}
+              style={`width:${sp.w}px;height:${sp.h}px;background:${sp.color};`}
+            >
+              <span class="spine-title">{sp.title}</span>
+            </a>
+          ))
         )}
-        <div>
-          <h2>{book.data.title}</h2>
-          <p class="author">{book.data.author}</p>
-          <div class="thoughts">
-            <Content />
+      </div>
+    </div>
+  )}
+
+  {reviews.length > 0 && (
+    <ul class="book-list">
+      {rendered.map(({ book, Content }) => (
+        <li class="book">
+          {book.data.cover ? (
+            <img src={book.data.cover} alt={`Cover of ${book.data.title}`} loading="lazy" />
+          ) : (
+            <div class="book-cover-placeholder">{book.data.title}</div>
+          )}
+          <div>
+            <h2>{book.data.title}</h2>
+            <p class="author">{book.data.author}</p>
+            <div class="thoughts">
+              <Content />
+            </div>
           </div>
-        </div>
-      </li>
-    ))}
-  </ul>
+        </li>
+      ))}
+    </ul>
+  )}
 </Layout>
+
+<script>
+  const scroller = document.getElementById('shelf-scroller');
+  if (scroller) {
+    let half = 0;
+    const measure = () => {
+      half = (scroller.scrollWidth - scroller.clientWidth > 0) ? scroller.scrollWidth / 2 : 0;
+    };
+    measure();
+    addEventListener('resize', measure);
+
+    scroller.scrollLeft = 1;
+    scroller.addEventListener('scroll', () => {
+      if (half <= 0) return;
+      if (scroller.scrollLeft >= half) scroller.scrollLeft -= half;
+      else if (scroller.scrollLeft < 1) scroller.scrollLeft += half;
+    });
+
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      let pauseUntil = 0;
+      const bump = () => (pauseUntil = performance.now() + 3000);
+      for (const ev of ['wheel', 'touchstart', 'pointerdown', 'pointerenter', 'keydown']) {
+        scroller.addEventListener(ev, bump, { passive: true });
+      }
+      let pos: number | null = null;
+      let last = performance.now();
+      const step = (t: number) => {
+        const dt = Math.min(t - last, 100);
+        last = t;
+        if (t < pauseUntil || half <= 0 || document.hidden) {
+          pos = null;
+        } else {
+          if (pos === null) pos = scroller.scrollLeft;
+          pos += dt * 0.012;
+          if (pos >= half) pos -= half;
+          scroller.scrollLeft = pos;
+        }
+        requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    }
+  }
+</script>

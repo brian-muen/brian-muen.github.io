@@ -18,7 +18,6 @@ const links = [
 const social = [
   { href: 'https://x.com/diffferance', label: 'Twitter' },
   { href: 'https://github.com/brian-muen', label: 'GitHub' },
-  { href: 'https://app.thestorygraph.com/profile/brian_', label: 'Storygraph' },
 ];
 
 function isCurrent(href: string) {
@@ -38,6 +37,19 @@ function isCurrent(href: string) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
     <title>{title}</title>
+    <script is:inline>
+      (function () {
+        try {
+          var t = localStorage.getItem('theme');
+          if (t !== 'light' && t !== 'dark') {
+            t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
   </head>
   <body>
     <aside class="sidebar">
@@ -47,6 +59,7 @@ function isCurrent(href: string) {
         ))}
       </nav>
     </aside>
+    <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle color theme" title="Theme"></button>
     <div class="content">
       <main>
         <slot />
@@ -57,5 +70,35 @@ function isCurrent(href: string) {
         ))}
       </footer>
     </div>
+    <script>
+      const root = document.documentElement;
+      const btn = document.getElementById('theme-toggle');
+
+      function current() {
+        return root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+      }
+
+      function syncLabel() {
+        if (!btn) return;
+        const dark = current() === 'dark';
+        btn.setAttribute('aria-pressed', String(dark));
+        btn.title = dark ? 'Switch to light' : 'Switch to dark';
+      }
+
+      function setTheme(next) {
+        root.setAttribute('data-theme', next);
+        try {
+          localStorage.setItem('theme', next);
+        } catch {
+          /* ignore */
+        }
+        syncLabel();
+      }
+
+      syncLabel();
+      btn?.addEventListener('click', () => {
+        setTheme(current() === 'dark' ? 'light' : 'dark');
+      });
+    </script>
   </body>
 </html>

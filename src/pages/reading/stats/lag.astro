@@ -1,0 +1,281 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import StatsNav from '../../../components/StatsNav.astro';
+import { loadBooks, shortTitle } from '../../../lib/bookshelf-stats';
+
+const books = await loadBooks();
+const withPub = books.filter((b) => b.pubYear && b.pubYear > 0);
+
+type LagRow = {
+  id: string;
+  t: string;
+  a: string;
+  pub: number;
+  read: number;
+  lag: number;
+  cover: string | null;
+  color: string | null;
+  rating: number | null;
+  pages: number;
+};
+
+const lags: LagRow[] = withPub
+  .map((b) => {
+    const readY = new Date(b.dateRead).getFullYear() + new Date(b.dateRead).getMonth() / 12;
+    const lag = readY - b.pubYear;
+    return {
+      id: b.id,
+      t: shortTitle(b.title),
+      a: b.author,
+      pub: b.pubYear,
+      read: b.dateRead,
+      lag,
+      cover: b.cover,
+      color: b.coverColor,
+      rating: b.rating,
+      pages: b.pages,
+    };
+  })
+  .sort((a, b) => b.lag - a.lag);
+
+const medianLag = (() => {
+  const xs = lags.map((l) => l.lag).sort((a, b) => a - b);
+  const mid = Math.floor(xs.length / 2);
+  return xs.length % 2 ? xs[mid] : (xs[mid - 1] + xs[mid]) / 2;
+})();
+
+const avgLag = lags.reduce((s, l) => s + l.lag, 0) / (lags.length || 1);
+const contemporary = lags.filter((l) => l.lag <= 5).length;
+const centuryPlus = lags.filter((l) => l.lag >= 100).length;
+
+// Scatter: pub year (x) vs lag (y) — or pub year vs read year
+const W = 640;
+const H = 320;
+const PAD = { l: 44, r: 16, t: 16, b: 32 };
+const minPub = Math.min(...lags.map((l) => l.pub));
+const maxPub = Math.max(...lags.map((l) => l.pub));
+// Cap visual lag for ancient texts so Art of War doesn't crush the chart
+const VIS_CAP = 200;
+const maxLagVis = Math.min(Math.max(...lags.map((l) => l.lag)), VIS_CAP);
+
+function xOf(pub: number) {
+  return PAD.l + ((pub - minPub) / (maxPub - minPub || 1)) * (W - PAD.l - PAD.r);
+}
+function yOf(lag: number) {
+  const v = Math.min(lag, VIS_CAP);
+  return H - PAD.b - (v / maxLagVis) * (H - PAD.t - PAD.b);
+}
+
+const scatter = lags.map((l) => ({
+  ...l,
+  x: +xOf(l.pub).toFixed(1),
+  y: +yOf(l.lag).toFixed(1),
+  capped: l.lag > VIS_CAP,
+}));
+
+const eras = [
+  { name: 'Ancient–1800', min: -Infinity, max: 1800 },
+  { name: '19th century', min: 1800, max: 1900 },
+  { name: '1900–1949', min: 1900, max: 1950 },
+  { name: '1950–1979', min: 1950, max: 1980 },
+  { name: '1980–1999', min: 1980, max: 2000 },
+  { name: '2000–2009', min: 2000, max: 2010 },
+  { name: '2010–2019', min: 2010, max: 2020 },
+  { name: '2020+', min: 2020, max: Infinity },
+].map((e) => {
+  const list = lags.filter((l) => l.pub >= e.min && l.pub < e.max);
+  return { ...e, n: list.length, avgLag: list.length ? list.reduce((s, l) => s + l.lag, 0) / list.length : 0 };
+}).filter((e) => e.n > 0);
+
+const longest = lags.slice(0, 12);
+const freshest = [...lags].sort((a, b) => a.lag - b.lag).slice(0, 8);
+
+// TBR marinade (dateAdded → dateRead)
+const marinades = books
+  .filter((b) => b.dateAdded != null && b.dateAdded <= b.dateRead)
+  .map((b) => ({
+    id: b.id,
+    t: shortTitle(b.title),
+    days: Math.round((b.dateRead - b.dateAdded!) / 86400000),
+    cover: b.cover,
+    color: b.coverColor,
+  }))
+  .sort((a, b) => b.days - a.days);
+
+const fmtYear = (y: number) => (y < 0 ? `${-y} BC` : String(y));
+---
+
+<Layout title="Time lag — Brian" description="Years between publication and reading">
+  <p class="muted small"><a href="/reading">← Reading</a></p>
+  <h1>Time lag</h1>
+  <StatsNav current="/reading/stats/lag" />
+  <p class="taste-fingerprint">
+    On average, you finish a book {avgLag.toFixed(0)} years after it was published
+    (median {medianLag.toFixed(0)}). {contemporary} were less than five years old;
+    {centuryPlus} had waited a century or more.
+  </p>
+
+  <div class="stat-cards">
+    <div class="stat-card">
+      <span class="stat-big">{avgLag.toFixed(0)}</span>
+      <span class="stat-sub">avg years waited</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-big">{medianLag.toFixed(0)}</span>
+      <span class="stat-sub">median lag</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-big">{contemporary}</span>
+      <span class="stat-sub">≤5 years old</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-big">{centuryPlus}</span>
+      <span class="stat-sub">century+ waits</span>
+    </div>
+  </div>
+
+  <section class="stats-section">
+    <h2>Publication year × wait</h2>
+    <p class="muted small">
+      Each dot is a book. Higher means it waited longer to reach you.
+      Ancient texts above {VIS_CAP} years are pinned to the top.
+    </p>
+    <div class="scatter-wrap">
+      <div class="scatter-readout muted small" id="lag-readout">&nbsp;</div>
+      <svg id="lag-scatter" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Publication year versus years waited">
+        {[0, 0.25, 0.5, 0.75, 1].map((f) => {
+          const lag = Math.round(f * maxLagVis);
+          const y = yOf(lag);
+          return (
+            <g>
+              <line x1={PAD.l} y1={y} x2={W - PAD.r} y2={y} class="tl-grid" />
+              <text x={PAD.l - 6} y={y + 3} class="tl-tick" text-anchor="end">{lag}y</text>
+            </g>
+          );
+        })}
+        {[0, 0.25, 0.5, 0.75, 1].map((f) => {
+          const pub = Math.round(minPub + f * (maxPub - minPub));
+          const x = xOf(pub);
+          return <text x={x} y={H - 8} class="tl-tick" text-anchor="middle">{fmtYear(pub)}</text>;
+        })}
+        {scatter.map((p) => (
+          <a href={`/reading/books/${p.id}`}>
+            <circle
+              class="scatter-dot lag-dot"
+              cx={p.x}
+              cy={p.y}
+              r={p.capped ? 6 : 4}
+              fill={p.color ?? '#000'}
+              data-title={p.t}
+              data-pub={p.pub}
+              data-lag={p.lag.toFixed(0)}
+              opacity="0.85"
+            />
+          </a>
+        ))}
+      </svg>
+    </div>
+  </section>
+
+  <section class="stats-section">
+    <h2>Books that waited</h2>
+    <p class="muted small">The longest journeys from publication to your shelf.</p>
+    <ol class="lag-list">
+      {longest.map((b) => (
+        <li>
+          <a class="lag-cover" href={`/reading/books/${b.id}`}>
+            {b.cover ? (
+              <img src={b.cover} alt="" loading="lazy" width="48" height="72" />
+            ) : (
+              <span class="lag-cover-fallback" style={b.color ? `background:${b.color}` : ''} />
+            )}
+          </a>
+          <div class="lag-meta">
+            <a href={`/reading/books/${b.id}`}><em>{b.t}</em></a>
+            <span class="muted small">{b.a} · pub {fmtYear(b.pub)}</span>
+          </div>
+          <div class="lag-years">
+            <span class="stat-big">{Math.round(b.lag)}</span>
+            <span class="stat-sub">years</span>
+          </div>
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <section class="stats-section">
+    <h2>Still warm from the press</h2>
+    <p class="muted small">Shortest gaps between publication and finishing.</p>
+    <ul class="filtered-list">
+      {freshest.map((b) => (
+        <li>
+          <a href={`/reading/books/${b.id}`}>{b.t}</a>
+          <span class="muted small">{fmtYear(b.pub)} → {Math.round(b.lag)}y wait</span>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section class="stats-section">
+    <h2>By era of origin</h2>
+    <ul class="stat-bars">
+      {eras.map((e) => (
+        <li>
+          <span class="stat-label wide">{e.name}</span>
+          <span class="stat-track">
+            <span class="stat-fill" style={`--w:${Math.max(2, Math.round((e.n / Math.max(...eras.map((x) => x.n))) * 100))}%`}></span>
+          </span>
+          <span class="stat-value">{e.n}</span>
+        </li>
+      ))}
+    </ul>
+    <p class="muted small" style="margin-top:0.75rem">
+      Average wait by era:{' '}
+      {eras.map((e) => `${e.name.split('–')[0].trim()}: ${e.avgLag.toFixed(0)}y`).join(' · ')}
+    </p>
+  </section>
+
+  {marinades.length > 0 && (
+    <section class="stats-section">
+      <h2>TBR marinade</h2>
+      <p class="muted small">Days between adding a book and finishing it — the personal wait, not the historical one.</p>
+      <ol class="lag-list">
+        {marinades.slice(0, 10).map((b) => (
+          <li>
+            <a class="lag-cover" href={`/reading/books/${b.id}`}>
+              {b.cover ? (
+                <img src={b.cover} alt="" loading="lazy" width="48" height="72" />
+              ) : (
+                <span class="lag-cover-fallback" style={b.color ? `background:${b.color}` : ''} />
+              )}
+            </a>
+            <div class="lag-meta">
+              <a href={`/reading/books/${b.id}`}><em>{b.t}</em></a>
+            </div>
+            <div class="lag-years">
+              <span class="stat-big">{b.days.toLocaleString()}</span>
+              <span class="stat-sub">days</span>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
+  )}
+
+  <p class="muted small stats-footnote">
+    Publication years come from enrichment (Hardcover / Open Library / Google Books).
+    Negative BC years are included; The Art of War will always win.
+  </p>
+</Layout>
+
+<script>
+  document.getElementById('lag-scatter')?.addEventListener('pointerover', (e) => {
+    const d = e.target.closest?.('.lag-dot');
+    if (!d) return;
+    document.getElementById('lag-readout').textContent =
+      `${d.dataset.title} — published ${d.dataset.pub}, waited ${d.dataset.lag} years`;
+  });
+  document.getElementById('lag-scatter')?.addEventListener('pointerout', () => {
+    document.getElementById('lag-readout').innerHTML = '&nbsp;';
+  });
+</script>

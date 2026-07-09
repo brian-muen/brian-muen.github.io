@@ -1,0 +1,199 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import StatsNav from '../../../components/StatsNav.astro';
+import { loadBooks, pct } from '../../../lib/bookshelf-stats';
+import { buildMetamorphosis } from '../../../lib/stats-viz';
+
+const books = await loadBooks();
+const { before, after, deltas, genreShifts } = buildMetamorphosis(books);
+
+const maxShift = Math.max(0.01, ...genreShifts.map((g) => Math.abs(g.delta)));
+
+function fmtDelta(d: (typeof deltas)[number]): string {
+  if (d.delta == null) return '—';
+  const sign = d.delta > 0 ? '+' : '';
+  if (d.unit === '%') return `${sign}${Math.round(d.delta * 100)} pts`;
+  if (d.unit === '★') return `${sign}${d.delta.toFixed(2)}${d.unit}`;
+  if (d.unit === 'p') return `${sign}${Math.round(d.delta)}${d.unit}`;
+  return `${sign}${d.delta}${d.unit}`;
+}
+
+function fmtVal(d: (typeof deltas)[number], which: 'before' | 'after'): string {
+  const v = which === 'before' ? d.before : d.after;
+  if (v == null) return '—';
+  if (d.unit === '%') return `${Math.round(v * 100)}%`;
+  if (d.unit === '★') return `${v.toFixed(2)}★`;
+  if (d.unit === 'p') return `${Math.round(v)}p`;
+  return `${v}${d.unit}`;
+}
+
+function deltaDir(delta: number | null): 'up' | 'down' | 'flat' {
+  if (delta == null || Math.abs(delta) < 0.005) return 'flat';
+  return delta > 0 ? 'up' : 'down';
+}
+
+const halves = [before, after] as const;
+---
+
+<Layout title="Metamorphosis — Brian" description="Before and after: how reading taste morphed">
+  <p class="muted small"><a href="/reading">← Reading</a></p>
+  <h1>Metamorphosis</h1>
+  <StatsNav current="/reading/stats/metamorphosis" />
+  <p class="taste-fingerprint">
+    Split the shelf at the midpoint — {before.n} books Then ({before.years}), {after.n} Now ({after.years}).
+    Same reader, different creature.
+  </p>
+
+  <div class="morph-split">
+    {halves.map((h) => (
+      <section class={`morph-half morph-half-${h.label.toLowerCase()}`}>
+        <header class="morph-half-head">
+          <h2>{h.label}</h2>
+          <span class="muted small">{h.years} · {h.n} books</span>
+        </header>
+
+        <dl class="morph-stats">
+          <div>
+            <dt>Fiction</dt>
+            <dd>{h.fictionShare != null ? `${Math.round(h.fictionShare * 100)}%` : '—'}</dd>
+          </div>
+          <div>
+            <dt>Avg rating</dt>
+            <dd>{h.avgRating != null ? `${h.avgRating.toFixed(2)}★` : '—'}</dd>
+          </div>
+          <div>
+            <dt>Median length</dt>
+            <dd>{h.medianPages != null ? `${Math.round(h.medianPages)}p` : '—'}</dd>
+          </div>
+          <div>
+            <dt>Median lag</dt>
+            <dd>{h.medianLag != null ? `${Math.round(h.medianLag)}y` : '—'}</dd>
+          </div>
+        </dl>
+
+        <h3 class="stats-subhead">Top genres</h3>
+        <ul class="morph-tags">
+          {h.topGenres.map((g) => (
+            <li>
+              {g.label}
+              <span class="muted small">{g.n}</span>
+            </li>
+          ))}
+        </ul>
+
+        <h3 class="stats-subhead">Top moods</h3>
+        <ul class="morph-tags">
+          {h.topMoods.map((m) => (
+            <li>
+              {m.label}
+              <span class="muted small">{m.n}</span>
+            </li>
+          ))}
+        </ul>
+
+        <h3 class="stats-subhead">Top authors</h3>
+        <ul class="morph-tags">
+          {h.topAuthors.map((a) => (
+            <li>
+              {a.label}
+              <span class="muted small">{a.n}</span>
+            </li>
+          ))}
+        </ul>
+
+        {h.sampleCovers.length > 0 && (
+          <div class="morph-covers" aria-label={`${h.label} cover samples`}>
+            {h.sampleCovers.map((c) => (
+              <a class="morph-cover" href={`/reading/books/${c.id}`} title={c.title}>
+                {c.cover ? (
+                  <img src={c.cover} alt="" loading="lazy" width="48" height="72" />
+                ) : (
+                  <span
+                    class="morph-cover-fallback"
+                    style={c.color ? `background:${c.color}` : undefined}
+                  />
+                )}
+              </a>
+            ))}
+          </div>
+        )}
+      </section>
+    ))}
+  </div>
+
+  <section class="stats-section">
+    <h2>What shifted</h2>
+    <p class="muted small">Deltas from Then → Now. Positive means the later half grew.</p>
+    <ul class="morph-deltas">
+      {deltas.map((d) => {
+        const dir = deltaDir(d.delta);
+        return (
+          <li class={`morph-delta morph-delta-${dir}`}>
+            <span class="morph-delta-label">{d.label}</span>
+            <span class="morph-delta-vals muted small">
+              {fmtVal(d, 'before')} → {fmtVal(d, 'after')}
+            </span>
+            <span class="morph-delta-change" aria-label={`change ${fmtDelta(d)}`}>
+              <span class="morph-arrow" aria-hidden="true">
+                {dir === 'up' ? '↑' : dir === 'down' ? '↓' : '·'}
+              </span>
+              {fmtDelta(d)}
+            </span>
+          </li>
+        );
+      })}
+    </ul>
+  </section>
+
+  {genreShifts.length > 0 && (
+    <section class="stats-section">
+      <h2>Genre morph</h2>
+      <p class="muted small">Share of books touching each genre — bars show Then (left) vs Now (right).</p>
+      <ul class="morph-shifts">
+        {genreShifts.map((g) => {
+          const dir = deltaDir(g.delta);
+          const barW = pct(Math.abs(g.delta), maxShift);
+          return (
+            <li class={`morph-shift morph-shift-${dir}`}>
+              <div class="morph-shift-label">
+                <span>{g.label}</span>
+                <span class={`morph-shift-delta morph-delta-${dir}`}>
+                  {g.delta > 0 ? '+' : ''}
+                  {Math.round(g.delta * 100)} pts
+                </span>
+              </div>
+              <div class="morph-shift-bars">
+                <div class="morph-shift-pair">
+                  <span class="muted small morph-shift-side">Then</span>
+                  <span class="morph-shift-track">
+                    <span class="morph-shift-fill morph-shift-fill-then" style={`width:${pct(g.before, 1)}`} />
+                  </span>
+                  <span class="muted small morph-shift-pct">{Math.round(g.before * 100)}%</span>
+                </div>
+                <div class="morph-shift-pair">
+                  <span class="muted small morph-shift-side">Now</span>
+                  <span class="morph-shift-track">
+                    <span class="morph-shift-fill morph-shift-fill-now" style={`width:${pct(g.after, 1)}`} />
+                  </span>
+                  <span class="muted small morph-shift-pct">{Math.round(g.after * 100)}%</span>
+                </div>
+              </div>
+              <div class="morph-shift-delta-bar" title={`${barW} of max shift`}>
+                <span
+                  class={`morph-shift-delta-fill morph-shift-delta-fill-${dir}`}
+                  style={`width:${barW}`}
+                />
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  )}
+
+  <p class="muted small stats-footnote">
+    The cut is chronological midpoint of finished books, not calendar years.
+    Trace the year-by-year path on <a href="/reading/stats/evolution">Evolution</a>,
+    or dig up what went extinct on <a href="/reading/stats/fossils">Fossils</a>.
+  </p>
+</Layout>

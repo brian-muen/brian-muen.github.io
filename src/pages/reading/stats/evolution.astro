@@ -1,0 +1,179 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import StatsNav from '../../../components/StatsNav.astro';
+import { loadBooks, pct } from '../../../lib/bookshelf-stats';
+import { buildEvolution } from '../../../lib/stats-viz';
+
+const books = await loadBooks();
+const { years, eras, authorGrowth, genreShare } = buildEvolution(books);
+
+const maxN = Math.max(1, ...years.map((y) => y.n));
+const maxAuthors = Math.max(1, ...authorGrowth.map((a) => a.unique));
+
+// Genre river SVG
+const RW = 720;
+const RH = 220;
+const PAD = { t: 12, b: 28, l: 8, r: 8 };
+const genreColors = [
+  '#5c7a6e',
+  '#8b5e4b',
+  '#4a5e7a',
+  '#7a6b45',
+  '#6a4f63',
+  '#3f6b6b',
+  '#7a4a4a',
+];
+
+function riverPath(seriesIndex: number) {
+  const rows = genreShare.rows;
+  if (rows.length < 2) return '';
+  // stacked shares — bottom of this series
+  const bottoms: number[] = [];
+  const tops: number[] = [];
+  for (const row of rows) {
+    let base = 0;
+    for (let i = 0; i < seriesIndex; i++) base += row.shares[i] ?? 0;
+    bottoms.push(base);
+    tops.push(base + (row.shares[seriesIndex] ?? 0));
+  }
+  const innerH = RH - PAD.t - PAD.b;
+  const innerW = RW - PAD.l - PAD.r;
+  const xAt = (i: number) => PAD.l + (i / Math.max(1, rows.length - 1)) * innerW;
+  const yAt = (v: number) => PAD.t + (1 - v) * innerH;
+
+  let d = `M ${xAt(0).toFixed(1)} ${yAt(tops[0]).toFixed(1)}`;
+  for (let i = 1; i < rows.length; i++) d += ` L ${xAt(i).toFixed(1)} ${yAt(tops[i]).toFixed(1)}`;
+  for (let i = rows.length - 1; i >= 0; i--) d += ` L ${xAt(i).toFixed(1)} ${yAt(bottoms[i]).toFixed(1)}`;
+  d += ' Z';
+  return d;
+}
+
+const first = years[0];
+const last = years[years.length - 1];
+const ficDelta =
+  first?.fictionShare != null && last?.fictionShare != null
+    ? Math.round((last.fictionShare - first.fictionShare) * 100)
+    : null;
+---
+
+<Layout title="Evolution — Brian" description="How my reading taste changed year by year">
+  <p class="muted small"><a href="/reading">← Reading</a></p>
+  <h1>Evolution</h1>
+  <StatsNav current="/reading/stats/evolution" />
+  <p class="taste-fingerprint">
+    Taste isn’t a fixed point — it’s a trail. From {first?.year ?? '—'} to {last?.year ?? '—'} the shelf
+    {ficDelta != null
+      ? ficDelta > 0
+        ? ` grew ${ficDelta} points more fictional`
+        : ficDelta < 0
+          ? ` grew ${-ficDelta} points more nonfictional`
+          : ' held a steady fiction/nonfiction balance'
+      : ' shifted in quieter ways'}
+    . Scroll the eras, then watch genres trade places in the river.
+  </p>
+
+  <section class="stats-section">
+    <h2>Eras</h2>
+    <p class="muted small">Named chapters in the reading life — click a year chip below to jump.</p>
+    <div class="evo-eras">
+      {eras.map((era) => (
+        <article class="evo-era" id={`era-${era.id}`}>
+          <header class="evo-era-head">
+            <h3>{era.label}</h3>
+            <span class="muted small">{era.years.join(' · ')} · {era.n} books</span>
+          </header>
+          <p class="evo-era-blurb">{era.blurb}</p>
+          <div class="evo-era-tags">
+            {era.signature.map((s) => (
+              <span class="evo-tag">{s}</span>
+            ))}
+          </div>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <section class="stats-section">
+    <h2>Year by year</h2>
+    <p class="muted small">Each row is a fingerprint: volume, fiction share, length, and what dominated.</p>
+    <ul class="evo-years">
+      {years.map((y) => (
+        <li class="evo-year">
+          <div class="evo-year-label">
+            <span class="evo-year-num">{y.year}</span>
+            <span class="muted small">{y.n} books</span>
+          </div>
+          <div class="evo-year-body">
+            <div class="evo-meter" title={`${y.n} books`}>
+              <span class="evo-meter-fill" style={`width:${pct(y.n, maxN)}`}></span>
+            </div>
+            <div class="evo-year-stats">
+              <span>{y.avgRating != null ? `${y.avgRating.toFixed(2)}★` : '—'}</span>
+              <span>
+                {y.fictionShare != null ? `${Math.round(y.fictionShare * 100)}% fiction` : 'unclassified'}
+              </span>
+              <span>{y.medianPages != null ? `${Math.round(y.medianPages)}p median` : '—'}</span>
+              <span>{y.medianLag != null ? `${Math.round(y.medianLag)}y lag` : '—'}</span>
+            </div>
+            <div class="evo-year-tags">
+              {y.topGenres.slice(0, 3).map((g) => (
+                <span class="evo-tag">{g.label} · {g.n}</span>
+              ))}
+            </div>
+          </div>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  {genreShare.genres.length > 0 && (
+    <section class="stats-section">
+      <h2>Genre river</h2>
+      <p class="muted small">Share of books touching each top genre, stacked by year — watch the currents trade places.</p>
+      <svg class="evo-river" viewBox={`0 0 ${RW} ${RH}`} role="img" aria-label="Genre share over time">
+        {genreShare.genres.map((_, i) => (
+          <path class="evo-river-band" d={riverPath(i)} fill={genreColors[i % genreColors.length]} opacity="0.85" />
+        ))}
+        {genreShare.rows.map((row, i) => {
+          const x =
+            PAD.l + (i / Math.max(1, genreShare.rows.length - 1)) * (RW - PAD.l - PAD.r);
+          return (
+            <text class="evo-river-tick" x={x} y={RH - 8} text-anchor="middle">
+              {row.year}
+            </text>
+          );
+        })}
+      </svg>
+      <ul class="evo-river-legend">
+        {genreShare.genres.map((g, i) => (
+          <li>
+            <span class="evo-legend-swatch" style={`background:${genreColors[i % genreColors.length]}`}></span>
+            {g}
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  <section class="stats-section">
+    <h2>Author universe</h2>
+    <p class="muted small">Cumulative unique authors — how fast the cast of the shelf expands.</p>
+    <ul class="evo-growth">
+      {authorGrowth.map((a) => (
+        <li>
+          <span class="evo-growth-year">{a.year}</span>
+          <span class="evo-meter">
+            <span class="evo-meter-fill" style={`width:${pct(a.unique, maxAuthors)}`}></span>
+          </span>
+          <span class="evo-growth-n muted small">{a.unique}</span>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <p class="muted small stats-footnote">
+    Eras are interpretive labels on top of the same bookshelf data — not hard boundaries.
+    Pair with <a href="/reading/stats/metamorphosis">Metamorphosis</a> for a before/after cut,
+    or <a href="/reading/stats/fossils">Fossils</a> for tastes that went extinct.
+  </p>
+</Layout>

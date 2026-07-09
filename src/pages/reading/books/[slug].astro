@@ -1,0 +1,82 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../../layouts/Layout.astro';
+
+export async function getStaticPaths() {
+  const books = await getCollection('bookshelf');
+  return books.map((book) => ({
+    params: { slug: book.id },
+    props: { book },
+  }));
+}
+
+const { book } = Astro.props;
+const { Content } = await render(book);
+const hasReview = (book.body?.trim().length ?? 0) > 0;
+
+const fmt = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+
+function stars(n?: number) {
+  if (!n || n <= 0) return null;
+  const full = Math.floor(n);
+  const frac = n - full;
+  return '★'.repeat(full) + (frac ? '½' : '') + '☆'.repeat(5 - full - (frac ? 1 : 0));
+}
+
+const finishedLabel = `Finished ${fmt.format(book.data.dateRead)}`;
+---
+
+<Layout title={`${book.data.title} — Brian`} description={`Read ${book.data.dateRead.toISOString().slice(0, 10)}`}>
+  <p class="muted small"><a href="/reading" id="book-back">← Reading</a></p>
+  <article class="book-detail">
+    {book.data.cover ? (
+      <img class="book-detail-cover" src={book.data.cover} alt={`Cover of ${book.data.title}`} />
+    ) : (
+      <div class="book-cover-placeholder book-detail-cover">{book.data.title}</div>
+    )}
+    <div>
+      <h1>{book.data.title}</h1>
+      <p class="author">{book.data.author}</p>
+      <p class="muted small book-meta">
+        {finishedLabel}
+        {book.data.pages ? ` · ${book.data.pages} pages` : ''}
+        {book.data.pubYear ? ` · first published ${book.data.pubYear}` : ''}
+      </p>
+      {book.data.rating && book.data.rating > 0 && (
+        <p class="rating" aria-label={`${book.data.rating} out of 5 stars`}>{stars(book.data.rating)}</p>
+      )}
+      {hasReview ? (
+        <div class="thoughts book-detail-review">
+          <Content />
+        </div>
+      ) : (
+        <p class="muted small">No review for this one.</p>
+      )}
+    </div>
+  </article>
+</Layout>
+
+<script>
+  const back = document.getElementById('book-back');
+  if (back) {
+    try {
+      const ref = document.referrer ? new URL(document.referrer) : null;
+      const sameOrigin = ref && ref.origin === location.origin;
+      if (sameOrigin && ref.pathname.includes('/reading/stats')) {
+        back.href = '/reading/stats';
+        back.textContent = '← Stats';
+      }
+      back.addEventListener('click', (e) => {
+        if (!sameOrigin || history.length <= 1) return;
+        e.preventDefault();
+        history.back();
+      });
+    } catch {
+      // keep the /reading fallback
+    }
+  }
+</script>

@@ -1,0 +1,296 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import StatsNav from '../../../components/StatsNav.astro';
+import { loadBooks, countMap, colorFamily, hueOf, luminance, shortTitle, safeJsonForScript} from '../../../lib/bookshelf-stats';
+
+const books = await loadBooks();
+const withColor = books.filter((b) => b.coverColor);
+const withMoods = books.filter((b) => b.moods.length > 0);
+
+const familyCounts = countMap(withColor.map((b) => colorFamily(b.coverColor!)));
+const moodCounts = countMap(withMoods.flatMap((b) => b.moods)).slice(0, 16);
+const maxMood = Math.max(...moodCounts.map(([, n]) => n), 1);
+
+// Chronological color river: group by year-quarter
+const river: { key: string; label: string; colors: { id: string; c: string; t: string }[] }[] = [];
+{
+  const map = new Map<string, { id: string; c: string; t: string }[]>();
+  for (const b of withColor) {
+    const d = new Date(b.dateRead);
+    const q = Math.floor(d.getMonth() / 3) + 1;
+    const key = `${d.getFullYear()}-Q${q}`;
+    const list = map.get(key) ?? [];
+    list.push({ id: b.id, c: b.coverColor!, t: shortTitle(b.title) });
+    map.set(key, list);
+  }
+  for (const key of [...map.keys()].sort()) {
+    river.push({ key, label: key, colors: map.get(key)! });
+  }
+}
+
+// Mood × year matrix
+const years = [...new Set(withMoods.map((b) => new Date(b.dateRead).getFullYear()))].sort((a, b) => a - b);
+const topMoods = moodCounts.slice(0, 8).map(([m]) => m);
+const moodYear = topMoods.map((mood) => ({
+  mood,
+  cells: years.map((y) =>
+    withMoods.filter((b) => new Date(b.dateRead).getFullYear() === y && b.moods.includes(mood)).length
+  ),
+}));
+const maxMoodYear = Math.max(...moodYear.flatMap((r) => r.cells), 1);
+
+// Hue timeline scatter
+const W = 640;
+const H = 260;
+const PAD = { l: 40, r: 16, t: 16, b: 28 };
+const t0 = withColor[0]?.dateRead ?? 0;
+const t1 = withColor.at(-1)?.dateRead ?? 1;
+const huePts = withColor.map((b) => {
+  const x = PAD.l + ((b.dateRead - t0) / (t1 - t0 || 1)) * (W - PAD.l - PAD.r);
+  const y = PAD.t + (1 - hueOf(b.coverColor!) / 360) * (H - PAD.t - PAD.b);
+  return {
+    id: b.id,
+    t: shortTitle(b.title),
+    c: b.coverColor!,
+    x: +x.toFixed(1),
+    y: +y.toFixed(1),
+    hue: +hueOf(b.coverColor!).toFixed(0),
+    lum: +luminance(b.coverColor!).toFixed(2),
+  };
+});
+
+const yearTicks: { x: number; label: number }[] = [];
+for (let y = new Date(t0).getFullYear() + 1; y <= new Date(t1).getFullYear(); y++) {
+  const t = new Date(y, 0, 1).valueOf();
+  if (t >= t0 && t <= t1) {
+    yearTicks.push({
+      x: +(PAD.l + ((t - t0) / (t1 - t0 || 1)) * (W - PAD.l - PAD.r)).toFixed(1),
+      label: y,
+    });
+  }
+}
+
+// Lightness over time — average luminance by year
+const lumByYear = years.map((y) => {
+  const subset = withColor.filter((b) => new Date(b.dateRead).getFullYear() === y);
+  const avg = subset.length
+    ? subset.reduce((s, b) => s + luminance(b.coverColor!), 0) / subset.length
+    : 0;
+  return { y, avg, n: subset.length };
+});
+
+const darkest = [...withColor].sort((a, b) => luminance(a.coverColor!) - luminance(b.coverColor!))[0];
+const lightest = [...withColor].sort((a, b) => luminance(b.coverColor!) - luminance(a.coverColor!))[0];
+const topFamily = familyCounts[0];
+
+function heat(n: number) {
+  if (n === 0) return '';
+  const light = Math.max(12, 88 - (n / maxMoodYear) * 76);
+  return `background:hsl(0 0% ${light}%);border-color:hsl(0 0% ${light}%);`;
+}
+
+const hueLabels: Record<number, string> = {
+  0: 'red',
+  60: 'yellow',
+  120: 'green',
+  180: 'cyan',
+  240: 'blue',
+  300: 'magenta',
+};
+
+const payload = { huePts, moods: moodCounts.map(([m]) => m) };
+---
+
+<Layout title="Reading mood — Brian" description="Cover colors and reading moods over time">
+  <p class="muted small"><a href="/reading">← Reading</a></p>
+  <h1>Mood</h1>
+  <StatsNav current="/reading/stats/mood" />
+  <p class="taste-fingerprint">
+    {topFamily
+      ? `Your covers lean ${topFamily[0]} (${topFamily[1]} books). `
+      : ''}
+    {darkest && lightest
+      ? `Darkest cover: ${shortTitle(darkest.title)}. Lightest: ${shortTitle(lightest.title)}.`
+      : ''}
+  </p>
+
+  <section class="stats-section">
+    <h2>Color river</h2>
+    <p class="muted small">Dominant cover colors, flowing by quarter. Hover a band.</p>
+    <div class="color-river" id="color-river">
+      {river.map((seg) => (
+        <div class="river-seg">
+          <div class="river-label muted small">{seg.label}</div>
+          <div class="river-band">
+            {seg.colors.map((c) => (
+              <a
+                class="river-swatch"
+                href={'/reading/books/' + c.id}
+                title={c.t}
+                style={'background:' + c.c}
+              >&nbsp;</a>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="stats-section">
+    <h2>Hue over time</h2>
+    <p class="muted small">Each dot is a cover’s hue. Vertical axis: red at top → violet at bottom.</p>
+    <div class="scatter-wrap">
+      <div class="scatter-readout muted small" id="hue-readout">&nbsp;</div>
+      <svg id="hue-chart" viewBox={'0 0 ' + W + ' ' + H} role="img" aria-label="Cover hue over time">
+        {[0, 60, 120, 180, 240, 300].map((h) => {
+          const y = PAD.t + (1 - h / 360) * (H - PAD.t - PAD.b);
+          return (
+            <g>
+              <line x1={PAD.l} y1={y} x2={W - PAD.r} y2={y} class="tl-grid" />
+              <text x={PAD.l - 6} y={y + 3} class="tl-tick" text-anchor="end">{hueLabels[h]}</text>
+            </g>
+          );
+        })}
+        {yearTicks.map((tk) => (
+          <g>
+            <line x1={tk.x} y1={PAD.t} x2={tk.x} y2={H - PAD.b} class="tl-grid" />
+            <text x={tk.x} y={H - 6} class="tl-tick" text-anchor="middle">{tk.label}</text>
+          </g>
+        ))}
+        {huePts.map((p) => (
+          <a href={'/reading/books/' + p.id}>
+            <circle
+              class="hue-dot"
+              cx={p.x}
+              cy={p.y}
+              r="5"
+              fill={p.c}
+              data-title={p.t}
+              data-hue={p.hue}
+            />
+          </a>
+        ))}
+      </svg>
+    </div>
+  </section>
+
+  <section class="stats-section">
+    <h2>Shelf brightness</h2>
+    <p class="muted small">Average cover luminance by year — did your shelf get darker or lighter?</p>
+    <ul class="stat-bars">
+      {lumByYear.map(({ y, avg, n }) => (
+        <li>
+          <span class="stat-label">{y}</span>
+          <span class="stat-track">
+            <span
+              class="stat-fill lum-fill"
+              style={'--w:' + Math.max(4, Math.round(avg * 100)) + '%;opacity:' + (0.35 + avg * 0.65)}
+            ></span>
+          </span>
+          <span class="stat-value">{n}</span>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  {moodCounts.length > 0 && (
+    <section class="stats-section">
+      <h2>Emotional weather</h2>
+      <p class="muted small">Mood tags from Hardcover / Storygraph. Click a mood to highlight matching covers in the river.</p>
+      <ul class="stat-bars" id="mood-bars">
+        {moodCounts.map(([name, n]) => (
+          <li>
+            <button type="button" class="stat-label wide genre-btn mood-btn" data-mood={name}>{name}</button>
+            <span class="stat-track"><span class="stat-fill" style={'--w:' + Math.max(2, Math.round((n / maxMood) * 100)) + '%'}></span></span>
+            <span class="stat-value">{n}</span>
+          </li>
+        ))}
+      </ul>
+      <p class="muted small filter-status" id="mood-status"></p>
+    </section>
+  )}
+
+  {moodYear.length > 0 && (
+    <section class="stats-section">
+      <h2>Mood × year</h2>
+      <p class="muted small">Which feelings showed up when.</p>
+      <div class="mood-matrix">
+        <div
+          class="mood-matrix-row mood-matrix-head"
+          style={'grid-template-columns:6.5rem repeat(' + years.length + ', 17px)'}
+        >
+          <span class="mood-matrix-label"></span>
+          {years.map((y) => <span class="heatmap-month">{String(y).slice(2)}</span>)}
+        </div>
+        {moodYear.map((row) => (
+          <div
+            class="mood-matrix-row"
+            style={'grid-template-columns:6.5rem repeat(' + years.length + ', 17px)'}
+          >
+            <span class="mood-matrix-label">{row.mood}</span>
+            {row.cells.map((n, i) => (
+              <span
+                class="heatmap-cell mood-cell"
+                style={heat(n)}
+                title={row.mood + ' ' + years[i] + ': ' + n}
+              ></span>
+            ))}
+          </div>
+        ))}
+      </div>
+    </section>
+  )}
+
+  <section class="stats-section">
+    <h2>Color families</h2>
+    <ul class="stat-bars">
+      {familyCounts.map(([name, n]) => (
+        <li>
+          <span class="stat-label wide">{name}</span>
+          <span class="stat-track"><span class="stat-fill" style={'--w:' + Math.max(2, Math.round((n / familyCounts[0][1]) * 100)) + '%'}></span></span>
+          <span class="stat-value">{n}</span>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <p class="muted small stats-footnote">
+    Colors are dominant hues extracted from cover JPEGs. Moods exist for {withMoods.length} of {books.length} books.
+  </p>
+
+  <script type="application/json" id="mood-data" set:html={safeJsonForScript({
+    books: books.map((b) => ({ id: b.id, moods: b.moods, color: b.coverColor })),
+  })} />
+</Layout>
+
+<script>
+  const data = JSON.parse(document.getElementById('mood-data').textContent);
+  let active = null;
+
+  document.getElementById('hue-chart')?.addEventListener('pointerover', (e) => {
+    const d = e.target.closest?.('.hue-dot');
+    if (!d) return;
+    document.getElementById('hue-readout').textContent = `${d.dataset.title} — hue ${d.dataset.hue}°`;
+  });
+  document.getElementById('hue-chart')?.addEventListener('pointerout', () => {
+    document.getElementById('hue-readout').innerHTML = '&nbsp;';
+  });
+
+  document.getElementById('mood-bars')?.addEventListener('click', (e) => {
+    const btn = e.target.closest?.('[data-mood]');
+    if (!btn) return;
+    active = active === btn.dataset.mood ? null : btn.dataset.mood;
+    for (const b of document.querySelectorAll('.mood-btn')) {
+      b.classList.toggle('active', b.dataset.mood === active);
+    }
+    const ids = new Set(
+      active ? data.books.filter((b) => b.moods.includes(active)).map((b) => b.id) : data.books.map((b) => b.id)
+    );
+    for (const a of document.querySelectorAll('.river-swatch')) {
+      const id = a.getAttribute('href')?.split('/').pop();
+      a.style.opacity = !active || ids.has(id) ? '1' : '0.12';
+    }
+    const status = document.getElementById('mood-status');
+    status.textContent = active ? `Highlighting covers tagged “${active}”` : '';
+  });
+</script>

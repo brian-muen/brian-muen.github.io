@@ -6,9 +6,18 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "import:goodreads": "node scripts/import-goodreads.mjs",
+    "import:storygraph": "node scripts/import-storygraph.mjs",
+    "restore:covers:storygraph": "node scripts/restore-covers-from-storygraph.mjs",
+    "enrich:bookshelf": "node scripts/enrich-bookshelf.mjs",
+    "recolor:covers": "node scripts/recolor-covers.mjs"
   },
   "dependencies": {
     "astro": "^5.0.0"
+  },
+  "devDependencies": {
+    "csv-parse": "^7.0.1",
+    "jpeg-js": "^0.4.4"
   }
 }

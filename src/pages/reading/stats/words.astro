@@ -1,0 +1,246 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import StatsNav from '../../../components/StatsNav.astro';
+import { loadBooks, shortTitle, wordCounts, tokenizeReview, safeJsonForScript} from '../../../lib/bookshelf-stats';
+
+const books = await loadBooks();
+const reviewed = books.filter((b) => b.review.length > 40);
+
+const words = wordCounts(
+  reviewed.map((b) => b.review),
+  80
+);
+const maxW = words[0]?.[1] ?? 1;
+
+const reviewStats = reviewed
+  .map((b) => {
+    const tokens = tokenizeReview(b.review);
+    return {
+      id: b.id,
+      t: shortTitle(b.title),
+      a: b.author,
+      rating: b.rating,
+      chars: b.review.length,
+      words: tokens.length,
+      cover: b.cover,
+      color: b.coverColor,
+    };
+  })
+  .sort((a, b) => b.words - a.words);
+
+const avgWords =
+  reviewStats.reduce((s, r) => s + r.words, 0) / (reviewStats.length || 1);
+
+// Rating vs review length
+const W = 640;
+const H = 240;
+const PAD = { l: 36, r: 14, t: 14, b: 28 };
+const maxWords = Math.max(...reviewStats.map((r) => r.words), 1);
+const scatter = reviewStats
+  .filter((r) => r.rating != null)
+  .map((r) => ({
+    ...r,
+    x: +(PAD.l + (r.words / maxWords) * (W - PAD.l - PAD.r)).toFixed(1),
+    y: +(PAD.t + ((5 - (r.rating ?? 0)) / 4) * (H - PAD.t - PAD.b)).toFixed(1),
+  }));
+
+// Correlation-ish: avg review length by rating bucket
+const byRating = [1, 2, 3, 4, 5].map((r) => {
+  const list = reviewStats.filter((x) => x.rating === r);
+  return {
+    r,
+    n: list.length,
+    avg: list.length ? list.reduce((s, x) => s + x.words, 0) / list.length : 0,
+  };
+});
+const maxAvg = Math.max(...byRating.map((x) => x.avg), 1);
+
+// Per-book distinctive words (words that appear in this review but rarely elsewhere)
+const global = new Map(words);
+const signatures = reviewed
+  .map((b) => {
+    const local = new Map<string, number>();
+    for (const w of tokenizeReview(b.review)) local.set(w, (local.get(w) ?? 0) + 1);
+    const scored = [...local.entries()]
+      .map(([w, n]) => {
+        const g = global.get(w) ?? n;
+        return { w, score: n / Math.sqrt(g) };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5)
+      .map((x) => x.w);
+    return {
+      id: b.id,
+      t: shortTitle(b.title),
+      rating: b.rating,
+      words: scored,
+      len: tokenizeReview(b.review).length,
+    };
+  })
+  .filter((s) => s.words.length >= 3)
+  .sort((a, b) => b.len - a.len);
+
+const longest = reviewStats[0];
+const shortest = [...reviewStats].sort((a, b) => a.words - b.words)[0];
+---
+
+<Layout title="Review words — Brian" description="Language quirks from your book reviews">
+  <p class="muted small"><a href="/reading">← Reading</a></p>
+  <h1>Words</h1>
+  <StatsNav current="/reading/stats/words" />
+  <p class="taste-fingerprint">
+    {reviewed.length} reviews on the shelf
+    {longest ? ` — longest on ${longest.t} (${longest.words} words)` : ''}.
+    Average review: {Math.round(avgWords)} content words.
+  </p>
+
+  {reviewed.length === 0 ? (
+    <p class="muted">No review text found yet.</p>
+  ) : (
+    <>
+      <section class="stats-section">
+        <h2>Word frequency</h2>
+        <p class="muted small">Most-used content words across your reviews. Click a word to find where it appears.</p>
+        <ul class="stat-bars" id="word-bars">
+          {words.slice(0, 24).map(([w, n]) => (
+            <li>
+              <button type="button" class="stat-label wide genre-btn word-btn" data-word={w}>{w}</button>
+              <span class="stat-track"><span class="stat-fill" style={`--w:${Math.max(2, Math.round((n / maxW) * 100))}%`}></span></span>
+              <span class="stat-value">{n}</span>
+            </li>
+          ))}
+        </ul>
+        <div class="heatmap-detail" id="word-detail" hidden></div>
+      </section>
+
+      <section class="stats-section">
+        <h2>Does love make you write more?</h2>
+        <p class="muted small">Review length (content words) vs rating. Hover a dot.</p>
+        <div class="scatter-wrap">
+          <div class="scatter-readout muted small" id="words-readout">&nbsp;</div>
+          <svg id="words-scatter" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Review length versus rating">
+            {[1, 2, 3, 4, 5].map((r) => {
+              const y = PAD.t + ((5 - r) / 4) * (H - PAD.t - PAD.b);
+              return (
+                <g>
+                  <line x1={PAD.l} y1={y} x2={W - PAD.r} y2={y} class="tl-grid" />
+                  <text x={PAD.l - 6} y={y + 3} class="tl-tick" text-anchor="end">{r}★</text>
+                </g>
+              );
+            })}
+            {[0, 0.5, 1].map((f) => {
+              const x = PAD.l + f * (W - PAD.l - PAD.r);
+              return <text x={x} y={H - 6} class="tl-tick" text-anchor="middle">{Math.round(f * maxWords)}</text>;
+            })}
+            {scatter.map((p) => (
+              <a href={`/reading/books/${p.id}`}>
+                <circle
+                  class="scatter-dot"
+                  cx={p.x}
+                  cy={p.y}
+                  r="5"
+                  data-title={p.t}
+                  data-words={p.words}
+                  data-rating={p.rating}
+                />
+              </a>
+            ))}
+          </svg>
+        </div>
+        <ul class="stat-bars" style="margin-top:1.25rem">
+          {byRating.filter((x) => x.n > 0).map((x) => (
+            <li>
+              <span class="stat-label">{x.r}★</span>
+              <span class="stat-track"><span class="stat-fill" style={`--w:${Math.max(2, Math.round((x.avg / maxAvg) * 100))}%`}></span></span>
+              <span class="stat-value">{Math.round(x.avg)}</span>
+            </li>
+          ))}
+        </ul>
+        <p class="muted small">Average content words per review, by star rating.</p>
+      </section>
+
+      <section class="stats-section">
+        <h2>Signature phrases</h2>
+        <p class="muted small">Words that stand out in each review relative to the rest of your writing.</p>
+        <ul class="signature-list">
+          {signatures.slice(0, 12).map((s) => (
+            <li>
+              <a href={`/reading/books/${s.id}`}><em>{s.t}</em></a>
+              <span class="sig-words">
+                {s.words.map((w) => <span class="sig-chip">{w}</span>)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section class="stats-section">
+        <h2>Longest & shortest</h2>
+        <ul class="archaeology">
+          {longest && (
+            <li>
+              <a href={`/reading/books/${longest.id}`}>Longest review</a>
+              <span><em>{longest.t}</em> — {longest.words} words</span>
+            </li>
+          )}
+          {shortest && (
+            <li>
+              <a href={`/reading/books/${shortest.id}`}>Shortest review</a>
+              <span><em>{shortest.t}</em> — {shortest.words} words</span>
+            </li>
+          )}
+        </ul>
+      </section>
+    </>
+  )}
+
+  <p class="muted small stats-footnote">
+    Stopwords removed. Goodreads link markup stripped. Only books with a written review body are included ({reviewed.length} of {books.length}).
+  </p>
+
+  <script type="application/json" id="words-data" set:html={safeJsonForScript({
+    reviews: reviewed.map((b) => ({
+      id: b.id,
+      t: shortTitle(b.title),
+      tokens: tokenizeReview(b.review),
+    })),
+  })} />
+</Layout>
+
+<script>
+  import { esc, bookHref, bookId, safeCoverSrc, safeHex } from '../../../lib/dom-safe';
+
+  const data = JSON.parse(document.getElementById('words-data').textContent);
+  const detail = document.getElementById('word-detail');
+
+
+  function showWord(word) {
+    const hits = data.reviews
+      .map((r) => ({ ...r, n: r.tokens.filter((t) => t === word).length }))
+      .filter((r) => r.n > 0)
+      .sort((a, b) => b.n - a.n);
+    detail.innerHTML =
+      `<p class="heatmap-detail-title">“${esc(word)}” — ${hits.length} review${hits.length === 1 ? '' : 's'}</p><ul>` +
+      hits.map((r) => `<li><a href="${bookHref(r.id)}">${esc(r.t)}</a> <span class="muted small">×${r.n}</span></li>`).join('') +
+      '</ul>';
+    detail.hidden = false;
+    for (const el of document.querySelectorAll('.word-btn')) {
+      el.classList.toggle('active', el.dataset.word === word);
+    }
+  }
+
+  document.getElementById('word-bars')?.addEventListener('click', (e) => {
+    const btn = e.target.closest?.('[data-word]');
+    if (btn) showWord(btn.dataset.word);
+  });
+
+  document.getElementById('words-scatter')?.addEventListener('pointerover', (e) => {
+    const d = e.target.closest?.('.scatter-dot');
+    if (!d) return;
+    document.getElementById('words-readout').textContent =
+      `${d.dataset.title} — ${d.dataset.words} words · ${d.dataset.rating}★`;
+  });
+  document.getElementById('words-scatter')?.addEventListener('pointerout', () => {
+    document.getElementById('words-readout').innerHTML = '&nbsp;';
+  });
+</script>
