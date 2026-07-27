@@ -3,30 +3,80 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light dark">
   <title>EE World Model Architecture Lab</title>
+  <meta name="description" content="Interactive map of the Open Dreams visual Diffusion Forcing world model and the proposed end-effector command-response adapter.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem('theme');
+        if (stored !== 'light' && stored !== 'dark') {
+          stored = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', stored);
+      } catch (error) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
   <style>
+    /* ---------------------------------------------------------------- tokens */
     :root {
-      color-scheme: light dark;
-      --bg: light-dark(#f7f8fa, #111318);
-      --surface: light-dark(#ffffff, #191c22);
-      --surface-2: light-dark(#eef1f5, #232730);
-      --text: light-dark(#17191d, #f4f6f8);
-      --muted: light-dark(#606773, #a8b0bd);
-      --border: light-dark(#dce1e8, #343a45);
-      --primary: light-dark(#1468d4, #79b4ff);
-      --primary-soft: light-dark(#e8f1ff, #162d4a);
-      --visual: light-dark(#2272dc, #78b7ff);
-      --action: light-dark(#c46615, #f0a35d);
-      --state: light-dark(#18824b, #67ce93);
-      --time: light-dark(#7b52c7, #b69af0);
-      --danger: light-dark(#bd3e34, #ff8f86);
-      --clean: light-dark(#f5f7fa, #252a33);
-      --noise: light-dark(#185ea9, #70b6ff);
-      --radius: 16px;
-      --shadow: 0 14px 40px light-dark(rgb(25 35 50 / 8%), rgb(0 0 0 / 28%));
-      --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      color-scheme: light;
+      --paper: #faf9f7;
+      --paper-2: #f4f2ed;
+      --surface: #ffffff;
+      --surface-2: #f4f2ed;
+      --text: #1a1814;
+      --muted: #6d675c;
+      --faint: #918a7d;
+      --border: #e4e0d8;
+      --border-strong: #cfc9bd;
+      --ink: #1a1814;
+      --ink-contrast: #fbfaf7;
+      --visual: #3f66a8;
+      --action: #ad6624;
+      --state: #3a7a4f;
+      --time: #6b53a4;
+      --danger: #a5412e;
+      --heat-0: #f1efe9;
+      --heat-1: #9dbde0;
+      --shadow-sm: 0 1px 2px rgb(26 24 20 / 5%), 0 1px 1px rgb(26 24 20 / 3%);
+      --shadow-md: 0 8px 24px -12px rgb(26 24 20 / 18%), 0 2px 6px -2px rgb(26 24 20 / 8%);
+      --serif: 'EB Garamond', Garamond, 'Apple Garamond', 'Times New Roman', serif;
+      --sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+      --radius: 14px;
+      --radius-sm: 10px;
+      --label-col: 84px;
+      --cell-gap: 4px;
+    }
+
+    html[data-theme='dark'] {
+      color-scheme: dark;
+      --paper: #141311;
+      --paper-2: #1b1a18;
+      --surface: #1c1b19;
+      --surface-2: #24221f;
+      --text: #f2efe8;
+      --muted: #9a958c;
+      --faint: #7d786f;
+      --border: #302d29;
+      --border-strong: #433f39;
+      --ink: #f2efe8;
+      --ink-contrast: #16150f;
+      --visual: #8fb0e8;
+      --action: #dfa367;
+      --state: #82c598;
+      --time: #b49ae4;
+      --danger: #ef9188;
+      --heat-0: #23211e;
+      --heat-1: #35577c;
+      --shadow-sm: 0 1px 2px rgb(0 0 0 / 30%);
+      --shadow-md: 0 10px 30px -14px rgb(0 0 0 / 60%), 0 2px 8px -4px rgb(0 0 0 / 40%);
     }
 
     * {
@@ -34,23 +84,31 @@
     }
 
     html {
-      scroll-behavior: smooth;
+      -webkit-text-size-adjust: 100%;
     }
 
     body {
       margin: 0;
       color: var(--text);
       background:
-        radial-gradient(circle at 16% 0%, color-mix(in srgb, var(--primary) 8%, transparent), transparent 30rem),
-        var(--bg);
-      font-family: var(--font);
+        radial-gradient(circle at 12% -8%, color-mix(in srgb, var(--visual) 7%, transparent), transparent 34rem),
+        radial-gradient(circle at 92% 4%, color-mix(in srgb, var(--action) 5%, transparent), transparent 26rem),
+        var(--paper);
+      font-family: var(--sans);
       font-size: 15px;
       line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    ::selection {
+      background: color-mix(in srgb, var(--visual) 22%, transparent);
     }
 
     button,
-    select {
+    select,
+    input {
       font: inherit;
+      color: inherit;
     }
 
     button,
@@ -58,499 +116,321 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    button:focus-visible,
-    select:focus-visible,
-    a:focus-visible,
-    summary:focus-visible {
-      outline: 3px solid color-mix(in srgb, var(--primary) 46%, transparent);
-      outline-offset: 3px;
+    :focus-visible {
+      outline: 2px solid color-mix(in srgb, var(--visual) 70%, var(--text));
+      outline-offset: 2px;
     }
 
     a {
-      color: var(--primary);
+      color: var(--text);
+      text-decoration-color: color-mix(in srgb, var(--text) 30%, transparent);
+      text-decoration-thickness: 1px;
       text-underline-offset: 3px;
+    }
+
+    a:hover {
+      text-decoration-color: currentcolor;
     }
 
     code {
       overflow-wrap: anywhere;
       font-family: var(--mono);
-      font-size: 0.9em;
-    }
-
-    .shell {
-      width: min(1180px, calc(100% - 32px));
-      margin: 0 auto;
-      padding: 28px 0 64px;
-    }
-
-    .masthead {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 20px;
-      align-items: end;
-      margin-bottom: 22px;
-    }
-
-    .eyebrow,
-    .kicker {
-      color: var(--muted);
-      font-size: 0.78rem;
-      font-weight: 500;
-      letter-spacing: 0.09em;
-      text-transform: uppercase;
+      font-size: 0.86em;
+      font-variant-ligatures: none;
     }
 
     h1,
     h2,
     h3,
-    p {
+    p,
+    dl,
+    figure {
       margin: 0;
     }
 
-    h1 {
-      margin-top: 4px;
-      font-size: clamp(1.65rem, 4vw, 2.55rem);
+    /* ------------------------------------------------------------- structure */
+    .page {
+      width: min(1160px, 100% - 3rem);
+      margin: 0 auto;
+      padding-bottom: 5rem;
+    }
+
+    .topbar {
+      display: flex;
+      gap: 18px;
+      align-items: center;
+      padding: 20px 0 26px;
+    }
+
+    .topbar .home {
+      margin-right: auto;
+      color: var(--text);
+      font-family: var(--serif);
+      font-size: 1.12rem;
+      text-decoration: none;
+    }
+
+    .topnav {
+      display: flex;
+      gap: 16px;
+      align-items: baseline;
+      font-family: var(--serif);
+      font-size: 1rem;
+    }
+
+    .topnav a {
+      color: var(--muted);
+      text-decoration: none;
+    }
+
+    .topnav a:hover {
+      color: var(--text);
+    }
+
+    .topnav .here {
+      color: var(--text);
+    }
+
+    .theme-btn {
+      display: grid;
+      width: 30px;
+      height: 30px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      place-items: center;
+    }
+
+    .theme-btn::before {
+      width: 11px;
+      height: 11px;
+      border-radius: 999px;
+      background:
+        linear-gradient(135deg, var(--text) 0 50%, transparent 50% 100%),
+        var(--surface-2);
+      box-shadow: inset 0 0 0 1px var(--border-strong);
+      content: '';
+    }
+
+    .theme-btn:hover {
+      border-color: var(--border-strong);
+    }
+
+    /* -------------------------------------------------------------- masthead */
+    .masthead {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 28px;
+      align-items: end;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .eyebrow,
+    .kicker,
+    .lane-name,
+    .switch-label {
+      color: var(--faint);
+      font-size: 0.7rem;
       font-weight: 500;
-      line-height: 1.08;
-      letter-spacing: -0.035em;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin-top: 10px;
+      font-family: var(--serif);
+      font-size: clamp(2.1rem, 5vw, 3.1rem);
+      font-weight: 400;
+      line-height: 1.02;
+      letter-spacing: -0.015em;
     }
 
     h2 {
-      font-size: 1.12rem;
-      font-weight: 500;
+      font-family: var(--serif);
+      font-size: 1.32rem;
+      font-weight: 400;
+      line-height: 1.2;
     }
 
     h3 {
-      font-size: 1rem;
-      font-weight: 500;
+      font-family: var(--serif);
+      font-size: 1.1rem;
+      font-weight: 400;
     }
 
     .lede {
-      max-width: 760px;
-      margin-top: 9px;
+      max-width: 46ch;
+      margin-top: 12px;
       color: var(--muted);
+      font-family: var(--serif);
+      font-size: 1.12rem;
+      line-height: 1.45;
     }
 
-    .mode-tabs,
-    .controls,
-    .legend,
-    .inline-actions,
-    .phase-tabs,
-    .compare-tabs {
-      display: flex;
-      flex-wrap: wrap;
+    .mode-switch {
+      display: grid;
       gap: 8px;
-      align-items: center;
+      justify-items: end;
     }
 
-    .btn,
-    .tab,
-    select {
-      min-height: 38px;
+    .segmented {
+      display: flex;
+      padding: 3px;
       border: 1px solid var(--border);
-      border-radius: 10px;
-      color: var(--text);
-      background: var(--surface);
-    }
-
-    .btn,
-    .tab {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 7px;
-      padding: 7px 12px;
-      cursor: pointer;
-    }
-
-    .btn:hover,
-    .tab:hover {
+      border-radius: 999px;
       background: var(--surface-2);
     }
 
-    .tab[aria-selected="true"],
-    .tab[aria-pressed="true"],
-    .btn[aria-pressed="true"],
+    .segmented .tab {
+      min-height: 32px;
+      padding: 4px 16px;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .segmented .tab:hover {
+      color: var(--text);
+    }
+
+    .segmented .tab[aria-pressed='true'] {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* ------------------------------------------------------------ mode strip */
+    .status-line {
+      --accent: var(--state);
+
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin: 18px 0 22px;
+      padding: 11px 14px;
+      border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+      border-left: 3px solid var(--accent);
+      border-radius: 4px var(--radius-sm) var(--radius-sm) 4px;
+      background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+      color: var(--muted);
+    }
+
+    [data-mode='target'] .status-line {
+      --accent: var(--visual);
+    }
+
+    [data-mode='overlay'] .status-line {
+      --accent: var(--action);
+    }
+
+    /* ---------------------------------------------------------------- badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      width: max-content;
+      padding: 2px 9px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+    }
+
+    .badge.current {
+      border-color: color-mix(in srgb, var(--state) 30%, var(--border));
+      background: color-mix(in srgb, var(--state) 12%, var(--surface));
+      color: color-mix(in srgb, var(--state) 72%, var(--text));
+    }
+
+    .badge.modify {
+      border-color: color-mix(in srgb, var(--action) 32%, var(--border));
+      background: color-mix(in srgb, var(--action) 13%, var(--surface));
+      color: color-mix(in srgb, var(--action) 72%, var(--text));
+    }
+
+    .badge.new {
+      border-color: color-mix(in srgb, var(--visual) 32%, var(--border));
+      background: color-mix(in srgb, var(--visual) 12%, var(--surface));
+      color: color-mix(in srgb, var(--visual) 72%, var(--text));
+    }
+
+    .badge.reference {
+      border-color: color-mix(in srgb, var(--time) 30%, var(--border));
+      background: color-mix(in srgb, var(--time) 12%, var(--surface));
+      color: color-mix(in srgb, var(--time) 72%, var(--text));
+    }
+
+    /* -------------------------------------------------------------- controls */
+    .btn,
+    select {
+      min-height: 34px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn {
+      display: inline-flex;
+      gap: 7px;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 13px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      border-color: var(--border-strong);
+      background: var(--surface-2);
+    }
+
     .btn.primary {
-      border-color: var(--primary);
-      color: light-dark(#ffffff, #101318);
-      background: var(--primary);
+      border-color: var(--ink);
+      background: var(--ink);
+      color: var(--ink-contrast);
+    }
+
+    .btn.primary:hover {
+      background: color-mix(in srgb, var(--ink) 88%, var(--paper));
     }
 
     .btn.ghost {
       border-color: transparent;
       background: transparent;
-    }
-
-    .status-line {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      min-height: 42px;
-      margin-bottom: 14px;
-      padding: 9px 12px;
-      border-left: 3px solid var(--primary);
-      color: var(--muted);
-      background: color-mix(in srgb, var(--surface) 72%, transparent);
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      width: max-content;
-      padding: 2px 8px;
-      border-radius: 999px;
-      color: var(--text);
-      background: var(--surface-2);
-      font-size: 0.76rem;
-      font-weight: 500;
-      white-space: nowrap;
-    }
-
-    .badge.current {
-      background: color-mix(in srgb, var(--state) 18%, var(--surface));
-    }
-
-    .badge.modify {
-      background: color-mix(in srgb, var(--action) 20%, var(--surface));
-    }
-
-    .badge.new {
-      background: color-mix(in srgb, var(--visual) 18%, var(--surface));
-    }
-
-    .badge.reference {
-      background: color-mix(in srgb, var(--time) 18%, var(--surface));
-    }
-
-    .workspace {
-      display: grid;
-      grid-template-columns: minmax(0, 1.65fr) minmax(280px, 0.75fr);
-      gap: 16px;
-      align-items: stretch;
-    }
-
-    .card {
-      min-width: 0;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface);
-      box-shadow: var(--shadow);
-    }
-
-    .architecture {
-      padding: 18px;
-    }
-
-    .section-head {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: start;
-      justify-content: space-between;
-      margin-bottom: 14px;
-    }
-
-    .section-head p {
-      max-width: 680px;
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-
-    .architecture-grid {
-      display: grid;
-      grid-template-columns:
-        minmax(88px, 0.85fr) 20px
-        minmax(94px, 0.9fr) 20px
-        minmax(94px, 0.9fr) 20px
-        minmax(108px, 1fr) 20px
-        minmax(96px, 0.9fr) 20px
-        minmax(100px, 0.95fr);
-      grid-template-rows: repeat(4, minmax(66px, auto));
-      gap: 10px 4px;
-      align-items: center;
-      margin-top: 18px;
-    }
-
-    .node {
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-      align-items: flex-start;
-      justify-content: center;
-      width: 100%;
-      min-width: 0;
-      min-height: 64px;
-      padding: 10px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      color: var(--text);
-      background: var(--surface-2);
-      text-align: left;
-      cursor: pointer;
-    }
-
-    .node strong {
-      font-weight: 500;
-    }
-
-    .node small {
-      color: var(--muted);
-      font-size: 0.76rem;
-    }
-
-    .node[data-kind="visual"] {
-      background: color-mix(in srgb, var(--visual) 12%, var(--surface));
-    }
-
-    .node[data-kind="action"] {
-      background: color-mix(in srgb, var(--action) 12%, var(--surface));
-    }
-
-    .node[data-kind="state"] {
-      background: color-mix(in srgb, var(--state) 12%, var(--surface));
-    }
-
-    .node[data-kind="time"] {
-      background: color-mix(in srgb, var(--time) 12%, var(--surface));
-    }
-
-    .node[aria-pressed="true"] {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
-    }
-
-    .arrow {
-      position: relative;
-      height: 2px;
-      background: var(--border);
-    }
-
-    .arrow::after {
-      position: absolute;
-      top: 50%;
-      right: -1px;
-      width: 8px;
-      height: 8px;
-      border-top: 2px solid var(--muted);
-      border-right: 2px solid var(--muted);
-      content: "";
-      transform: translateY(-50%) rotate(45deg);
-    }
-
-    .camera { grid-area: 1 / 1; }
-    .a1 { grid-area: 1 / 2; }
-    .vae { grid-area: 1 / 3; }
-    .a2 { grid-area: 1 / 4; }
-    .camera-token { grid-area: 1 / 5; }
-    .camera-pack-arrow { grid-area: 1 / 6; }
-    .action { grid-area: 2 / 1; }
-    .a4 { grid-area: 2 / 2; }
-    .action-embed { grid-area: 2 / 3; }
-    .action-token-node { grid-area: 2 / 5; }
-    .action-pack-arrow { grid-area: 2 / 6; }
-    .noise-input { grid-area: 3 / 1; }
-    .noise-arrow { grid-area: 3 / 2; }
-    .time-embed { grid-area: 3 / 3; }
-    .time-token { grid-area: 3 / 5; }
-    .time-pack-arrow { grid-area: 3 / 6; }
-    .ee { grid-area: 4 / 1; }
-    .a7 { grid-area: 4 / 2; }
-    .adapter { grid-area: 4 / 3; }
-    .state-token { grid-area: 4 / 5; }
-    .state-pack-arrow { grid-area: 4 / 6; }
-    .token-pack {
-      grid-column: 7;
-      grid-row: 1 / -1;
-      align-self: stretch;
-    }
-    .a3 {
-      grid-column: 8;
-      grid-row: 1 / -1;
-    }
-    .dit {
-      grid-column: 9;
-      grid-row: 1 / -1;
-      align-self: stretch;
-    }
-    .a6 {
-      grid-column: 10;
-      grid-row: 1 / -1;
-    }
-    .velocity {
-      grid-column: 11;
-      grid-row: 1 / -1;
-      align-self: stretch;
-    }
-
-    [data-mode="current"] .target-only {
-      display: none;
-    }
-
-    [data-mode="current"] .architecture-grid {
-      grid-template-rows: repeat(3, minmax(66px, auto));
-    }
-
-    [data-mode="overlay"] .target-only .node,
-    [data-mode="overlay"] .node.target-only {
-      border-style: dashed;
-    }
-
-    .join-note {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      align-items: center;
-      margin-top: 16px;
-      color: var(--muted);
-      font-size: 0.86rem;
-    }
-
-    .token-strip {
-      display: grid;
-      grid-template-columns: 52px 52px minmax(120px, 1fr);
-      gap: 5px;
-      margin-top: 14px;
-    }
-
-    [data-mode="target"] .token-strip,
-    [data-mode="overlay"] .token-strip {
-      grid-template-columns: 52px 52px 52px minmax(120px, 1fr);
-    }
-
-    .token {
-      display: flex;
-      min-width: 0;
-      min-height: 40px;
-      align-items: center;
-      justify-content: center;
-      padding: 6px;
-      border-radius: 9px;
-      text-align: center;
-      font-size: 0.76rem;
-    }
-
-    .token.action-token { background: color-mix(in srgb, var(--action) 22%, transparent); }
-    .token.time { background: color-mix(in srgb, var(--time) 22%, transparent); }
-    .token.state-token-block { background: color-mix(in srgb, var(--state) 22%, transparent); }
-    .token.patches {
-      background:
-        repeating-linear-gradient(
-          90deg,
-          color-mix(in srgb, var(--visual) 16%, transparent) 0 13px,
-          color-mix(in srgb, var(--visual) 29%, transparent) 13px 14px
-        );
-    }
-
-    .token.state-token-block {
-      display: none;
-    }
-
-    [data-mode="target"] .token.state-token-block,
-    [data-mode="overlay"] .token.state-token-block {
-      display: flex;
-    }
-
-    .token-total {
-      margin-top: 7px;
-      color: var(--muted);
-      font-size: 0.82rem;
-    }
-
-    .inspector {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      padding: 18px;
-    }
-
-    .inspector-title {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .inspector-grid {
-      display: grid;
-      grid-template-columns: auto minmax(0, 1fr);
-      gap: 7px 10px;
-      align-items: start;
-    }
-
-    .inspector-grid dt {
-      color: var(--muted);
-    }
-
-    .inspector-grid dd {
-      min-width: 0;
-      margin: 0;
-    }
-
-    .file-ref {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 8px;
-      align-items: center;
-      padding-top: 10px;
-      border-top: 1px solid var(--border);
-    }
-
-    .copy-feedback {
-      min-height: 22px;
+      box-shadow: none;
       color: var(--muted);
       font-size: 0.78rem;
     }
 
-    .secondary {
-      display: grid;
-      gap: 12px;
-      margin-top: 16px;
+    .btn.ghost:hover {
+      border-color: var(--border);
+      background: var(--surface-2);
+      color: var(--text);
     }
 
-    details {
-      overflow: clip;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface);
-    }
-
-    summary {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      justify-content: space-between;
-      padding: 15px 18px;
+    select {
+      width: 100%;
+      padding: 6px 32px 6px 11px;
+      appearance: none;
+      background-image:
+        linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+        linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+      background-repeat: no-repeat;
+      background-position: right 15px center, right 10px center;
+      background-size: 5px 5px, 5px 5px;
       cursor: pointer;
-      font-weight: 500;
-      list-style: none;
-    }
-
-    summary::-webkit-details-marker {
-      display: none;
-    }
-
-    summary::after {
-      color: var(--muted);
-      content: "+";
-      font-size: 1.25rem;
-    }
-
-    details[open] summary::after {
-      content: "−";
-    }
-
-    .detail-body {
-      padding: 0 18px 20px;
-    }
-
-    .schedule-toolbar {
-      display: grid;
-      grid-template-columns: minmax(230px, 1fr) auto;
-      gap: 12px;
-      align-items: end;
-      margin-bottom: 14px;
     }
 
     .field {
@@ -559,170 +439,818 @@
     }
 
     .field label {
-      color: var(--muted);
-      font-size: 0.8rem;
+      color: var(--faint);
+      font-size: 0.76rem;
+      letter-spacing: 0.02em;
     }
 
-    select {
-      width: 100%;
-      padding: 7px 34px 7px 10px;
-    }
-
-    .schedule-meta {
+    .controls {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
       align-items: center;
-      margin-bottom: 12px;
+    }
+
+    .check {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .check input {
+      width: 15px;
+      height: 15px;
+      accent-color: var(--visual);
+    }
+
+    /* ----------------------------------------------------------------- cards */
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1.62fr) minmax(290px, 0.78fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .card {
+      min-width: 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow-md);
+    }
+
+    .architecture {
+      padding: 20px 20px 22px;
+    }
+
+    .section-head {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: start;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .section-head h2 {
+      margin-top: 3px;
+    }
+
+    /* ------------------------------------------------------------- swimlanes */
+    .lanes {
+      display: grid;
+      gap: 8px;
+    }
+
+    .lane {
+      display: grid;
+      grid-template-columns: 94px minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+    }
+
+    .lane-head {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+      justify-content: flex-end;
+      text-align: right;
+    }
+
+    .lane-dot {
+      flex: none;
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--lane, var(--muted));
+    }
+
+    .lane[data-kind='visual'] { --lane: var(--visual); }
+    .lane[data-kind='action'] { --lane: var(--action); }
+    .lane[data-kind='time'] { --lane: var(--time); }
+    .lane[data-kind='state'] { --lane: var(--state); }
+
+    .track {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 22px minmax(0, 1fr) 22px minmax(0, 1fr);
+      gap: 0;
+      align-items: stretch;
+      padding: 8px;
+      border: 1px solid color-mix(in srgb, var(--lane) 18%, var(--border));
+      border-radius: 12px;
+      background: color-mix(in srgb, var(--lane) 5%, var(--surface));
+    }
+
+    /* ----------------------------------------------------------------- nodes */
+    .node {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      align-items: flex-start;
+      justify-content: center;
+      width: 100%;
+      min-width: 0;
+      min-height: 58px;
+      padding: 9px 11px;
+      border: 1px solid var(--border);
+      border-left: 3px solid color-mix(in srgb, var(--lane, var(--muted)) 55%, var(--border));
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+      color: var(--text);
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .node strong {
+      font-size: 0.86rem;
+      font-weight: 500;
+      letter-spacing: -0.004em;
+      line-height: 1.25;
+    }
+
+    .node small {
+      color: var(--muted);
+      font-size: 0.73rem;
+      line-height: 1.3;
+    }
+
+    .node:hover {
+      border-color: var(--border-strong);
+      border-left-color: var(--lane, var(--muted));
+      box-shadow: var(--shadow-md);
+    }
+
+    .node[aria-pressed='true'] {
+      border-color: var(--ink);
+      border-left-color: var(--lane, var(--ink));
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink) 11%, transparent);
+    }
+
+    /* ------------------------------------------------------------ connectors */
+    .link {
+      position: relative;
+      align-self: center;
+      height: 1px;
+      background: var(--border-strong);
+    }
+
+    .link::after {
+      position: absolute;
+      top: 50%;
+      right: 0;
+      width: 6px;
+      height: 6px;
+      border-top: 1px solid var(--faint);
+      border-right: 1px solid var(--faint);
+      content: '';
+      transform: translateY(-50%) rotate(45deg);
+    }
+
+    /* ---------------------------------------------------------------- funnel */
+    .funnel {
+      position: relative;
+      height: 46px;
+      margin-top: 2px;
+    }
+
+    .funnel {
+      /* centre of the first pipeline column, so the drop lands on the token pack */
+      --join-x: calc((100% - 52px) / 6);
+    }
+
+    .funnel::before {
+      position: absolute;
+      top: 0;
+      right: 6%;
+      left: var(--join-x);
+      height: 1px;
+      background: var(--border-strong);
+      content: '';
+    }
+
+    .funnel::after {
+      position: absolute;
+      top: 0;
+      left: var(--join-x);
+      width: 1px;
+      height: 100%;
+      background: var(--border-strong);
+      content: '';
+    }
+
+    .funnel-label {
+      position: absolute;
+      top: 50%;
+      left: var(--join-x);
+      z-index: 1;
+      padding: 3px 11px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 0.72rem;
+      white-space: nowrap;
+      transform: translate(-50%, -50%);
+    }
+
+    .funnel-arrow {
+      position: absolute;
+      bottom: 0;
+      left: var(--join-x);
+      width: 7px;
+      height: 7px;
+      border-right: 1px solid var(--faint);
+      border-bottom: 1px solid var(--faint);
+      transform: translate(-50%, -50%) rotate(45deg);
+    }
+
+    /* -------------------------------------------------------------- pipeline */
+    .pipeline {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 26px minmax(0, 1fr) 26px minmax(0, 1fr);
+      align-items: stretch;
+      margin-top: 2px;
+    }
+
+    .node.stage {
+      --lane: var(--visual);
+
+      gap: 4px;
+      min-height: 74px;
+      padding: 12px 13px;
+      background: color-mix(in srgb, var(--visual) 4%, var(--surface));
+    }
+
+    .stage-index {
+      color: var(--faint);
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.04em;
+    }
+
+    .node.stage strong {
+      font-size: 0.94rem;
+    }
+
+    /* ---------------------------------------------------------- notes, forms */
+    .notes {
+      display: grid;
+      gap: 7px;
+      margin-top: 18px;
+    }
+
+    .note {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      align-items: baseline;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .formula {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-top: 14px;
+      padding: 11px 13px;
+      border: 1px dashed color-mix(in srgb, var(--state) 34%, var(--border));
+      border-radius: var(--radius-sm);
+      background: color-mix(in srgb, var(--state) 5%, var(--surface));
+      font-size: 0.86rem;
+    }
+
+    .formula code {
+      font-size: 0.84rem;
+      white-space: nowrap;
+    }
+
+    .formula .sep {
+      color: var(--faint);
+    }
+
+    .formula em {
+      color: var(--muted);
+      font-family: var(--serif);
+      font-size: 1rem;
+    }
+
+    /* ------------------------------------------------------------ token bar */
+    .tokens {
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+    }
+
+    .tokens-head {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .token-bar {
+      display: flex;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+    }
+
+    .token-seg {
+      display: flex;
+      flex: none;
+      min-height: 44px;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 12px;
+      border-right: 1px solid var(--border);
+      background: color-mix(in srgb, var(--seg, var(--muted)) 12%, var(--surface));
+      color: color-mix(in srgb, var(--seg, var(--muted)) 55%, var(--text));
+      font-size: 0.76rem;
+      white-space: nowrap;
+    }
+
+    .token-seg:last-child {
+      border-right: 0;
+    }
+
+    .token-seg[data-kind='action'] { --seg: var(--action); }
+    .token-seg[data-kind='time'] { --seg: var(--time); }
+    .token-seg[data-kind='state'] { --seg: var(--state); }
+
+    .token-seg.is-patches {
+      position: relative;
+      flex: 1;
+      min-width: 120px;
+      --seg: var(--visual);
+    }
+
+    .token-seg.is-patches::before {
+      position: absolute;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(
+          90deg,
+          color-mix(in srgb, var(--visual) 26%, transparent) 0 1px,
+          transparent 1px 9px
+        );
+      content: '';
+    }
+
+    .token-seg.is-patches span {
+      position: relative;
+      padding: 3px 10px;
+      border-radius: 6px;
+      background: color-mix(in srgb, var(--surface) 82%, transparent);
+    }
+
+    .token-total {
+      margin-top: 9px;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    /* ------------------------------------------------------------- inspector */
+    .inspector {
+      display: flex;
+      position: sticky;
+      top: 20px;
+      flex-direction: column;
+      gap: 13px;
+      min-height: 360px;
+      padding: 20px;
+    }
+
+    .inspector-title {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .inspector-title h2 {
+      font-size: 1.24rem;
+    }
+
+    #inspector-purpose {
+      color: var(--muted);
+      font-family: var(--serif);
+      font-size: 1.04rem;
+      line-height: 1.4;
+    }
+
+    .inspector-grid {
+      display: grid;
+      grid-template-columns: 3.6rem minmax(0, 1fr);
+      gap: 9px 12px;
+      align-items: baseline;
+      padding-top: 13px;
+      border-top: 1px solid var(--border);
+      font-size: 0.86rem;
+    }
+
+    .inspector-grid dt {
+      color: var(--faint);
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .inspector-grid dd {
+      min-width: 0;
+      margin: 0;
+    }
+
+    #inspector-input,
+    #inspector-output {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+    }
+
+    .file-ref {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: auto;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .file-ref a {
+      min-width: 0;
+      flex: 1;
+      padding: 5px 9px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface-2);
+      text-decoration: none;
+    }
+
+    .file-ref a:hover {
+      border-color: var(--border-strong);
+    }
+
+    .file-ref a[aria-disabled='true'] {
+      color: var(--faint);
+      pointer-events: none;
+    }
+
+    .file-ref code {
+      display: block;
+      overflow: hidden;
+      font-size: 0.74rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .copy-feedback {
+      min-height: 1em;
+      color: var(--faint);
+      font-size: 0.75rem;
+    }
+
+    .chip-node {
+      padding: 4px 10px;
+      border-color: color-mix(in srgb, var(--state) 30%, var(--border));
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .chip-node code {
+      font-size: 0.82rem;
+      white-space: nowrap;
+    }
+
+    .chip-node[aria-pressed='true'] {
+      border-color: var(--ink);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink) 11%, transparent);
+    }
+
+    /* -------------------------------------------------------------- jump nav */
+    .jump {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px 16px;
+      align-items: baseline;
+      margin: 24px 2px 14px;
+    }
+
+    .jump .kicker {
+      margin-right: 2px;
+    }
+
+    .jump a {
+      color: var(--muted);
+      font-size: 0.86rem;
+      text-decoration: none;
+    }
+
+    .jump a:hover {
+      color: var(--text);
+      text-decoration: underline;
+      text-decoration-color: color-mix(in srgb, var(--text) 35%, transparent);
+    }
+
+    /* ---------------------------------------------------------------- panels */
+    .secondary {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .panel {
+      overflow: clip;
+      min-width: 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .panel[open] {
+      box-shadow: var(--shadow-md);
+    }
+
+    .panel summary {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto auto;
+      gap: 13px;
+      align-items: center;
+      padding: 16px 20px;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .panel summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .panel summary:hover {
+      background: color-mix(in srgb, var(--surface-2) 60%, var(--surface));
+    }
+
+    .panel-mark {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--mark, var(--muted));
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--mark, var(--muted)) 16%, transparent);
+    }
+
+    .panel[data-kind='visual'] { --mark: var(--visual); }
+    .panel[data-kind='action'] { --mark: var(--action); }
+    .panel[data-kind='state'] { --mark: var(--state); }
+    .panel[data-kind='time'] { --mark: var(--time); }
+
+    .panel-name {
+      display: block;
+      font-family: var(--serif);
+      font-size: 1.18rem;
+      line-height: 1.25;
+    }
+
+    .panel-desc {
+      display: block;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .chevron {
+      width: 7px;
+      height: 7px;
+      border-right: 1.5px solid var(--faint);
+      border-bottom: 1.5px solid var(--faint);
+      transform: rotate(45deg) translateY(-2px);
+    }
+
+    .panel[open] .chevron {
+      transform: rotate(225deg) translateY(-2px);
+    }
+
+    .detail-body {
+      padding: 4px 20px 22px;
+    }
+
+    .detail-body > .section-head {
+      margin-bottom: 16px;
+    }
+
+    /* -------------------------------------------------------------- schedule */
+    .schedule-toolbar {
+      display: grid;
+      grid-template-columns: minmax(220px, 380px) 1fr;
+      gap: 14px;
+      align-items: end;
+      margin-bottom: 16px;
+    }
+
+    .schedule-toolbar .controls {
+      justify-content: flex-end;
+    }
+
+    .schedule-meta {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 16px;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      background: var(--surface-2);
       color: var(--muted);
       font-size: 0.84rem;
     }
 
-    .state-trajectory {
-      display: none;
-      grid-template-columns: 88px repeat(6, minmax(48px, 1fr));
-      gap: 5px;
+    .schedule-meta-top {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
       align-items: center;
-      margin-bottom: 10px;
     }
 
-    [data-mode="target"] .state-trajectory,
-    [data-mode="overlay"] .state-trajectory {
+    .schedule-meta-facts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 18px;
+      color: var(--faint);
+      font-size: 0.78rem;
+    }
+
+    .state-trajectory {
       display: grid;
+      max-width: 760px;
+      grid-template-columns: var(--label-col) repeat(6, minmax(0, 1fr));
+      gap: var(--cell-gap);
+      align-items: center;
+      margin-bottom: 12px;
     }
 
     .trajectory-label {
-      color: var(--muted);
-      font-size: 0.76rem;
+      color: var(--faint);
+      font-size: 0.7rem;
+      letter-spacing: 0.04em;
+      text-align: right;
+      text-transform: uppercase;
     }
 
     .state-chip {
       min-width: 0;
-      padding: 6px 4px;
-      border-radius: 8px;
-      background: color-mix(in srgb, var(--state) 18%, transparent);
+      padding: 5px 4px;
+      border: 1px solid color-mix(in srgb, var(--state) 26%, var(--border));
+      border-radius: 6px;
+      background: color-mix(in srgb, var(--state) 11%, var(--surface));
+      color: color-mix(in srgb, var(--state) 70%, var(--text));
+      font-family: var(--mono);
+      font-size: 0.72rem;
       text-align: center;
-      font-size: 0.74rem;
     }
 
     .matrix-wrap {
       overflow-x: auto;
-      padding-bottom: 4px;
+      min-width: 0;
+      padding-bottom: 6px;
+      overscroll-behavior-x: contain;
     }
 
     .matrix {
       display: grid;
-      min-width: 580px;
-      grid-template-columns: 80px repeat(6, minmax(68px, 1fr));
-      gap: 4px;
+      min-width: 540px;
+      max-width: 760px;
+      grid-template-columns: var(--label-col) repeat(6, minmax(0, 1fr));
+      gap: var(--cell-gap);
       align-items: stretch;
     }
 
     .matrix-label,
     .frame-label {
       display: flex;
-      min-height: 34px;
+      min-height: 26px;
       align-items: center;
       justify-content: center;
-      color: var(--muted);
-      font-size: 0.76rem;
+      color: var(--faint);
+      font-size: 0.72rem;
+      letter-spacing: 0.03em;
       text-align: center;
     }
 
     .frame-label.is-active {
       color: var(--text);
-      font-weight: 500;
-    }
-
-    .matrix-cell {
-      min-height: 34px;
-      padding: 4px;
-      border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
-      border-radius: 7px;
-      color: var(--text);
-      background:
-        color-mix(
-          in srgb,
-          var(--noise) calc(var(--tau, 0) * 72%),
-          var(--clean)
-        );
-      cursor: pointer;
-      font-family: var(--mono);
-      font-size: 0.72rem;
-    }
-
-    .matrix-cell.absent {
-      color: var(--muted);
-      background:
-        repeating-linear-gradient(
-          135deg,
-          transparent 0 5px,
-          color-mix(in srgb, var(--border) 45%, transparent) 5px 6px
-        );
-    }
-
-    .matrix-cell.is-selected {
-      border-color: var(--primary);
-      box-shadow: inset 0 0 0 2px var(--primary);
-    }
-
-    .matrix-cell.is-row {
-      border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
     }
 
     .matrix-row-label {
       display: flex;
-      min-height: 34px;
+      min-height: 26px;
       align-items: center;
       justify-content: flex-end;
-      padding-right: 7px;
-      color: var(--muted);
-      font-size: 0.72rem;
+      padding-right: 9px;
+      color: var(--faint);
+      font-family: var(--mono);
+      font-size: 0.7rem;
     }
 
     .matrix-row-label.is-active {
       color: var(--text);
-      font-weight: 500;
     }
 
-    .schedule-detail {
-      display: grid;
-      grid-template-columns: auto minmax(0, 1fr);
-      gap: 8px 10px;
-      min-height: 70px;
-      margin-top: 13px;
-      padding: 12px;
-      border-left: 3px solid var(--visual);
-      background: var(--surface-2);
+    .matrix-cell {
+      min-height: 26px;
+      padding: 2px;
+      border: 0;
+      border-radius: 5px;
+      background: color-mix(in srgb, var(--heat-1) calc(var(--tau, 0) * 100%), var(--heat-0));
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border) 60%, transparent);
+      color: color-mix(in srgb, var(--text) 55%, transparent);
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      font-variant-numeric: tabular-nums;
+      cursor: pointer;
     }
 
-    .schedule-detail span:nth-child(odd) {
-      color: var(--muted);
+    .matrix-cell:hover {
+      box-shadow: inset 0 0 0 1px var(--border-strong);
+      color: var(--text);
+    }
+
+    .matrix-cell.absent {
+      background:
+        repeating-linear-gradient(
+          135deg,
+          transparent 0 4px,
+          color-mix(in srgb, var(--border) 55%, transparent) 4px 5px
+        );
+      box-shadow: none;
+      color: var(--faint);
+    }
+
+    .matrix-cell.is-row {
+      color: var(--text);
+    }
+
+    .matrix-cell.is-selected {
+      box-shadow:
+        inset 0 0 0 2px var(--ink),
+        0 0 0 2px color-mix(in srgb, var(--ink) 12%, transparent);
+      color: var(--text);
     }
 
     .noise-legend {
       display: flex;
-      gap: 8px;
+      gap: 9px;
       align-items: center;
-      margin-top: 10px;
-      color: var(--muted);
-      font-size: 0.76rem;
+      margin-top: 12px;
+      color: var(--faint);
+      font-size: 0.74rem;
     }
 
     .noise-ramp {
-      width: min(240px, 45vw);
-      height: 9px;
+      width: min(220px, 40vw);
+      height: 8px;
       border-radius: 999px;
-      background: linear-gradient(90deg, var(--clean), var(--noise));
+      background: linear-gradient(90deg, var(--heat-0), var(--heat-1));
+      box-shadow: inset 0 0 0 1px var(--border);
+    }
+
+    .schedule-detail {
+      display: grid;
+      grid-template-columns: 5.2rem minmax(0, 1fr);
+      gap: 8px 14px;
+      align-items: baseline;
+      min-height: 64px;
+      margin-top: 16px;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--visual);
+      border-radius: 4px var(--radius-sm) var(--radius-sm) 4px;
+      background: color-mix(in srgb, var(--visual) 4%, var(--surface));
+      font-size: 0.86rem;
+    }
+
+    .schedule-detail span:nth-child(odd) {
+      color: var(--faint);
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .schedule-detail code {
+      font-size: 0.78rem;
     }
 
     .causal-wrap {
       display: none;
-      grid-template-columns: minmax(0, 1fr) minmax(220px, 0.6fr);
-      gap: 18px;
+      grid-template-columns: auto minmax(220px, 1fr);
+      gap: 22px;
       align-items: start;
-      margin-top: 18px;
-      padding-top: 16px;
+      margin-top: 20px;
+      padding-top: 18px;
       border-top: 1px solid var(--border);
     }
 
@@ -732,563 +1260,826 @@
 
     .causal-grid {
       display: grid;
-      grid-template-columns: 40px repeat(6, 32px);
-      gap: 4px;
+      grid-template-columns: 32px repeat(6, 28px);
+      gap: 3px;
       width: max-content;
+      margin-top: 10px;
     }
 
     .causal-cell {
       display: flex;
-      width: 32px;
-      height: 32px;
+      width: 28px;
+      height: 28px;
       align-items: center;
       justify-content: center;
-      border-radius: 6px;
-      color: var(--muted);
+      border-radius: 5px;
       background: var(--surface-2);
-      font-size: 0.68rem;
+      color: var(--faint);
+      font-family: var(--mono);
+      font-size: 0.66rem;
     }
 
     .causal-cell.allowed {
-      color: var(--text);
-      background: color-mix(in srgb, var(--primary) 24%, var(--surface));
+      background: color-mix(in srgb, var(--visual) 20%, var(--surface));
+      color: color-mix(in srgb, var(--visual) 78%, var(--text));
     }
 
     .callout {
-      padding-left: 12px;
-      border-left: 3px solid var(--action);
+      padding: 12px 14px;
+      border-left: 3px solid color-mix(in srgb, var(--action) 55%, var(--border));
+      border-radius: 4px;
+      background: color-mix(in srgb, var(--action) 5%, var(--surface));
       color: var(--muted);
+      font-size: 0.88rem;
     }
 
-    .data-grid,
-    .repo-grid {
+    /* ------------------------------------------------------------ stat tiles */
+    .stats {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 10px;
     }
 
-    .metric {
+    .stat {
       display: grid;
-      gap: 4px;
-      padding: 11px;
-      border-bottom: 2px solid var(--border);
+      gap: 5px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-top: 2px solid var(--stat, var(--border-strong));
+      border-radius: var(--radius-sm);
       background: var(--surface-2);
     }
 
-    .metric span {
+    .stat span {
       color: var(--muted);
       font-size: 0.76rem;
     }
 
-    .metric strong {
-      font-size: 1.08rem;
+    .stat strong {
+      font-family: var(--mono);
+      font-size: 1.22rem;
+      font-variant-numeric: tabular-nums;
       font-weight: 500;
+      letter-spacing: -0.01em;
+    }
+
+    .stat.is-command { --stat: var(--action); }
+    .stat.is-realized { --stat: var(--state); }
+    .stat.is-residual { --stat: var(--danger); }
+
+    /* --------------------------------------------------------------- stepper */
+    .stepper {
+      display: flex;
+      position: relative;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .step {
+      gap: 9px;
+      padding: 7px 14px 7px 9px;
+    }
+
+    .stepper .link {
+      flex: none;
+      align-self: center;
+      width: 14px;
+    }
+
+    .step-num {
+      display: grid;
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      place-items: center;
+    }
+
+    .step.primary .step-num {
+      background: color-mix(in srgb, var(--ink-contrast) 22%, transparent);
+      color: var(--ink-contrast);
     }
 
     .phase-detail,
     .compare-detail {
-      min-height: 62px;
-      margin-top: 12px;
-      padding: 12px;
+      min-height: 58px;
+      margin-top: 14px;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
       background: var(--surface-2);
+      color: var(--muted);
+      font-family: var(--serif);
+      font-size: 1.06rem;
+      line-height: 1.45;
     }
 
+    .phase-detail strong,
+    .compare-detail strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    /* -------------------------------------------------------------- repo map */
     .repo-grid {
+      display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
     }
 
     .repo-item {
       display: grid;
-      gap: 7px;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 6px 10px;
       min-width: 0;
-      padding: 11px 0;
-      border-bottom: 1px solid var(--border);
+      padding: 13px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface-2);
+    }
+
+    .repo-item:hover {
+      border-color: var(--border-strong);
+    }
+
+    .repo-item .badge {
+      grid-column: 1;
+    }
+
+    .repo-item .repo-copy {
+      grid-row: 1;
+      grid-column: 2;
+      align-self: start;
+      justify-self: end;
     }
 
     .repo-item a,
-    .repo-item code {
+    .repo-item > code {
+      grid-column: 1 / -1;
+      min-width: 0;
       overflow-wrap: anywhere;
     }
 
+    .repo-item code {
+      font-size: 0.74rem;
+    }
+
     .repo-item p {
+      grid-column: 1 / -1;
       color: var(--muted);
-      font-size: 0.82rem;
+      font-size: 0.84rem;
     }
 
-    .footer-note {
-      margin-top: 18px;
-      color: var(--muted);
-      font-size: 0.78rem;
+    /* ---------------------------------------------------------------- footer */
+    .page-footer {
+      display: grid;
+      gap: 10px;
+      margin-top: 26px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+      color: var(--faint);
+      font-size: 0.8rem;
     }
 
-    @media (max-width: 900px) {
-      .masthead,
+    .page-footer a {
+      color: var(--muted);
+    }
+
+    /* ---------------------------------------------------------------- motion */
+    @media (prefers-reduced-motion: no-preference) {
+      html {
+        scroll-behavior: smooth;
+      }
+
+      .node,
+      .btn,
+      .tab,
+      .matrix-cell,
+      .panel summary,
+      .chevron,
+      .repo-item,
+      .theme-btn {
+        transition:
+          background-color 140ms ease,
+          border-color 140ms ease,
+          box-shadow 140ms ease,
+          color 140ms ease,
+          transform 140ms ease;
+      }
+
+      .node:hover {
+        transform: translateY(-1px);
+      }
+    }
+
+    /* ------------------------------------------------------------ mode rules */
+    [data-mode='current'] .target-only {
+      display: none;
+    }
+
+    [data-mode='overlay'] .lane[data-kind='state'] .node,
+    [data-mode='overlay'] .formula {
+      border-style: dashed;
+    }
+
+    [data-mode='overlay'] .lane[data-kind='state'] .track {
+      border-style: dashed;
+    }
+
+    /* ------------------------------------------------------------ responsive */
+    @media (max-width: 1040px) {
       .workspace {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .inspector {
+        position: static;
+        min-height: 0;
+      }
+    }
+
+    @media (max-width: 860px) {
+      .page {
+        width: min(1160px, 100% - 2rem);
       }
 
       .masthead {
+        grid-template-columns: minmax(0, 1fr);
         align-items: start;
       }
 
-      .architecture-grid {
-        grid-template-columns:
-          minmax(70px, 0.85fr) 14px
-          minmax(74px, 0.9fr) 14px
-          minmax(74px, 0.9fr) 14px
-          minmax(84px, 1fr) 14px
-          minmax(76px, 0.9fr) 14px
-          minmax(80px, 0.95fr);
-        column-gap: 2px;
+      .mode-switch {
+        justify-items: start;
       }
 
-      .node {
-        padding: 8px;
+      .lane {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 6px;
+      }
+
+      .lane-head {
+        justify-content: flex-start;
+        text-align: left;
+      }
+
+      .schedule-toolbar {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .stats,
+      .repo-grid,
+      .causal-wrap {
+        grid-template-columns: minmax(0, 1fr);
       }
     }
 
     @media (max-width: 660px) {
-      .shell {
-        width: min(100% - 20px, 1180px);
-        padding-top: 16px;
-      }
-
-      .mode-tabs {
-        width: 100%;
-      }
-
-      .mode-tabs .tab {
-        flex: 1 1 88px;
-      }
-
       .architecture,
-      .inspector,
+      .inspector {
+        padding: 16px;
+      }
+
+      .panel summary {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        padding: 14px 16px;
+      }
+
+      .panel summary .badge {
+        grid-row: 2;
+        grid-column: 2;
+      }
+
       .detail-body {
-        padding-left: 13px;
-        padding-right: 13px;
+        padding: 4px 16px 20px;
       }
 
-      .architecture-grid {
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
+      .track,
+      .pipeline {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0;
       }
 
-      .architecture-grid .arrow {
-        width: 2px;
-        height: 18px;
-        margin: 0 auto;
+      .funnel {
+        --join-x: 50%;
       }
 
-      .architecture-grid .arrow::after {
+      .track .link,
+      .pipeline .link {
+        justify-self: center;
+        width: 1px;
+        height: 16px;
+        margin: 2px 0;
+        background: var(--border-strong);
+      }
+
+      .track .link::after,
+      .pipeline .link::after {
         top: auto;
         right: 50%;
-        bottom: -1px;
+        bottom: 0;
         transform: translateX(50%) rotate(135deg);
       }
 
-      .architecture-grid .target-only {
-        order: 8;
+      .token-bar {
+        flex-wrap: wrap;
       }
 
-      .token-strip,
-      [data-mode="target"] .token-strip,
-      [data-mode="overlay"] .token-strip {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+      .token-seg {
+        flex: 1 0 auto;
       }
 
-      .schedule-toolbar {
-        grid-template-columns: 1fr;
+      .inspector-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 4px;
       }
 
-      .state-trajectory {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+      .inspector-grid dd {
+        margin-bottom: 6px;
       }
 
-      .trajectory-label {
-        grid-column: 1 / -1;
-      }
-
-      .causal-wrap,
-      .data-grid,
-      .repo-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .matrix-wrap {
-        overflow: visible;
-      }
-
-      .matrix {
-        min-width: 0;
-        grid-template-columns: 42px repeat(6, minmax(32px, 1fr));
+      .schedule-detail {
+        grid-template-columns: minmax(0, 1fr);
         gap: 3px;
       }
 
-      .matrix-cell,
-      .matrix-row-label,
-      .matrix-label,
-      .frame-label {
-        font-size: 0.64rem;
+      .schedule-detail span:nth-child(odd) {
+        margin-top: 7px;
       }
 
-      .matrix-cell {
-        padding: 2px;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      html {
-        scroll-behavior: auto;
+      .matrix {
+        min-width: 420px;
       }
     }
   </style>
 </head>
 <body>
-  <main class="shell" id="app" data-mode="current">
-    <header class="masthead">
-      <div>
-        <div class="eyebrow">Open Dreams · EE-aware world model</div>
-        <h1>Architecture lab</h1>
-        <p class="lede">
-          Trace the current visual Diffusion Forcing model, overlay the proposed
-          command-to-realized EE adapter, and inspect how future visual latents are denoised.
-        </p>
-      </div>
-      <div class="mode-tabs" role="group" aria-label="Architecture mode">
-        <button class="tab" type="button" aria-pressed="true" data-mode-button="current">Current</button>
-        <button class="tab" type="button" aria-pressed="false" data-mode-button="target">Target</button>
-        <button class="tab" type="button" aria-pressed="false" data-mode-button="overlay">Overlay</button>
-      </div>
+  <div class="page">
+    <header class="topbar">
+      <a class="home" href="/">brian</a>
+      <nav class="topnav" aria-label="Site">
+        <a href="/writing">Writing</a>
+        <a href="/reading">Reading</a>
+        <span class="here" aria-current="page">EE Lab</span>
+      </nav>
+      <button type="button" class="theme-btn" id="theme-toggle" aria-label="Toggle color theme" title="Theme"></button>
     </header>
 
-    <div class="status-line" aria-live="polite">
-      <span class="badge current" id="mode-badge">implemented</span>
-      <span id="mode-summary">Visual history and leading actions condition latent visual-flow prediction.</span>
-    </div>
-
-    <section class="workspace" aria-label="World model architecture">
-      <div class="card architecture">
-        <div class="section-head">
-          <div>
-            <div class="kicker">Dominant data flow</div>
-            <h2>From actions and camera history to future observations</h2>
-          </div>
-          <span class="badge">PushT · 1 camera · D=512</span>
-        </div>
-
-        <div class="architecture-grid" aria-label="Connected architecture diagram">
-          <button class="node camera" type="button" data-node="camera" data-kind="visual" aria-pressed="false">
-            <strong>Camera history</strong>
-            <small>RGB observations</small>
-          </button>
-          <span class="arrow a1" aria-hidden="true"></span>
-          <button class="node vae" type="button" data-node="vae" data-kind="visual" aria-pressed="false">
-            <strong>VAE + patchify</strong>
-            <small>144² RGB → 9² grid</small>
-          </button>
-          <span class="arrow a2" aria-hidden="true"></span>
-          <button class="node camera-token" type="button" data-node="camera-token" data-kind="visual" aria-pressed="false">
-            <strong>Camera patches</strong>
-            <small>81 tokens · D=512</small>
-          </button>
-          <span class="arrow camera-pack-arrow" aria-hidden="true"></span>
-
-          <button class="node action" type="button" data-node="action" data-kind="action" aria-pressed="false">
-            <strong>Leading action</strong>
-            <small>action that led to frame</small>
-          </button>
-          <span class="arrow a4" aria-hidden="true"></span>
-          <button class="node action-embed" type="button" data-node="action-embed" data-kind="action" aria-pressed="false">
-            <strong>Action embedding</strong>
-            <small>raw action retained</small>
-          </button>
-          <span class="arrow a5" aria-hidden="true" style="grid-area: 2 / 4"></span>
-          <button class="node action-token-node" type="button" data-node="action-token" data-kind="action" aria-pressed="false">
-            <strong>Action token</strong>
-            <small>1 token · D=512</small>
-          </button>
-          <span class="arrow action-pack-arrow" aria-hidden="true"></span>
-
-          <button class="node noise-input" type="button" data-node="noise" data-kind="time" aria-pressed="false">
-            <strong>Noise schedule</strong>
-            <small>τ and Δτ per camera</small>
-          </button>
-          <span class="arrow noise-arrow" aria-hidden="true"></span>
-          <button class="node time-embed" type="button" data-node="time-embed" data-kind="time" aria-pressed="false">
-            <strong>NeRF + time MLP</strong>
-            <small>continuous conditioning</small>
-          </button>
-          <span class="arrow" aria-hidden="true" style="grid-area: 3 / 4"></span>
-          <button class="node time-token" type="button" data-node="time-token" data-kind="time" aria-pressed="false">
-            <strong>Flow-time token</strong>
-            <small>1 token per camera</small>
-          </button>
-          <span class="arrow time-pack-arrow" aria-hidden="true"></span>
-
-          <button class="node ee target-only" type="button" data-node="ee" data-kind="state" aria-pressed="false">
-            <strong>Actual EE + commands</strong>
-            <small>xₜ and Δa chunk</small>
-          </button>
-          <span class="arrow a7 target-only" aria-hidden="true"></span>
-          <button class="node adapter target-only" type="button" data-node="adapter" data-kind="state" aria-pressed="false">
-            <strong>State adapter</strong>
-            <small>command → realized motion</small>
-          </button>
-          <span class="arrow a8 target-only" aria-hidden="true" style="grid-area: 4 / 4"></span>
-          <button class="node state-token target-only" type="button" data-node="state-token" data-kind="state" aria-pressed="false">
-            <strong>Predicted state token</strong>
-            <small>x̂ₜ₊ₖ → D</small>
-          </button>
-          <span class="arrow state-pack-arrow target-only" aria-hidden="true"></span>
-
-          <button class="node token-pack" type="button" data-node="token-pack" data-kind="visual" aria-pressed="true">
-            <strong>Per-frame token pack</strong>
-            <small>action · time · state · camera</small>
-          </button>
-          <span class="arrow a3" aria-hidden="true"></span>
-          <button class="node dit" type="button" data-node="dit" data-kind="visual" aria-pressed="false">
-            <strong>SSST DiT</strong>
-            <small>12 layers · causal time</small>
-          </button>
-          <span class="arrow a6" aria-hidden="true"></span>
-          <button class="node velocity" type="button" data-node="velocity" data-kind="visual" aria-pressed="false">
-            <strong>Visual velocity</strong>
-            <small>clean − noise</small>
-          </button>
-        </div>
-
-        <div class="join-note">
-          <span class="badge current">reused</span>
-          <span>Raw actions continue to condition the DiT.</span>
-          <span class="badge new target-only">added</span>
-          <span class="target-only">Predicted realized EE states provide additive conditioning—not a hard bottleneck.</span>
-        </div>
-
-        <div class="join-note target-only">
-          <code>Δx̂actual = Fadapter(xₜ, Δacmd)</code>
-          <span>→</span>
-          <code>x̂ₜ₊₁ = xₜ ⊕ Δx̂actual</code>
-          <span>Learn one; derive the other.</span>
-        </div>
-
-        <div class="token-strip" aria-label="Per-frame token packing">
-          <div class="token action-token">1 action</div>
-          <div class="token time">1 time</div>
-          <div class="token state-token-block">1 state</div>
-          <div class="token patches">81 camera patches</div>
-        </div>
-        <div class="token-total" id="token-total">
-          Current total: 83 tokens/frame = 1 action + 1 flow-time + 81 visual patches.
-        </div>
-      </div>
-
-      <aside class="card inspector" aria-live="polite">
-        <div class="kicker">Selected component</div>
-        <div class="inspector-title">
-          <h2 id="inspector-title">Per-frame token pack</h2>
-          <span class="badge modify" id="inspector-status">modify</span>
-        </div>
-        <p id="inspector-purpose">
-          Concatenates action, per-camera flow-time, and camera-patch tokens before the transformer.
-        </p>
-        <dl class="inspector-grid">
-          <dt>Input</dt>
-          <dd id="inspector-input">action [B,T,A], τ [B,T,C], patches [B,T,81C,D]</dd>
-          <dt>Output</dt>
-          <dd id="inspector-output">[B,T,83,D] for one PushT camera</dd>
-          <dt>Role</dt>
-          <dd id="inspector-role">Current packing point; add one predicted-state token here.</dd>
-        </dl>
-        <div class="file-ref">
-          <a id="inspector-link" href="https://github.com/Cyberdr8gon/open-dreams/blob/main/src/open_dreams/models/latent_diffusion_forcing_world_model.py#L657">
-            <code id="inspector-path">latent_diffusion_forcing_world_model.py:657-748</code>
-          </a>
-          <button class="btn ghost copy-btn" type="button" data-copy="src/open_dreams/models/latent_diffusion_forcing_world_model.py:657">
-            Copy
-          </button>
-        </div>
-        <div class="copy-feedback" id="copy-feedback" aria-live="polite"></div>
-      </aside>
-    </section>
-
-    <section class="secondary" aria-label="Architecture studies">
-      <details open id="schedule">
-        <summary>
-          <span>Diffusion Forcing schedule lab</span>
-          <span class="badge modify">reconstructed from code</span>
-        </summary>
-        <div class="detail-body">
-          <div class="schedule-toolbar">
-            <div class="field">
-              <label for="schedule-mode">Noise schedule K(m,t)</label>
-              <select id="schedule-mode">
-                <option value="ar">Open Dreams autoregressive · reconstructed</option>
-                <option value="eval">Open Dreams batch evaluation · reconstructed</option>
-                <option value="train">Training noise sample · reconstructed</option>
-                <option value="full">Full-sequence diffusion · paper reference</option>
-                <option value="zigzag">Zig-zag · paper reference</option>
-              </select>
-            </div>
-            <div class="controls" aria-label="Schedule playback">
-              <button class="btn" type="button" id="prev-row">Previous</button>
-              <button class="btn primary" type="button" id="play-row" aria-pressed="false">Play</button>
-              <button class="btn" type="button" id="next-row">Next</button>
-            </div>
-          </div>
-
-          <div class="schedule-meta">
-            <span class="badge modify" id="schedule-status">implemented behavior · reconstructed</span>
-            <span id="schedule-description">
-              Each next visual frame is denoised from τ=1 to τ=0, then committed with τ=0.05.
-            </span>
-            <span>Configured inner loop: 128 Euler steps.</span>
-            <span>PushT: C=1; schedules are per camera when C&gt;1.</span>
-          </div>
-
-          <p class="callout">
-            This matrix is an explanatory reconstruction of the procedural loops below. The
-            repository does not currently define or store an explicit <code>K[m,t]</code> scheduling matrix.
+    <main class="shell" id="app" data-mode="current">
+      <header class="masthead">
+        <div>
+          <p class="eyebrow">Open Dreams · EE-aware world model</p>
+          <h1>Architecture lab</h1>
+          <p class="lede">
+            Trace the implemented visual Diffusion Forcing model, overlay the proposed
+            command-to-realized EE adapter, and inspect how future visual latents are denoised.
           </p>
-
-          <div class="state-trajectory" aria-label="Target predicted EE trajectory">
-            <span class="trajectory-label">Direct EE prediction</span>
-            <span class="state-chip">x̂ₜ₊₁</span>
-            <span class="state-chip">x̂ₜ₊₂</span>
-            <span class="state-chip">x̂ₜ₊₃</span>
-            <span class="state-chip">x̂ₜ₊₄</span>
-            <span class="state-chip">x̂ₜ₊₅</span>
-            <span class="state-chip">x̂ₜ₊₆</span>
+        </div>
+        <div class="mode-switch">
+          <p class="switch-label">Architecture</p>
+          <div class="segmented" role="group" aria-label="Architecture mode">
+            <button class="tab" type="button" aria-pressed="true" data-mode-button="current">Current</button>
+            <button class="tab" type="button" aria-pressed="false" data-mode-button="target">Target</button>
+            <button class="tab" type="button" aria-pressed="false" data-mode-button="overlay">Overlay</button>
           </div>
+        </div>
+      </header>
 
-          <div class="matrix-wrap">
-            <div class="matrix" id="schedule-matrix" role="grid" aria-label="Visual latent noise schedule matrix"></div>
-          </div>
+      <p class="status-line" aria-live="polite">
+        <span class="badge current" id="mode-badge">implemented</span>
+        <span id="mode-summary">Visual history and leading actions condition latent visual-flow prediction.</span>
+      </p>
 
-          <div class="noise-legend" aria-label="Noise-level legend">
-            <span>clean τ=0</span>
-            <span class="noise-ramp" aria-hidden="true"></span>
-            <span>noise τ=1</span>
-          </div>
-
-          <div class="schedule-detail" id="schedule-detail" aria-live="polite"></div>
-
-          <div class="controls" style="margin-top: 14px">
-            <label>
-              <input type="checkbox" id="show-causal">
-              Show causal-attention matrix
-            </label>
-          </div>
-
-          <div class="causal-wrap" id="causal-wrap">
+      <section class="workspace" aria-label="World model architecture">
+        <div class="card architecture">
+          <div class="section-head">
             <div>
-              <div class="kicker">Separate mechanism</div>
-              <h3>Frame-level causal visibility</h3>
-              <div class="causal-grid" id="causal-grid" aria-label="Lower triangular causal attention mask"></div>
+              <p class="kicker">Dominant data flow</p>
+              <h2>From actions and camera history to future observations</h2>
             </div>
-            <p class="callout">
-              The attention mask answers which prior frames a query may use. It is not the
-              denoising schedule. PushT currently uses one timestep per block, producing a
-              lower-triangular frame mask within each episode.
+            <span class="badge">PushT · 1 camera · D=512</span>
+          </div>
+
+          <div class="lanes" aria-label="Conditioning lanes">
+            <div class="lane" data-kind="visual">
+              <p class="lane-head"><span class="lane-dot" aria-hidden="true"></span><span class="lane-name">Vision</span></p>
+              <div class="track">
+                <button class="node" type="button" data-node="camera" aria-pressed="false">
+                  <strong>Camera history</strong>
+                  <small>RGB observations</small>
+                </button>
+                <span class="link" aria-hidden="true"></span>
+                <button class="node" type="button" data-node="vae" aria-pressed="false">
+                  <strong>VAE + patchify</strong>
+                  <small>144² RGB → 9² grid</small>
+                </button>
+                <span class="link" aria-hidden="true"></span>
+                <button class="node" type="button" data-node="camera-token" aria-pressed="false">
+                  <strong>Camera patches</strong>
+                  <small>81 tokens · D=512</small>
+                </button>
+              </div>
+            </div>
+
+            <div class="lane" data-kind="action">
+              <p class="lane-head"><span class="lane-dot" aria-hidden="true"></span><span class="lane-name">Action</span></p>
+              <div class="track">
+                <button class="node" type="button" data-node="action" aria-pressed="false">
+                  <strong>Leading action</strong>
+                  <small>action that led to frame</small>
+                </button>
+                <span class="link" aria-hidden="true"></span>
+                <button class="node" type="button" data-node="action-embed" aria-pressed="false">
+                  <strong>Action embedding</strong>
+                  <small>raw action retained</small>
+                </button>
+                <span class="link" aria-hidden="true"></span>
+                <button class="node" type="button" data-node="action-token" aria-pressed="false">
+                  <strong>Action token</strong>
+                  <small>1 token · D=512</small>
+                </button>
+              </div>
+            </div>
+
+            <div class="lane" data-kind="time">
+              <p class="lane-head"><span class="lane-dot" aria-hidden="true"></span><span class="lane-name">Flow time</span></p>
+              <div class="track">
+                <button class="node" type="button" data-node="noise" aria-pressed="false">
+                  <strong>Noise schedule</strong>
+                  <small>τ and Δτ per camera</small>
+                </button>
+                <span class="link" aria-hidden="true"></span>
+                <button class="node" type="button" data-node="time-embed" aria-pressed="false">
+                  <strong>NeRF + time MLP</strong>
+                  <small>continuous conditioning</small>
+                </button>
+                <span class="link" aria-hidden="true"></span>
+                <button class="node" type="button" data-node="time-token" aria-pressed="false">
+                  <strong>Flow-time token</strong>
+                  <small>1 token per camera</small>
+                </button>
+              </div>
+            </div>
+
+            <div class="lane target-only" data-kind="state">
+              <p class="lane-head"><span class="lane-dot" aria-hidden="true"></span><span class="lane-name">EE state</span></p>
+              <div class="track">
+                <button class="node" type="button" data-node="ee" aria-pressed="false">
+                  <strong>Measured EE state</strong>
+                  <small>x<sub>t</sub> and the Δa chunk</small>
+                </button>
+                <span class="link" aria-hidden="true"></span>
+                <button class="node" type="button" data-node="adapter" aria-pressed="false">
+                  <strong>State adapter</strong>
+                  <small>command → realized motion</small>
+                </button>
+                <span class="link" aria-hidden="true"></span>
+                <button class="node" type="button" data-node="state-token" aria-pressed="false">
+                  <strong>Predicted state token</strong>
+                  <small>x̂<sub>t+k</sub> → D</small>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="funnel" aria-hidden="true">
+            <span class="funnel-label">concatenate per frame</span>
+            <span class="funnel-arrow"></span>
+          </div>
+
+          <div class="pipeline" aria-label="Shared transformer pipeline">
+            <button class="node stage" type="button" data-node="token-pack" aria-pressed="true">
+              <span class="stage-index">stage 1</span>
+              <strong>Per-frame token pack</strong>
+              <small>action · flow time · state · camera</small>
+            </button>
+            <span class="link" aria-hidden="true"></span>
+            <button class="node stage" type="button" data-node="dit" aria-pressed="false">
+              <span class="stage-index">stage 2</span>
+              <strong>SSST DiT</strong>
+              <small>12 layers · causal in time</small>
+            </button>
+            <span class="link" aria-hidden="true"></span>
+            <button class="node stage" type="button" data-node="velocity" aria-pressed="false">
+              <span class="stage-index">stage 3</span>
+              <strong>Visual flow velocity</strong>
+              <small>clean − noise</small>
+            </button>
+          </div>
+
+          <div class="notes">
+            <p class="note">
+              <span class="badge current">reused</span>
+              <span>Raw action tokens keep conditioning the DiT.</span>
+            </p>
+            <p class="note target-only">
+              <span class="badge new">added</span>
+              <span>Predicted realized EE states are additive conditioning, not a hard bottleneck.</span>
+            </p>
+          </div>
+
+          <div class="formula target-only">
+            <code>Δx̂<sup>actual</sup> = F<sub>adapter</sub>(x<sub>t</sub>, Δa<sup>cmd</sup>)</code>
+            <span class="sep" aria-hidden="true">→</span>
+            <button class="btn ghost chip-node" type="button" data-node="rollout" aria-pressed="false">
+              <code>x̂<sub>t+1</sub> = x<sub>t</sub> ⊕ Δx̂<sup>actual</sup></code>
+            </button>
+            <em>Learn one; derive the other.</em>
+          </div>
+
+          <div class="tokens">
+            <div class="tokens-head">
+              <p class="kicker">Per-frame token packing</p>
+              <span class="badge">shared width D=512</span>
+            </div>
+            <div class="token-bar" aria-label="Per-frame token packing">
+              <span class="token-seg" data-kind="action">action ×1</span>
+              <span class="token-seg" data-kind="time">flow time ×1</span>
+              <span class="token-seg target-only" data-kind="state">state ×1</span>
+              <span class="token-seg is-patches"><span>camera patches ×81</span></span>
+            </div>
+            <p class="token-total" id="token-total">
+              Current total: 83 tokens/frame = 1 action + 1 flow-time + 81 visual patches.
             </p>
           </div>
         </div>
-      </details>
 
-      <details id="data-contract">
-        <summary>
-          <span>Command and telemetry contract</span>
-          <span class="badge modify">scientific blocker</span>
-        </summary>
-        <div class="detail-body">
-          <div class="section-head">
-            <div>
-              <div class="kicker">Command ≠ realized motion</div>
-              <h2>Save both sides of every controller transition</h2>
-            </div>
-            <div class="field">
-              <label for="contact-mode">Regime</label>
-              <select id="contact-mode">
-                <option value="free">Free space</option>
-                <option value="contact">Contact / saturation</option>
-              </select>
+        <aside class="card inspector" aria-live="polite">
+          <div>
+            <p class="kicker">Selected component</p>
+            <div class="inspector-title">
+              <h2 id="inspector-title">Per-frame token pack</h2>
+              <span class="badge modify" id="inspector-status">modify</span>
             </div>
           </div>
-          <div class="data-grid">
-            <div class="metric">
-              <span>Commanded EE delta Δa</span>
-              <strong>+4.0 cm</strong>
-            </div>
-            <div class="metric">
-              <span>Realized EE delta Δxactual</span>
-              <strong id="realized-value">+4.0 cm</strong>
-            </div>
-            <div class="metric">
-              <span>Execution residual</span>
-              <strong id="residual-value">0.0 cm</strong>
-            </div>
-          </div>
-          <p class="callout" style="margin-top: 14px">
-            The current collector derives <code>action_continuous</code> from consecutive
-            measured TCP poses. That records achieved motion, not the raw command sent to the controller.
+          <p id="inspector-purpose">
+            Concatenates action, per-camera flow-time, and camera-patch tokens before the transformer.
           </p>
-        </div>
-      </details>
-
-      <details id="training">
-        <summary>
-          <span>Training roadmap</span>
-          <span class="badge new">target</span>
-        </summary>
-        <div class="detail-body">
-          <div class="phase-tabs" aria-label="Training phase">
-            <button class="btn primary" type="button" data-phase="0" aria-pressed="true">0 · data</button>
-            <button class="btn" type="button" data-phase="1" aria-pressed="false">1 · adapter</button>
-            <button class="btn" type="button" data-phase="2" aria-pressed="false">2 · visual</button>
-            <button class="btn" type="button" data-phase="3" aria-pressed="false">3 · joint</button>
-            <button class="btn" type="button" data-phase="4" aria-pressed="false">4 · evaluate</button>
+          <dl class="inspector-grid">
+            <dt>Input</dt>
+            <dd id="inspector-input">action [B,T,A], τ [B,T,C], patches [B,T,81C,D]</dd>
+            <dt>Output</dt>
+            <dd id="inspector-output">[B,T,83,D] for one PushT camera</dd>
+            <dt>Role</dt>
+            <dd id="inspector-role">Current packing point; add one predicted-state token here.</dd>
+          </dl>
+          <div class="file-ref">
+            <a id="inspector-link" href="https://github.com/Cyberdr8gon/open-dreams/blob/main/src/open_dreams/models/latent_diffusion_forcing_world_model.py#L657">
+              <code id="inspector-path">latent_diffusion_forcing_world_model.py:657-748</code>
+            </a>
+            <button class="btn ghost copy-btn" type="button" data-copy="src/open_dreams/models/latent_diffusion_forcing_world_model.py:657">
+              Copy
+            </button>
           </div>
-          <div class="phase-detail" id="phase-detail">
-            Record raw commands, measured pre/post EE poses, camera observations, masks, and episode boundaries.
-          </div>
-        </div>
-      </details>
+          <p class="copy-feedback" id="copy-feedback" aria-live="polite"></p>
+        </aside>
+      </section>
 
-      <details id="comparison">
-        <summary>
-          <span>Architecture comparison</span>
-          <span class="badge">4 variants</span>
-        </summary>
-        <div class="detail-body">
-          <div class="compare-tabs" aria-label="Architecture comparison">
-            <button class="btn" type="button" data-compare="direct" aria-pressed="false">Direct</button>
-            <button class="btn" type="button" data-compare="joint" aria-pressed="false">Joint-output</button>
-            <button class="btn" type="button" data-compare="hard" aria-pressed="false">Hard two-stage</button>
-            <button class="btn primary" type="button" data-compare="soft" aria-pressed="true">Soft two-stage</button>
-          </div>
-          <div class="compare-detail" id="compare-detail">
-            <strong>Soft two-stage:</strong> raw actions and predicted future EE states both condition
-            the visual DiT, so state prediction is explicit without becoming a hard bottleneck.
-          </div>
-        </div>
-      </details>
+      <nav class="jump" aria-label="Studies">
+        <span class="kicker">Studies</span>
+        <a href="#schedule">Schedule lab</a>
+        <a href="#data-contract">Command contract</a>
+        <a href="#training">Roadmap</a>
+        <a href="#comparison">Comparison</a>
+        <a href="#repo-map">Repository map</a>
+      </nav>
 
-      <details id="repo-map">
-        <summary>
-          <span>Repository map</span>
-          <span class="badge current">exact anchors</span>
-        </summary>
-        <div class="detail-body">
-          <div class="repo-grid" id="repo-grid"></div>
-        </div>
-      </details>
-    </section>
+      <section class="secondary" aria-label="Architecture studies">
+        <details class="panel" id="schedule" data-kind="visual" open>
+          <summary>
+            <span class="panel-mark" aria-hidden="true"></span>
+            <span>
+              <span class="panel-name">Diffusion Forcing schedule lab</span>
+              <span class="panel-desc">Where every future frame sits on its own denoising path</span>
+            </span>
+            <span class="badge modify">reconstructed from code</span>
+            <span class="chevron" aria-hidden="true"></span>
+          </summary>
+          <div class="detail-body">
+            <div class="schedule-toolbar">
+              <div class="field">
+                <label for="schedule-mode">Noise schedule K(m,t)</label>
+                <select id="schedule-mode">
+                  <option value="ar">Open Dreams autoregressive · reconstructed</option>
+                  <option value="eval">Open Dreams batch evaluation · reconstructed</option>
+                  <option value="train">Training noise sample · reconstructed</option>
+                  <option value="full">Full-sequence diffusion · paper reference</option>
+                  <option value="zigzag">Zig-zag · paper reference</option>
+                </select>
+              </div>
+              <div class="controls" aria-label="Schedule playback">
+                <button class="btn" type="button" id="prev-row">Previous</button>
+                <button class="btn primary" type="button" id="play-row" aria-pressed="false">Play</button>
+                <button class="btn" type="button" id="next-row">Next</button>
+              </div>
+            </div>
 
-    <p class="footer-note">
-      Terminology: the schedule matrix diffuses future visual latents. In the proposed
-      architecture, the EE adapter predicts physical states directly and supplies them as conditioning tokens.
-    </p>
-  </main>
+            <div class="schedule-meta">
+              <p class="schedule-meta-top">
+                <span class="badge modify" id="schedule-status">implemented behavior · reconstructed</span>
+                <span id="schedule-description">
+                  Each next visual frame is denoised from τ=1 to τ=0, then committed with τ=0.05.
+                </span>
+              </p>
+              <p class="schedule-meta-facts">
+                <span>Configured inner loop · 128 Euler steps</span>
+                <span>Hedge commit · τ=0.05</span>
+                <span>PushT · C=1; schedules are per camera when C&gt;1</span>
+              </p>
+            </div>
+
+            <p class="callout" style="margin-bottom: 18px">
+              This matrix is an explanatory reconstruction of the procedural loops below. The
+              repository does not currently define or store an explicit <code>K[m,t]</code>
+              scheduling matrix.
+            </p>
+
+            <div class="state-trajectory target-only" aria-label="Target predicted EE trajectory">
+              <span class="trajectory-label">Direct EE prediction</span>
+              <span class="state-chip">x̂ₜ₊₁</span>
+              <span class="state-chip">x̂ₜ₊₂</span>
+              <span class="state-chip">x̂ₜ₊₃</span>
+              <span class="state-chip">x̂ₜ₊₄</span>
+              <span class="state-chip">x̂ₜ₊₅</span>
+              <span class="state-chip">x̂ₜ₊₆</span>
+            </div>
+
+            <div class="matrix-wrap">
+              <div class="matrix" id="schedule-matrix" role="grid" aria-label="Visual latent noise schedule matrix"></div>
+            </div>
+
+            <p class="noise-legend" aria-label="Noise-level legend">
+              <span>clean τ=0</span>
+              <span class="noise-ramp" aria-hidden="true"></span>
+              <span>noise τ=1</span>
+            </p>
+
+            <div class="schedule-detail" id="schedule-detail" aria-live="polite"></div>
+
+            <div class="controls" style="margin-top: 16px">
+              <label class="check">
+                <input type="checkbox" id="show-causal">
+                Show causal-attention matrix
+              </label>
+            </div>
+
+            <div class="causal-wrap" id="causal-wrap">
+              <div>
+                <p class="kicker">Separate mechanism</p>
+                <h3>Frame-level causal visibility</h3>
+                <div class="causal-grid" id="causal-grid" aria-label="Lower triangular causal attention mask"></div>
+              </div>
+              <p class="callout">
+                The attention mask answers which prior frames a query may use. It is not the
+                denoising schedule. PushT currently uses one timestep per block, producing a
+                lower-triangular frame mask within each episode.
+              </p>
+            </div>
+          </div>
+        </details>
+
+        <details class="panel" id="data-contract" data-kind="action">
+          <summary>
+            <span class="panel-mark" aria-hidden="true"></span>
+            <span>
+              <span class="panel-name">Command and telemetry contract</span>
+              <span class="panel-desc">Commanded motion is not the motion the robot realizes</span>
+            </span>
+            <span class="badge modify">scientific blocker</span>
+            <span class="chevron" aria-hidden="true"></span>
+          </summary>
+          <div class="detail-body">
+            <div class="section-head">
+              <div>
+                <p class="kicker">Command ≠ realized motion</p>
+                <h2>Save both sides of every controller transition</h2>
+              </div>
+              <div class="field">
+                <label for="contact-mode">Regime</label>
+                <select id="contact-mode">
+                  <option value="free">Free space</option>
+                  <option value="contact">Contact / saturation</option>
+                </select>
+              </div>
+            </div>
+            <div class="stats">
+              <div class="stat is-command">
+                <span>Commanded EE delta Δa</span>
+                <strong>+4.0 cm</strong>
+              </div>
+              <div class="stat is-realized">
+                <span>Realized EE delta Δx<sup>actual</sup></span>
+                <strong id="realized-value">+4.0 cm</strong>
+              </div>
+              <div class="stat is-residual">
+                <span>Execution residual r</span>
+                <strong id="residual-value">0.0 cm</strong>
+              </div>
+            </div>
+            <p class="callout" style="margin-top: 14px">
+              The current collector derives <code>action_continuous</code> from consecutive
+              measured TCP poses, so it records achieved motion rather than the raw command sent
+              to the controller. With only that field the residual
+              <code>r = Δx<sup>actual</sup> − Δa<sup>cmd</sup></code> collapses to zero, leaving
+              the adapter no learnable target.
+            </p>
+          </div>
+        </details>
+
+        <details class="panel" id="training" data-kind="state">
+          <summary>
+            <span class="panel-mark" aria-hidden="true"></span>
+            <span>
+              <span class="panel-name">Training roadmap</span>
+              <span class="panel-desc">Five phases, from data schema to ablations</span>
+            </span>
+            <span class="badge new">target</span>
+            <span class="chevron" aria-hidden="true"></span>
+          </summary>
+          <div class="detail-body">
+            <div class="stepper" aria-label="Training phase">
+              <button class="btn step primary" type="button" data-phase="0" aria-pressed="true">
+                <span class="step-num" aria-hidden="true">0</span>Data
+              </button>
+              <span class="link" aria-hidden="true"></span>
+              <button class="btn step" type="button" data-phase="1" aria-pressed="false">
+                <span class="step-num" aria-hidden="true">1</span>Adapter
+              </button>
+              <span class="link" aria-hidden="true"></span>
+              <button class="btn step" type="button" data-phase="2" aria-pressed="false">
+                <span class="step-num" aria-hidden="true">2</span>Visual
+              </button>
+              <span class="link" aria-hidden="true"></span>
+              <button class="btn step" type="button" data-phase="3" aria-pressed="false">
+                <span class="step-num" aria-hidden="true">3</span>Joint
+              </button>
+              <span class="link" aria-hidden="true"></span>
+              <button class="btn step" type="button" data-phase="4" aria-pressed="false">
+                <span class="step-num" aria-hidden="true">4</span>Evaluate
+              </button>
+            </div>
+            <p class="phase-detail" id="phase-detail">
+              Record raw commands, measured pre/post EE poses, camera observations, masks, and episode boundaries.
+            </p>
+          </div>
+        </details>
+
+        <details class="panel" id="comparison" data-kind="time">
+          <summary>
+            <span class="panel-mark" aria-hidden="true"></span>
+            <span>
+              <span class="panel-name">Architecture comparison</span>
+              <span class="panel-desc">Where the recommended soft factorization sits</span>
+            </span>
+            <span class="badge">4 variants</span>
+            <span class="chevron" aria-hidden="true"></span>
+          </summary>
+          <div class="detail-body">
+            <div class="controls" aria-label="Architecture comparison">
+              <button class="btn" type="button" data-compare="direct" aria-pressed="false">Direct</button>
+              <button class="btn" type="button" data-compare="joint" aria-pressed="false">Joint-output</button>
+              <button class="btn" type="button" data-compare="hard" aria-pressed="false">Hard two-stage</button>
+              <button class="btn primary" type="button" data-compare="soft" aria-pressed="true">Soft two-stage</button>
+            </div>
+            <p class="compare-detail" id="compare-detail">
+              <strong>Soft two-stage:</strong> raw actions and predicted future EE states both condition
+              the visual DiT, so state prediction is explicit without becoming a hard bottleneck.
+            </p>
+          </div>
+        </details>
+
+        <details class="panel" id="repo-map" data-kind="visual">
+          <summary>
+            <span class="panel-mark" aria-hidden="true"></span>
+            <span>
+              <span class="panel-name">Repository map</span>
+              <span class="panel-desc">Exact files and line anchors this work touches</span>
+            </span>
+            <span class="badge current">exact anchors</span>
+            <span class="chevron" aria-hidden="true"></span>
+          </summary>
+          <div class="detail-body">
+            <div class="repo-grid" id="repo-grid"></div>
+          </div>
+        </details>
+      </section>
+
+      <footer class="page-footer">
+        <p>
+          Terminology: the schedule matrix diffuses future visual latents. In the proposed
+          architecture the EE adapter predicts physical states directly and supplies them to the
+          DiT as conditioning tokens.
+        </p>
+        <p>
+          Repository <a href="https://github.com/Cyberdr8gon/open-dreams">Cyberdr8gon/open-dreams</a>.
+          Notes: EE action–state token writeup, implementation checklist, and current-vs-target comparison.
+        </p>
+      </footer>
+    </main>
+  </div>
 
   <script>
     (() => {
@@ -1923,6 +2714,45 @@
       renderSchedule();
       setArchitectureMode("current");
       selectComponent("token-pack");
+    })();
+  </script>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const root = document.documentElement;
+      const toggle = document.getElementById("theme-toggle");
+
+      function currentTheme() {
+        return root.getAttribute("data-theme") === "dark" ? "dark" : "light";
+      }
+
+      function syncToggle() {
+        const dark = currentTheme() === "dark";
+        toggle.setAttribute("aria-pressed", String(dark));
+        toggle.title = dark ? "Switch to light" : "Switch to dark";
+      }
+
+      syncToggle();
+
+      toggle.addEventListener("click", () => {
+        const next = currentTheme() === "dark" ? "light" : "dark";
+        root.setAttribute("data-theme", next);
+        try {
+          localStorage.setItem("theme", next);
+        } catch (error) {
+          /* storage is unavailable; the in-page toggle still works */
+        }
+        syncToggle();
+      });
+
+      document.querySelectorAll(".jump a").forEach((link) => {
+        link.addEventListener("click", () => {
+          const panel = document.querySelector(link.getAttribute("href"));
+          if (panel instanceof HTMLDetailsElement) panel.open = true;
+        });
+      });
     })();
   </script>
 </body>
