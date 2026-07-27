@@ -1116,16 +1116,16 @@
       <details open id="schedule">
         <summary>
           <span>Diffusion Forcing schedule lab</span>
-          <span class="badge current">implemented defaults</span>
+          <span class="badge modify">reconstructed from code</span>
         </summary>
         <div class="detail-body">
           <div class="schedule-toolbar">
             <div class="field">
               <label for="schedule-mode">Noise schedule K(m,t)</label>
               <select id="schedule-mode">
-                <option value="ar">Open Dreams autoregressive · implemented</option>
-                <option value="eval">Open Dreams batch evaluation · implemented</option>
-                <option value="train">Training noise sample · implemented</option>
+                <option value="ar">Open Dreams autoregressive · reconstructed</option>
+                <option value="eval">Open Dreams batch evaluation · reconstructed</option>
+                <option value="train">Training noise sample · reconstructed</option>
                 <option value="full">Full-sequence diffusion · paper reference</option>
                 <option value="zigzag">Zig-zag · paper reference</option>
               </select>
@@ -1138,13 +1138,18 @@
           </div>
 
           <div class="schedule-meta">
-            <span class="badge current" id="schedule-status">implemented</span>
+            <span class="badge modify" id="schedule-status">implemented behavior · reconstructed</span>
             <span id="schedule-description">
               Each next visual frame is denoised from τ=1 to τ=0, then committed with τ=0.05.
             </span>
             <span>Configured inner loop: 128 Euler steps.</span>
             <span>PushT: C=1; schedules are per camera when C&gt;1.</span>
           </div>
+
+          <p class="callout">
+            This matrix is an explanatory reconstruction of the procedural loops below. The
+            repository does not currently define or store an explicit <code>K[m,t]</code> scheduling matrix.
+          </p>
 
           <div class="state-trajectory" aria-label="Target predicted EE trajectory">
             <span class="trajectory-label">Direct EE prediction</span>
@@ -1488,21 +1493,21 @@
 
       const scheduleContent = {
         ar: {
-          status: "implemented",
-          statusClass: "current",
-          description: "Each next visual frame is denoised from τ=1 to τ=0, then committed with τ=0.05.",
+          status: "behavior implemented · reconstructed",
+          statusClass: "modify",
+          description: "The code denoises one action-conditioned next frame from τ=1 to τ=0, then commits it with τ=0.05; this matrix reconstructs that sequence.",
           path: "src/open_dreams/models/latent_diffusion_forcing_world_model.py:1241-1379"
         },
         eval: {
-          status: "implemented",
-          statusClass: "current",
-          description: "Episode starts are clean anchors; other frames begin at varied noise levels and denoise together.",
+          status: "behavior implemented · reconstructed",
+          statusClass: "modify",
+          description: "Episode starts are clean anchors; other frames begin at varied noise levels and denoise together; this matrix reconstructs the tensor updates.",
           path: "src/open_dreams/models/latent_diffusion_forcing_world_model.py:915-1051"
         },
         train: {
-          status: "implemented snapshot",
-          statusClass: "current",
-          description: "One independent τ ~ U[0,1] is sampled for every frame and camera; this is not an inference trajectory.",
+          status: "behavior implemented · reconstructed",
+          statusClass: "modify",
+          description: "One independent τ ~ U[0,1] is sampled for every frame and camera; the page renders that tensor as a one-row snapshot, not an inference trajectory.",
           path: "src/open_dreams/models/latent_diffusion_forcing_world_model.py:460-489"
         },
         full: {
