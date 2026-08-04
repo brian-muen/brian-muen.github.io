@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>EE World Model Architecture Lab</title>
-  <meta name="description" content="Interactive map of the Open Dreams visual Diffusion Forcing world model and the proposed end-effector command-response adapter.">
+  <meta name="description" content="Interactive map of the implemented Open Dreams visual Diffusion Forcing world model and a selected joint state-and-vision diffusion proposal.">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -322,7 +322,7 @@
       color: var(--muted);
     }
 
-    [data-mode='target'] .status-line {
+    [data-mode='selected'] .status-line {
       --accent: var(--visual);
     }
 
@@ -364,7 +364,8 @@
       color: color-mix(in srgb, var(--visual) 72%, var(--text));
     }
 
-    .badge.reference {
+    .badge.reference,
+    .badge.ablation {
       border-color: color-mix(in srgb, var(--time) 30%, var(--border));
       background: color-mix(in srgb, var(--time) 12%, var(--surface));
       color: color-mix(in srgb, var(--time) 72%, var(--text));
@@ -483,6 +484,9 @@
     }
 
     .architecture {
+      /* centre of the first pipeline column, shared by the funnel and feedback rail */
+      --join-x: calc((100% - 52px) / 6);
+
       padding: 20px 20px 22px;
     }
 
@@ -532,6 +536,10 @@
     .lane[data-kind='action'] { --lane: var(--action); }
     .lane[data-kind='time'] { --lane: var(--time); }
     .lane[data-kind='state'] { --lane: var(--state); }
+
+    .ablation-track {
+      --lane: var(--state);
+    }
 
     .track {
       display: grid;
@@ -617,11 +625,6 @@
       margin-top: 2px;
     }
 
-    .funnel {
-      /* centre of the first pipeline column, so the drop lands on the token pack */
-      --join-x: calc((100% - 52px) / 6);
-    }
-
     .funnel::before {
       position: absolute;
       top: 0;
@@ -694,6 +697,52 @@
 
     .node.stage strong {
       font-size: 0.94rem;
+    }
+
+    /* two output heads share the final pipeline column */
+    .stage-split {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .node.state-head {
+      --lane: var(--state);
+
+      background: color-mix(in srgb, var(--state) 5%, var(--surface));
+    }
+
+    /* --------------------------------------------------- next-frame feedback */
+    .feedback {
+      position: relative;
+      height: 38px;
+      margin: 0 0 4px;
+      border: 1px dashed color-mix(in srgb, var(--state) 42%, var(--border));
+      border-top: 0;
+      border-radius: 0 0 12px 12px;
+    }
+
+    .feedback-arrow {
+      position: absolute;
+      top: -1px;
+      left: 0;
+      width: 7px;
+      height: 7px;
+      border-top: 1px solid color-mix(in srgb, var(--state) 62%, var(--border));
+      border-left: 1px solid color-mix(in srgb, var(--state) 62%, var(--border));
+      transform: translate(-50%, -50%) rotate(45deg);
+    }
+
+    .feedback-label {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      padding: 0 11px;
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 0.74rem;
+      white-space: nowrap;
+      transform: translate(-50%, 50%);
     }
 
     /* ---------------------------------------------------------- notes, forms */
@@ -1477,12 +1526,12 @@
     }
 
     /* ------------------------------------------------------------ mode rules */
-    [data-mode='current'] .target-only {
+    [data-mode='current'] .selected-only {
       display: none;
     }
 
     [data-mode='overlay'] .lane[data-kind='state'] .node,
-    [data-mode='overlay'] .formula {
+    [data-mode='overlay'] .node.state-head {
       border-style: dashed;
     }
 
@@ -1563,7 +1612,7 @@
         gap: 0;
       }
 
-      .funnel {
+      .architecture {
         --join-x: 50%;
       }
 
@@ -1634,15 +1683,15 @@
           <p class="eyebrow">Open Dreams · EE-aware world model</p>
           <h1>Architecture lab</h1>
           <p class="lede">
-            Trace the implemented visual Diffusion Forcing model, overlay the proposed
-            command-to-realized EE adapter, and inspect how future visual latents are denoised.
+            Trace the implemented visual Diffusion Forcing model, overlay a selected joint
+            state-and-vision diffusion proposal, and inspect how future latents are denoised.
           </p>
         </div>
         <div class="mode-switch">
           <p class="switch-label">Architecture</p>
           <div class="segmented" role="group" aria-label="Architecture mode">
             <button class="tab" type="button" aria-pressed="true" data-mode-button="current">Current</button>
-            <button class="tab" type="button" aria-pressed="false" data-mode-button="target">Target</button>
+            <button class="tab" type="button" aria-pressed="false" data-mode-button="selected">Selected</button>
             <button class="tab" type="button" aria-pressed="false" data-mode-button="overlay">Overlay</button>
           </div>
         </div>
@@ -1694,7 +1743,7 @@
                 <span class="link" aria-hidden="true"></span>
                 <button class="node" type="button" data-node="action-embed" aria-pressed="false">
                   <strong>Action embedding</strong>
-                  <small>raw action retained</small>
+                  <small>recorded action retained</small>
                 </button>
                 <span class="link" aria-hidden="true"></span>
                 <button class="node" type="button" data-node="action-token" aria-pressed="false">
@@ -1709,7 +1758,7 @@
               <div class="track">
                 <button class="node" type="button" data-node="noise" aria-pressed="false">
                   <strong>Noise schedule</strong>
-                  <small>τ and Δτ per camera</small>
+                  <small>τ + step conditioning</small>
                 </button>
                 <span class="link" aria-hidden="true"></span>
                 <button class="node" type="button" data-node="time-embed" aria-pressed="false">
@@ -1724,22 +1773,22 @@
               </div>
             </div>
 
-            <div class="lane target-only" data-kind="state">
+            <div class="lane selected-only" data-kind="state">
               <p class="lane-head"><span class="lane-dot" aria-hidden="true"></span><span class="lane-name">EE state</span></p>
               <div class="track">
                 <button class="node" type="button" data-node="ee" aria-pressed="false">
                   <strong>Measured EE state</strong>
-                  <small>x<sub>t</sub> and the Δa chunk</small>
+                  <small>x<sub>t</sub> history and prior x̂</small>
                 </button>
                 <span class="link" aria-hidden="true"></span>
-                <button class="node" type="button" data-node="adapter" aria-pressed="false">
-                  <strong>State adapter</strong>
-                  <small>command → realized motion</small>
+                <button class="node" type="button" data-node="state-embed" aria-pressed="false">
+                  <strong>State embedder</strong>
+                  <small>pose → width D</small>
                 </button>
                 <span class="link" aria-hidden="true"></span>
                 <button class="node" type="button" data-node="state-token" aria-pressed="false">
-                  <strong>Predicted state token</strong>
-                  <small>x̂<sub>t+k</sub> → D</small>
+                  <strong>Noisy state token</strong>
+                  <small>x<sup>(τ)</sup><sub>t+k</sub> · diffused</small>
                 </button>
               </div>
             </div>
@@ -1754,7 +1803,7 @@
             <button class="node stage" type="button" data-node="token-pack" aria-pressed="true">
               <span class="stage-index">stage 1</span>
               <strong>Per-frame token pack</strong>
-              <small>action · flow time · state · camera</small>
+              <small>action · flow time · camera (+ state in proposal)</small>
             </button>
             <span class="link" aria-hidden="true"></span>
             <button class="node stage" type="button" data-node="dit" aria-pressed="false">
@@ -1763,31 +1812,41 @@
               <small>12 layers · causal in time</small>
             </button>
             <span class="link" aria-hidden="true"></span>
-            <button class="node stage" type="button" data-node="velocity" aria-pressed="false">
-              <span class="stage-index">stage 3</span>
-              <strong>Visual flow velocity</strong>
-              <small>clean − noise</small>
-            </button>
+            <div class="stage-split">
+              <button class="node stage" type="button" data-node="velocity" aria-pressed="false">
+                <span class="stage-index">stage 3 · visual</span>
+                <strong>Visual flow head</strong>
+                <small>clean − noise</small>
+              </button>
+              <button class="node stage state-head selected-only" type="button" data-node="state-head" aria-pressed="false">
+                <span class="stage-index">stage 3 · state</span>
+                <strong>State flow head</strong>
+                <small>v̂<sup>state</sup> = x − ε</small>
+              </button>
+            </div>
+          </div>
+
+          <div class="feedback selected-only" aria-hidden="true">
+            <span class="feedback-arrow"></span>
+            <span class="feedback-label">committed x̂<sub>t+k</sub> conditions frame t+k+1</span>
           </div>
 
           <div class="notes">
             <p class="note">
               <span class="badge current">reused</span>
-              <span>Raw action tokens keep conditioning the DiT.</span>
+              <span>The existing leading-action token keeps conditioning the DiT.</span>
             </p>
-            <p class="note target-only">
+            <p class="note selected-only">
               <span class="badge new">added</span>
-              <span>Predicted realized EE states are additive conditioning, not a hard bottleneck.</span>
+              <span>State enters as a noised generative DiT token, not as a separate adapter prediction.</span>
             </p>
           </div>
 
-          <div class="formula target-only">
-            <code>Δx̂<sup>actual</sup> = F<sub>adapter</sub>(x<sub>t</sub>, Δa<sup>cmd</sup>)</code>
-            <span class="sep" aria-hidden="true">→</span>
-            <button class="btn ghost chip-node" type="button" data-node="rollout" aria-pressed="false">
-              <code>x̂<sub>t+1</sub> = x<sub>t</sub> ⊕ Δx̂<sup>actual</sup></code>
-            </button>
-            <em>Learn one; derive the other.</em>
+          <div class="formula selected-only">
+            <code>p(o<sub>t</sub>, x<sub>t</sub> | o<sub>&lt;t</sub>, x<sub>&lt;t</sub>, Δa)</code>
+            <span class="sep" aria-hidden="true">·</span>
+            <code>ℒ = ℒ<sub>visual</sub> + λ<sub>x</sub> ℒ<sub>state</sub></code>
+            <em>One joint distribution per timestep.</em>
           </div>
 
           <div class="tokens">
@@ -1798,11 +1857,15 @@
             <div class="token-bar" aria-label="Per-frame token packing">
               <span class="token-seg" data-kind="action">action ×1</span>
               <span class="token-seg" data-kind="time">flow time ×1</span>
-              <span class="token-seg target-only" data-kind="state">state ×1</span>
+              <span class="token-seg selected-only" data-kind="state">state ×1</span>
               <span class="token-seg is-patches"><span>camera patches ×81</span></span>
             </div>
             <p class="token-total" id="token-total">
               Current total: 83 tokens/frame = 1 action + 1 flow-time + 81 visual patches.
+            </p>
+            <p class="token-total selected-only">
+              Diffused: camera patches and the EE state token. Conditioning: actions, flow time,
+              history state.
             </p>
           </div>
         </div>
@@ -1824,13 +1887,13 @@
             <dt>Output</dt>
             <dd id="inspector-output">[B,T,83,D] for one PushT camera</dd>
             <dt>Role</dt>
-            <dd id="inspector-role">Current packing point; add one predicted-state token here.</dd>
+            <dd id="inspector-role">Current packing point; the selected proposal adds one noised EE-state token here.</dd>
           </dl>
           <div class="file-ref">
-            <a id="inspector-link" href="https://github.com/Cyberdr8gon/open-dreams/blob/main/src/open_dreams/models/latent_diffusion_forcing_world_model.py#L657">
-              <code id="inspector-path">latent_diffusion_forcing_world_model.py:657-748</code>
+            <a id="inspector-link" href="https://github.com/Cyberdr8gon/open-dreams/blob/2fb2fac2438bc55905fdc53f76ea0ecae0119a02/src/open_dreams/models/latent_diffusion_forcing_world_model.py#L654">
+              <code id="inspector-path">latent_diffusion_forcing_world_model.py:654-745</code>
             </a>
-            <button class="btn ghost copy-btn" type="button" data-copy="src/open_dreams/models/latent_diffusion_forcing_world_model.py:657">
+            <button class="btn ghost copy-btn" type="button" data-copy="src/open_dreams/models/latent_diffusion_forcing_world_model.py:654">
               Copy
             </button>
           </div>
@@ -1845,6 +1908,7 @@
         <a href="#training">Roadmap</a>
         <a href="#comparison">Comparison</a>
         <a href="#repo-map">Repository map</a>
+        <a href="#appendix">Appendix</a>
       </nav>
 
       <section class="secondary" aria-label="Architecture studies">
@@ -1881,13 +1945,14 @@
               <p class="schedule-meta-top">
                 <span class="badge modify" id="schedule-status">implemented behavior · reconstructed</span>
                 <span id="schedule-description">
-                  Each next visual frame is denoised from τ=1 to τ=0, then committed with τ=0.05.
+                  Each next visual frame is denoised from τ=1 to τ=0; the clean latent is committed
+                  to the cache under conditioning label τ=0.05.
                 </span>
               </p>
               <p class="schedule-meta-facts">
-                <span>Configured inner loop · 128 Euler steps</span>
-                <span>Hedge commit · τ=0.05</span>
-                <span>PushT · C=1; schedules are per camera when C&gt;1</span>
+                <span>Configured AR/eval default · 128 Euler steps</span>
+                <span>AR cache label · τ=0.05; no commit noise on main</span>
+                <span>PushT · C=1; training/eval noise is per-camera when C&gt;1</span>
               </p>
             </div>
 
@@ -1897,8 +1962,8 @@
               scheduling matrix.
             </p>
 
-            <div class="state-trajectory target-only" aria-label="Target predicted EE trajectory">
-              <span class="trajectory-label">Direct EE prediction</span>
+            <div class="state-trajectory selected-only" aria-label="EE state tokens on the same schedule">
+              <span class="trajectory-label">Proposed EE state token · aligned schedule</span>
               <span class="state-chip">x̂ₜ₊₁</span>
               <span class="state-chip">x̂ₜ₊₂</span>
               <span class="state-chip">x̂ₜ₊₃</span>
@@ -1948,7 +2013,7 @@
               <span class="panel-name">Command and telemetry contract</span>
               <span class="panel-desc">Commanded motion is not the motion the robot realizes</span>
             </span>
-            <span class="badge modify">scientific blocker</span>
+            <span class="badge ablation">ablation prerequisite</span>
             <span class="chevron" aria-hidden="true"></span>
           </summary>
           <div class="detail-body">
@@ -1980,11 +2045,14 @@
               </div>
             </div>
             <p class="callout" style="margin-top: 14px">
-              The current collector derives <code>action_continuous</code> from consecutive
+              The values above are illustrative, not measured repository results. The current
+              collector derives <code>action_continuous</code> from consecutive
               measured TCP poses, so it records achieved motion rather than the raw command sent
-              to the controller. With only that field the residual
-              <code>r = Δx<sup>actual</sup> − Δa<sup>cmd</sup></code> collapses to zero, leaving
-              the adapter no learnable target.
+              to the controller. A residual is meaningful only after command and realized motion
+              share units and coordinate frames. With only the current field the residual
+              <code>r = Δx<sup>actual</sup> − Δa<sup>cmd</sup></code> collapses to zero. The
+              selected proposal does not require a residual target, but honest command-execution analysis and
+              the residual ablations do, so both streams should still be stored.
             </p>
           </div>
         </details>
@@ -1993,10 +2061,10 @@
           <summary>
             <span class="panel-mark" aria-hidden="true"></span>
             <span>
-              <span class="panel-name">Training roadmap</span>
-              <span class="panel-desc">Five phases, from data schema to ablations</span>
+              <span class="panel-name">Proposed training roadmap</span>
+              <span class="panel-desc">Four study phases, from data audit to rollout evaluation</span>
             </span>
-            <span class="badge new">target</span>
+            <span class="badge new">proposal</span>
             <span class="chevron" aria-hidden="true"></span>
           </summary>
           <div class="detail-body">
@@ -2006,23 +2074,20 @@
               </button>
               <span class="link" aria-hidden="true"></span>
               <button class="btn step" type="button" data-phase="1" aria-pressed="false">
-                <span class="step-num" aria-hidden="true">1</span>Adapter
+                <span class="step-num" aria-hidden="true">1</span>Joint DiT
               </button>
               <span class="link" aria-hidden="true"></span>
               <button class="btn step" type="button" data-phase="2" aria-pressed="false">
-                <span class="step-num" aria-hidden="true">2</span>Visual
+                <span class="step-num" aria-hidden="true">2</span>Ablations
               </button>
               <span class="link" aria-hidden="true"></span>
               <button class="btn step" type="button" data-phase="3" aria-pressed="false">
-                <span class="step-num" aria-hidden="true">3</span>Joint
-              </button>
-              <span class="link" aria-hidden="true"></span>
-              <button class="btn step" type="button" data-phase="4" aria-pressed="false">
-                <span class="step-num" aria-hidden="true">4</span>Evaluate
+                <span class="step-num" aria-hidden="true">3</span>Rollout
               </button>
             </div>
             <p class="phase-detail" id="phase-detail">
-              Record raw commands, measured pre/post EE poses, camera observations, masks, and episode boundaries.
+              Record raw commands and measured pre/post EE poses separately, then audit frame alignment,
+              controller frequency, coordinate frames, quaternion conventions, and episode boundaries.
             </p>
           </div>
         </details>
@@ -2031,22 +2096,26 @@
           <summary>
             <span class="panel-mark" aria-hidden="true"></span>
             <span>
-              <span class="panel-name">Architecture comparison</span>
-              <span class="panel-desc">Where the recommended soft factorization sits</span>
+              <span class="panel-name">Proposed architecture comparison</span>
+              <span class="panel-desc">The selected proposal and six study variants around it</span>
             </span>
-            <span class="badge">4 variants</span>
+            <span class="badge">7 variants</span>
             <span class="chevron" aria-hidden="true"></span>
           </summary>
           <div class="detail-body">
             <div class="controls" aria-label="Architecture comparison">
-              <button class="btn" type="button" data-compare="direct" aria-pressed="false">Direct</button>
-              <button class="btn" type="button" data-compare="joint" aria-pressed="false">Joint-output</button>
-              <button class="btn" type="button" data-compare="hard" aria-pressed="false">Hard two-stage</button>
-              <button class="btn primary" type="button" data-compare="soft" aria-pressed="true">Soft two-stage</button>
+              <button class="btn" type="button" data-compare="a" aria-pressed="false">A · Action only</button>
+              <button class="btn" type="button" data-compare="b" aria-pressed="false">B · Oracle state</button>
+              <button class="btn" type="button" data-compare="c" aria-pressed="false">C · Hard two-stage</button>
+              <button class="btn" type="button" data-compare="d" aria-pressed="false">D · Soft adapter</button>
+              <button class="btn" type="button" data-compare="e" aria-pressed="false">E · Joint, no reuse</button>
+              <button class="btn primary" type="button" data-compare="f" aria-pressed="true">F · Joint + reuse</button>
+              <button class="btn" type="button" data-compare="g" aria-pressed="false">G · Residual</button>
             </div>
             <p class="compare-detail" id="compare-detail">
-              <strong>Soft two-stage:</strong> raw actions and predicted future EE states both condition
-              the visual DiT, so state prediction is explicit without becoming a hard bottleneck.
+              <strong>F · Joint multimodal with next-frame state conditioning:</strong> visual and state
+              tokens are denoised together in one DiT, and the committed state conditions the following
+              frame. Selected proposal; not implemented.
             </p>
           </div>
         </details>
@@ -2056,26 +2125,86 @@
             <span class="panel-mark" aria-hidden="true"></span>
             <span>
               <span class="panel-name">Repository map</span>
-              <span class="panel-desc">Exact files and line anchors this work touches</span>
+              <span class="panel-desc">Immutable code anchors and proposal context</span>
             </span>
             <span class="badge current">exact anchors</span>
             <span class="chevron" aria-hidden="true"></span>
           </summary>
           <div class="detail-body">
+            <p class="callout" style="margin-bottom: 16px">
+              Current-code links are pinned to Open Dreams <code>main</code> at
+              <code>2fb2fac</code>. The selected 84-token joint-diffusion design is a site-level
+              proposal, not implemented code. The EE branch roadmap at <code>f1e92f7</code>
+              documents an earlier alternative: fuse command and pose into the existing transition
+              token, preserve 83 tokens, and add a deterministic realized-delta head.
+            </p>
             <div class="repo-grid" id="repo-grid"></div>
+          </div>
+        </details>
+
+        <details class="panel" id="appendix" data-kind="state">
+          <summary>
+            <span class="panel-mark" aria-hidden="true"></span>
+            <span>
+              <span class="panel-name">Appendix · conceptual pre-DiT command-response adapter</span>
+              <span class="panel-desc">An earlier page alternative, kept as proposed ablation D</span>
+            </span>
+            <span class="badge ablation">not selected</span>
+            <span class="chevron" aria-hidden="true"></span>
+          </summary>
+          <div class="detail-body">
+            <p style="margin-bottom: 16px">
+              A separately trained adapter predicts the realized EE trajectory before visual
+              generation, and the DiT conditions on that prediction. It is a clean engineering
+              cascade, but it factorizes the same timestep as
+              <code>p(o | x̂) p(x̂ | …)</code> when observation and state are two views of one
+              physical configuration.
+            </p>
+
+            <div class="track ablation-track">
+              <button class="node" type="button" data-node="ee" aria-pressed="false">
+                <strong>Measured EE state</strong>
+                <small>x<sub>t</sub> and the Δa chunk</small>
+              </button>
+              <span class="link" aria-hidden="true"></span>
+              <button class="node" type="button" data-node="adapter" aria-pressed="false">
+                <strong>Command-response adapter</strong>
+                <small>command → realized motion</small>
+              </button>
+              <span class="link" aria-hidden="true"></span>
+              <button class="node" type="button" data-node="rollout" aria-pressed="false">
+                <strong>Predicted state tokens</strong>
+                <small>x̂<sub>t+k</sub> → visual DiT</small>
+              </button>
+            </div>
+
+            <div class="formula" style="margin-top: 16px">
+              <code>Δx̂<sup>actual</sup> = F<sub>adapter</sub>(x<sub>t</sub>, Δa<sup>cmd</sup>)</code>
+              <span class="sep" aria-hidden="true">→</span>
+              <code>x̂<sub>t+1</sub> = x<sub>t</sub> ⊕ Δx̂<sup>actual</sup></code>
+              <em>Learn one; derive the other.</em>
+            </div>
+
+            <p class="callout" style="margin-top: 16px">
+              Worth running as ablation D: it tests whether a separately trained physical predictor
+              helps vision. <a href="https://arxiv.org/abs/2606.13672">WEAVER</a> maps action and
+              current robot state into a future state trajectory
+              and reports lower generation quality when conditioning directly on joint velocities.
+              The selected proposal instead asks one DiT to own <code>p(o, x | …)</code>.
+            </p>
           </div>
         </details>
       </section>
 
       <footer class="page-footer">
         <p>
-          Terminology: the schedule matrix diffuses future visual latents. In the proposed
-          architecture the EE adapter predicts physical states directly and supplies them to the
-          DiT as conditioning tokens.
+          Terminology: τ is flow-matching noise time and z is a VAE latent, while x is the measured
+          EE state. In the selected proposal both future latents and future EE state are
+          denoised on an aligned schedule; the previously committed state conditions the next frame.
         </p>
         <p>
           Repository <a href="https://github.com/Cyberdr8gon/open-dreams">Cyberdr8gon/open-dreams</a>.
-          Notes: EE action–state token writeup, implementation checklist, and current-vs-target comparison.
+          Notes: action, state, and visual tokens in an EE-aware world model; implementation checklist.
         </p>
       </footer>
     </main>
@@ -2086,7 +2215,11 @@
       "use strict";
 
       const app = document.getElementById("app");
-      const sourceBase = "https://github.com/Cyberdr8gon/open-dreams/blob/main/";
+      const mainCommit = "2fb2fac2438bc55905fdc53f76ea0ecae0119a02";
+      const eeBranchCommit = "f1e92f7b86cb03f69253c7927a5e27689c07d1d8";
+      const sourceBase = `https://github.com/Cyberdr8gon/open-dreams/blob/${mainCommit}/`;
+      const eeBranchBase = `https://github.com/Cyberdr8gon/open-dreams/blob/${eeBranchCommit}/`;
+      const diffusionForcingPaper = "https://arxiv.org/abs/2407.01392";
       const horizon = 6;
       const displayRows = 13;
       let architectureMode = "current";
@@ -2102,29 +2235,29 @@
           purpose: "Supplies uint8 RGB sequences for each camera view.",
           input: "observations [B,T,C,H,W,3]",
           output: "camera images ready for VAE encoding",
-          role: "Current visual history and teacher-forced training target.",
+          role: "Current RGB sequence and visual flow-matching target.",
           path: "src/open_dreams/models/latent_diffusion_forcing_world_model.py",
-          lines: "418-458"
+          lines: "415-455"
         },
         vae: {
           title: "VAE + latent patchify",
           status: "current",
-          purpose: "Compresses 144×144 RGB frames into latent maps and divides them into a 9×9 patch grid.",
+          purpose: "Encodes 144×144 RGB to 18×18×4 VAE mean latents; each flow step patchifies the current noised latent into a 9×9 grid.",
           input: "RGB [B,T,C,144,144,3]",
           output: "patches [B,T,81C,D]",
           role: "Reuse unchanged for the EE-aware model.",
           path: "src/open_dreams/models/latent_diffusion_forcing_world_model.py",
-          lines: "456-489"
+          lines: "328-385"
         },
         "camera-token": {
           title: "Camera latent patch tokens",
           status: "current",
           purpose: "Represents each camera latent as a 9×9 grid of D-dimensional patch tokens.",
-          input: "VAE latents [B,T,C,18,18,4]",
+          input: "current noised VAE latents [B,T,C,18,18,4]",
           output: "81C patch tokens [B,T,81C,D]",
           role: "The visual content being independently noised and denoised per frame and camera.",
           path: "src/open_dreams/models/latent_diffusion_forcing_world_model.py",
-          lines: "667-676"
+          lines: "654-673"
         },
         "token-pack": {
           title: "Per-frame token pack",
@@ -2132,59 +2265,59 @@
           purpose: "Concatenates action, per-camera flow-time, and camera-patch tokens before the transformer.",
           input: "action [B,T,A], τ [B,T,C], patches [B,T,81C,D]",
           output: "[B,T,83,D] now; [B,T,84,D] with one state token",
-          role: "Insert the predicted-state token here and expand token masks accordingly.",
+          role: "Selected proposal insertion point; token masks, VideoRoPE, output slicing, cache geometry, inference, and tests must also change.",
           path: "src/open_dreams/models/latent_diffusion_forcing_world_model.py",
-          lines: "657-748"
+          lines: "654-745"
         },
         dit: {
           title: "SSST Diffusion Forcing transformer",
           status: "current",
           purpose: "Alternates three spatial-attention layers with one temporal causal-attention layer.",
           input: "[B,T,S,D] packed tokens and temporal mask",
-          output: "contextualized action, time, state, and visual tokens",
-          role: "Reuse the shared transformer; state conditioning is additive.",
+          output: "contextualized action, time, and visual tokens; plus state in the selected proposal",
+          role: "Reuse the shared transformer in the proposal; it gains a second output head rather than a second model.",
           path: "src/open_dreams/models/components/diffusion_forcing_transformer.py",
-          lines: "16-119"
+          lines: "16-133"
         },
         action: {
           title: "Leading action alignment",
           status: "current",
-          purpose: "Pairs each frame with the action that led to it; the first frame receives a passive action.",
-          input: "raw action sequence",
+          purpose: "Pairs each frame with the action that led to it; every episode-start frame receives a passive action.",
+          input: "recorded action_continuous sequence",
           output: "leading_actions [B,T,A]",
-          role: "Preserve this alignment for command and predicted-state trajectories.",
+          role: "Preserve this alignment for command and state trajectories alike.",
           path: "src/open_dreams/models/latent_diffusion_forcing_world_model.py",
-          lines: "444-454"
+          lines: "441-451"
         },
         "action-embed": {
-          title: "Raw action embedding",
+          title: "Continuous action embedding",
           status: "current",
           purpose: "Projects continuous actions to transformer width and supports action masking.",
           input: "leading action [B,T,A]",
           output: "one D-dimensional token per frame",
-          role: "Retain raw action conditioning so adapter error is not a hard bottleneck.",
+          role: "The direct action path stays in the pack; new collection must separate command from realized motion and define command-specific units and normalization.",
           path: "src/open_dreams/models/components/action_embedding.py",
-          lines: "1-180"
+          lines: "13-158"
         },
         "action-token": {
-          title: "Raw action token",
+          title: "Leading action token",
           status: "current",
-          purpose: "Carries the leading commanded or recorded action into the shared transformer context.",
+          purpose: "Carries the dataset's leading action_continuous value into the shared transformer context.",
           input: "embedded action [B,T,D]",
           output: "one action token per frame",
-          role: "Keep this token in the proposed soft two-stage architecture.",
+          role: "For existing PushT data this is a state-derived realized EE delta, not the raw controller command.",
           path: "src/open_dreams/models/latent_diffusion_forcing_world_model.py",
-          lines: "678-691"
+          lines: "675-688"
         },
         noise: {
           title: "Per-frame, per-camera noise schedule",
           status: "current",
           purpose: "Assigns an independent visual-latent noise level to every frame and camera during training.",
           input: "random key or inference schedule",
-          output: "τ [B,T,C] and integration step Δτ",
+          output: "τ [B,T,C] plus normalized step-size conditioning; Euler uses raw/clamped Δτ separately",
           role: "The schedule lab below visualizes how these values evolve during sampling.",
           path: "src/open_dreams/models/latent_diffusion_forcing_world_model.py",
-          lines: "460-499"
+          lines: "457-496"
         },
         "time-embed": {
           title: "Noise and step-size embedder",
@@ -2194,17 +2327,17 @@
           output: "time conditioning [B,T,C,D]",
           role: "Allows each camera and frame to follow a different denoising schedule.",
           path: "src/open_dreams/models/latent_diffusion_forcing_world_model.py",
-          lines: "693-710"
+          lines: "690-707"
         },
         "time-token": {
           title: "Per-camera flow-time token",
           status: "current",
-          purpose: "NeRF-encodes the current noise level and integration step size for each camera.",
+          purpose: "NeRF-encodes the current noise level and normalized step-size conditioning for each camera.",
           input: "τ and normalized step size [B,T,C]",
           output: "C time tokens [B,T,C,D]",
           role: "This token tells the DiT where each visual latent sits on its denoising path.",
           path: "src/open_dreams/models/latent_diffusion_forcing_world_model.py",
-          lines: "693-710"
+          lines: "690-707"
         },
         velocity: {
           title: "Visual flow velocity",
@@ -2214,45 +2347,66 @@
           output: "pred_velocity matching zclean − ε",
           role: "Euler integration repeatedly applies this field during inference.",
           path: "src/open_dreams/models/latent_diffusion_forcing_world_model.py",
-          lines: "475-519"
+          lines: "764-790"
         },
         ee: {
-          title: "Actual EE state and raw commands",
+          title: "Measured EE state and proposed command field",
           status: "modify",
-          purpose: "Uses measured Cartesian pose xₜ plus the exact command chunk sent to the controller.",
-          input: "xₜ and Δaₜ:ₜ₊H₋₁",
-          output: "physical inputs for the state adapter",
-          role: "Dataset must retain commands and measured pre/post poses separately.",
+          purpose: "Existing data supplies measured 6-D EE pose and achieved delta; proposed recollection adds the controller command for each transition.",
+          input: "xₜ, proposed Δaₜcmd, and committed x̂ carried from earlier frames",
+          output: "physical state values awaiting embedding",
+          role: "Dataset must retain commands and measured pre/post poses separately, with units and coordinate frames documented.",
           path: "scripts/collect_maniskill_rollouts.py",
-          lines: "552-590"
+          lines: "56-151",
+          sourceBase: eeBranchBase
         },
-        adapter: {
-          title: "Command-to-realized state adapter",
+        "state-embed": {
+          title: "EE state embedding projection",
           status: "new",
-          purpose: "Predicts the actual future EE delta or pose trajectory resulting from commanded motion.",
-          input: "current measured xₜ + raw command chunk",
-          output: "Δx̂actual or x̂ₜ₊₁:ₜ₊H",
-          role: "A pre-DiT conditioning module trained first with direct supervision.",
-          path: "src/open_dreams/models/components/ee_state_adapter.py",
+          purpose: "Maps a low-dimensional physical EE state into one D-dimensional transformer token.",
+          input: "separately normalized position(3) + axis-angle(3) [B,T,6]",
+          output: "state tokens [B,T,D]",
+          role: "Predicts no dynamics; it only matches width. Any derived next pose must use proper SE(3) composition rather than naive vector addition.",
+          path: "src/open_dreams/models/components/ee_state_embedding.py",
           lines: "NEW"
         },
         "state-token": {
-          title: "Predicted EE state embedder",
+          title: "Noisy EE state token",
           status: "new",
-          purpose: "Maps each predicted physical EE state into one D-dimensional transformer token.",
-          input: "predicted physical EE trajectory [B,H,P]",
-          output: "state tokens [B,H,D]",
-          role: "Distinct from both the physical-space adapter and any output head.",
-          path: "src/open_dreams/models/components/ee_state_embedding.py",
+          purpose: "Carries the future EE state as a generative variable on the same flow-matching path as the visual latents.",
+          input: "x⁽τ⁾ₜ₊ₖ = (1−τ)·xₜ₊ₖ + τ·ε",
+          output: "one noised state token per future frame",
+          role: "Selected proposal only: denoised jointly with camera patches so (o,x) share one distribution per timestep.",
+          path: "src/open_dreams/models/latent_diffusion_forcing_world_model.py",
+          lines: "654-745"
+        },
+        "state-head": {
+          title: "Post-DiT state flow head",
+          status: "new",
+          purpose: "Converts the DiT hidden vector for the state token into a state flow velocity.",
+          input: "contextualized state token hₜ₊ₖ",
+          output: "v̂state matching xₜ₊ₖ − ε",
+          role: "Required by the selected proposal; this is how the joint DiT would denoise the state modality.",
+          path: "src/open_dreams/models/components/ee_state_head.py",
+          lines: "NEW"
+        },
+        adapter: {
+          title: "Command-to-realized state adapter",
+          status: "ablation",
+          purpose: "Predicts the actual future EE delta or pose trajectory resulting from commanded motion.",
+          input: "current measured xₜ + proposed command sequence",
+          output: "Δx̂actual or x̂ₜ₊₁:ₜ₊H",
+          role: "Ablation D only. A pre-DiT module implies p(o|x̂)p(x̂|…) rather than a joint distribution.",
+          path: "src/open_dreams/models/components/ee_state_adapter.py",
           lines: "NEW"
         },
         rollout: {
           title: "Derived next EE pose",
-          status: "new",
-          purpose: "Composes the predicted realized delta with the current pose.",
+          status: "ablation",
+          purpose: "Composes the predicted realized delta with the current pose, then embeds it for the visual DiT.",
           input: "xₜ and Δx̂actual",
           output: "x̂ₜ₊₁ = xₜ ⊕ Δx̂actual",
-          role: "Delta and next pose contain the same information; learn one, derive the other.",
+          role: "Delta and next pose contain the same information given xₜ; learn one and derive the other with proper SE(3) composition.",
           path: "src/open_dreams/models/components/ee_pose.py",
           lines: "NEW"
         }
@@ -2261,7 +2415,8 @@
       const statusLabels = {
         current: "implemented",
         modify: "modify",
-        new: "new"
+        new: "new",
+        ablation: "ablation"
       };
 
       const modeContent = {
@@ -2270,10 +2425,10 @@
           badgeClass: "current",
           summary: "Visual history and leading actions condition latent visual-flow prediction."
         },
-        target: {
-          badge: "proposed",
+        selected: {
+          badge: "selected proposal",
           badgeClass: "new",
-          summary: "A supervised adapter predicts realized EE states, which join raw actions as visual-DiT conditioning."
+          summary: "Proposed: one DiT denoises visual and EE state tokens together; committed state conditions the next frame."
         },
         overlay: {
           badge: "implementation map",
@@ -2286,36 +2441,41 @@
         ar: {
           status: "behavior implemented · reconstructed",
           statusClass: "modify",
-          description: "The code denoises one action-conditioned next frame from τ=1 to τ=0, then commits it with τ=0.05; this matrix reconstructs that sequence.",
-          path: "src/open_dreams/models/latent_diffusion_forcing_world_model.py:1241-1379"
+          description: "The code denoises one action-conditioned next frame from τ=1 to τ=0, then commits the clean latent under cache-conditioning label τ=0.05; this matrix reconstructs that sequence.",
+          path: "src/open_dreams/models/latent_diffusion_forcing_world_model.py:1239-1377",
+          href: `${sourceBase}src/open_dreams/models/latent_diffusion_forcing_world_model.py#L1239`
         },
         eval: {
           status: "behavior implemented · reconstructed",
           statusClass: "modify",
-          description: "Episode starts are clean anchors; other frames begin at varied noise levels and denoise together; this matrix reconstructs the tensor updates.",
-          path: "src/open_dreams/models/latent_diffusion_forcing_world_model.py:915-1051"
+          description: "Episode starts are clean anchors; each other frame/camera draws an initial τ from {20/128,…,1} and all entries denoise in parallel. This compressed matrix illustrates those tensor updates.",
+          path: "src/open_dreams/models/latent_diffusion_forcing_world_model.py:912-1048",
+          href: `${sourceBase}src/open_dreams/models/latent_diffusion_forcing_world_model.py#L912`
         },
         train: {
           status: "behavior implemented · reconstructed",
           statusClass: "modify",
-          description: "One independent τ ~ U[0,1] is sampled for every frame and camera; the page renders that tensor as a one-row snapshot, not an inference trajectory.",
-          path: "src/open_dreams/models/latent_diffusion_forcing_world_model.py:460-489"
+          description: "One independent τ ~ U[0,1] is sampled for every frame and camera; the page renders illustrative draws as a one-row snapshot, not an inference trajectory.",
+          path: "src/open_dreams/models/latent_diffusion_forcing_world_model.py:457-486",
+          href: `${sourceBase}src/open_dreams/models/latent_diffusion_forcing_world_model.py#L457`
         },
         full: {
           status: "reference · not implemented",
           statusClass: "reference",
-          description: "All future frames share the same noise level at each row, as in full-sequence diffusion.",
-          path: "Diffusion Forcing paper · Sections 3.2-3.3"
+          description: "Illustrative paper schedule: all future frames share the same noise level at each row. Open Dreams does not implement this mode.",
+          path: "Diffusion Forcing paper · sampling schedules",
+          href: diffusionForcingPaper
         },
         zigzag: {
           status: "reference · not implemented",
           statusClass: "reference",
-          description: "Near futures denoise first while farther futures stay uncertain longer.",
-          path: "Diffusion Forcing paper · Section 3.3"
+          description: "Illustrative paper schedule: near futures denoise first while farther futures stay uncertain longer. Open Dreams does not implement this mode.",
+          path: "Diffusion Forcing paper · zig-zag sampling",
+          href: diffusionForcingPaper
         }
       };
 
-      const evalStarts = [0, 0.86, 0.35, 0.62, 1, 0.49];
+      const evalStarts = [0, 110 / 128, 45 / 128, 79 / 128, 1, 63 / 128];
       const trainSamples = [0.08, 0.74, 0.31, 0.93, 0.47, 0.66];
 
       function clamp(value, min = 0, max = 1) {
@@ -2376,7 +2536,7 @@
         document.getElementById("token-total").textContent =
           mode === "current"
             ? "Current total: 83 tokens/frame = 1 action + 1 flow-time + 81 visual patches."
-            : "Target total: 84 tokens/frame = 1 action + 1 flow-time + 1 predicted-state + 81 visual patches.";
+            : "Selected total: 84 tokens/frame = 1 action + 1 flow-time + 1 EE state + 81 visual patches.";
       }
 
       function selectComponent(id) {
@@ -2402,7 +2562,7 @@
           link.removeAttribute("href");
           link.setAttribute("aria-disabled", "true");
         } else {
-          link.href = `${sourceBase}${data.path}${firstLine}`;
+          link.href = `${data.sourceBase || sourceBase}${data.path}${firstLine}`;
           link.removeAttribute("aria-disabled");
         }
         document.getElementById("inspector-path").textContent =
@@ -2489,7 +2649,12 @@
             } else {
               button.style.setProperty("--tau", tau.toFixed(3));
               button.textContent = tau.toFixed(2);
-              button.setAttribute("aria-label", `Future frame t+${column + 1}, row ${row}, noise level ${tau.toFixed(2)}`);
+              button.setAttribute(
+                "aria-label",
+                scheduleMode === "ar" && row === rowCount - 1
+                  ? `Future frame t+${column + 1}, clean cached latent with conditioning label ${tau.toFixed(2)}`
+                  : `Future frame t+${column + 1}, row ${row}, noise level ${tau.toFixed(2)}`
+              );
             }
             if (row === selectedRow) button.classList.add("is-row");
             if (row === selectedRow && column === selectedColumn) button.classList.add("is-selected");
@@ -2505,26 +2670,33 @@
         const tau = tauFor(scheduleMode, selectedRow, selectedColumn, rowCount);
         const detail = document.getElementById("schedule-detail");
         const content = scheduleContent[scheduleMode];
+        const isArCache = scheduleMode === "ar" && selectedRow === rowCount - 1;
         const role =
           tau === null
             ? "Future frame not yet instantiated in the current autoregressive rollout."
+            : isArCache
+              ? "Clean generated latent committed under the configured τ=0.05 cache-conditioning label."
             : tau <= 0.001
               ? "Clean visual latent."
-              : Math.abs(tau - 0.05) < 0.001
-                ? "Committed generated frame with configured hedge noise."
                 : tau >= 0.999
                   ? "Gaussian-noise visual latent."
                   : "Partially denoised visual latent.";
+        const noiseDescription =
+          tau === null
+            ? "not instantiated"
+            : isArCache
+              ? "clean z committed · cache label τ = 0.050"
+              : `τ = ${tau.toFixed(3)} · forward convention zᵗ = (1 − τ)zclean + τε`;
 
         detail.innerHTML = `
           <span>Selection</span>
           <strong>future t+${selectedColumn + 1} · ${scheduleMode === "train" ? "training draw" : `row ${selectedRow + 1}/${rowCount}`}</strong>
           <span>Noise</span>
-          <code>${tau === null ? "not instantiated" : `τ = ${tau.toFixed(3)} · zᵗ = (1 − τ)zclean + τε`}</code>
+          <code>${noiseDescription}</code>
           <span>Meaning</span>
           <span>${role}</span>
           <span>Source</span>
-          <code>${content.path}</code>
+          <a href="${content.href}"><code>${content.path}</code></a>
         `;
       }
 
@@ -2605,35 +2777,47 @@
       }
 
       const phases = [
-        "Record raw commands, measured pre/post EE poses, camera observations, masks, and episode boundaries.",
-        "Train the state adapter on xₜ plus the raw command chunk to predict realized EE deltas or the derived pose trajectory.",
-        "Freeze the adapter and train the visual DiT using adapter-predicted—not only oracle—state tokens alongside raw actions.",
-        "Optionally fine-tune jointly at a lower adapter learning rate with Lvisual + λstate Lstate; compare frozen, joint, and stop-gradient.",
-        "Report free-space versus contact errors, long-rollout drift, planning performance, and robustness to controller or payload changes."
+        "Record raw commands and measured pre/post EE poses separately, then audit frame alignment, controller frequency, coordinate frames, quaternion conventions, and episode boundaries.",
+        "Train the proposed shared DiT end-to-end with Lvisual + λx Lstate. Sample and align state noise with the chosen schedule; define whether state cache commits are clean or hedge-labeled, then train that behavior explicitly.",
+        "Optional only. Train a command-response adapter, condition a visual DiT on its predicted or oracle state, and compare against the joint model under matched data and compute.",
+        "Evaluate teacher-forced steps, open-loop chunks, and long autoregressive rollouts, measuring both visual quality and agreement between rendered motion and predicted EE trajectory."
       ];
 
       const comparisons = {
-        direct: "<strong>Direct:</strong> visual history and raw actions predict future visuals; future physical state remains implicit.",
-        joint: "<strong>Joint-output:</strong> a shared DiT predicts visual and state flow in parallel, but state is not necessarily causal conditioning for vision.",
-        hard: "<strong>Hard two-stage:</strong> only the predicted state trajectory conditions the visual DiT, making adapter error a bottleneck.",
-        soft: "<strong>Soft two-stage:</strong> raw actions and predicted future EE states both condition the visual DiT, so state prediction is explicit without becoming a hard bottleneck."
+        a: "<strong>A · Action only:</strong> the implemented visual baseline. For current PushT data, action_continuous is an achieved EE delta reconstructed from measured TCP poses; there is no explicit physical-state token or supervised state output.",
+        b: "<strong>B · Ground-truth state oracle:</strong> a proposed ablation conditioning on true future states to estimate the ceiling on a state-mediated design.",
+        c: "<strong>C · Hard two-stage:</strong> a proposed ablation where only the predicted state trajectory reaches the visual DiT, exposing the cascade to predictor error.",
+        d: "<strong>D · Soft two-stage adapter:</strong> a proposed page-level ablation where commands and adapter-predicted states both condition the DiT; it is not the repository roadmap design.",
+        e: "<strong>E · Joint output without temporal reuse:</strong> proposed parallel visual and state heads, but committed state never conditions later frames. The branch roadmap is loosely related but uses a deterministic auxiliary delta head rather than state diffusion.",
+        f: "<strong>F · Joint multimodal with next-frame state conditioning:</strong> proposed visual and state tokens are denoised together in one DiT, and the committed state conditions the following frame. Selected proposal; not implemented.",
+        g: "<strong>G · Explicit execution residual:</strong> proposed model of Δxactual − Δacmd after both quantities are aligned to the same units and coordinate frame; likely most informative under contact and saturation."
       };
 
       const repoItems = [
-        ["current", "src/open_dreams/models/latent_diffusion_forcing_world_model.py", "418", "Independent training noise and visual flow target"],
-        ["modify", "src/open_dreams/models/latent_diffusion_forcing_world_model.py", "657", "Insert predicted-state token into per-frame packing"],
-        ["current", "src/open_dreams/models/latent_diffusion_forcing_world_model.py", "915", "Batch-parallel Diffusion Forcing evaluation"],
-        ["current", "src/open_dreams/models/latent_diffusion_forcing_world_model.py", "1241", "Autoregressive denoising and hedge commit"],
-        ["current", "src/open_dreams/data/tf_masking.py", "23", "Block-causal episode attention mask"],
-        ["current", "configs/model/latent_diffusion_forcing_world_model.yaml", "55", "128 inference steps and 0.05 hedge noise"],
-        ["modify", "scripts/collect_maniskill_rollouts.py", "552", "Persist raw commands in addition to achieved TCP motion"],
-        ["new", "src/open_dreams/models/components/ee_state_adapter.py", "NEW", "Command-to-realized EE trajectory adapter"]
+        ["current", "configs/model/latent_diffusion_forcing_world_model_pusht.yaml", "1", "PushT specialization: one camera and continuous 6-D action features"],
+        ["current", "configs/model/latent_diffusion_forcing_world_model.yaml", "16", "144px input, 18×18×4 latents, 2×2 patches, D=512, and SSST settings"],
+        ["current", "src/open_dreams/models/latent_diffusion_forcing_world_model.py", "457", "Independent per-frame/per-camera training noise and visual flow target"],
+        ["modify", "src/open_dreams/models/latent_diffusion_forcing_world_model.py", "72", "Update token counts, output slicing, cache geometry, state loss, and APIs for an 84th token"],
+        ["modify", "src/open_dreams/models/latent_diffusion_forcing_world_model.py", "654", "Pack the proposed noisy EE-state token and expand token masks"],
+        ["modify", "src/open_dreams/models/components/videorope_attention.py", "311", "Extend hard-coded VideoRoPE positions and stride for the state token"],
+        ["modify", "src/open_dreams/models/latent_diffusion_forcing_world_model.py", "912", "Extend batch evaluation to update proposed state trajectories"],
+        ["modify", "src/open_dreams/models/latent_diffusion_forcing_world_model.py", "1239", "Define autoregressive state denoising and cache-commit semantics"],
+        ["current", "src/open_dreams/data/tf_masking.py", "23", "Block-causal episode attention mask; model expands it to tokens"],
+        ["current", "configs/data/dataloader_maniskill_pusht_ppo.yaml", "22", "PushT uses one-timestep blocks, yielding frame-level causal visibility"],
+        ["current", "configs/model/latent_diffusion_forcing_world_model.yaml", "55", "Default 128 inference steps and τ=0.05 cache-conditioning label"],
+        ["current", "docs/diffusion_forcing.md", "225", "Main commits a clean generated latent under the hedge-noise conditioning label"],
+        ["modify", "scripts/collect_maniskill_rollouts.py", "552", "EE branch snapshot: persist controller input alongside achieved TCP motion, with units and frame metadata", eeBranchBase],
+        ["modify", "docs/wm_notes/roadmap.md", "139", "EE branch roadmap: earlier fused transition-token + deterministic realized-delta head plan", eeBranchBase],
+        ["modify", "tests/test_videorope.py", "586", "Update the existing 83-position VideoRoPE expectations"],
+        ["new", "src/open_dreams/models/components/ee_state_embedding.py", "NEW", "Suggested new file: project normalized measured or noised EE state to width D"],
+        ["new", "src/open_dreams/models/components/ee_state_head.py", "NEW", "Suggested new file: post-DiT state flow-velocity head"],
+        ["ablation", "src/open_dreams/models/components/ee_state_adapter.py", "NEW", "Suggested new file for proposed pre-DiT adapter ablation D only"]
       ];
 
       function renderRepoMap() {
         const grid = document.getElementById("repo-grid");
-        grid.innerHTML = repoItems.map(([status, path, line, description]) => {
-          const href = line === "NEW" ? path : `${sourceBase}${path}#L${line}`;
+        grid.innerHTML = repoItems.map(([status, path, line, description, itemSourceBase = sourceBase]) => {
+          const href = line === "NEW" ? path : `${itemSourceBase}${path}#L${line}`;
           const location = line === "NEW"
             ? `<code>${path}:${line}</code>`
             : `<a href="${href}"><code>${path}:${line}</code></a>`;
