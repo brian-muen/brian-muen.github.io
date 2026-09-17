@@ -15,8 +15,18 @@ type CourseGroup = {
 
 const groups: CourseGroup[] = [
   {
-    heading: 'operations research',
+    heading: 'applied math',
     courses: [
+      {
+        code: 'mat201',
+        title: 'Multivariable Calculus',
+        instructors: ['Semon Rezchikov'],
+      },
+      {
+        code: 'mat202',
+        title: 'Linear Algebra with Applications',
+        instructors: ['Matija Bucic'],
+      },
       {
         code: 'orf245',
         title: 'Fundamentals of Statistics',
@@ -26,6 +36,12 @@ const groups: CourseGroup[] = [
         code: 'orf309',
         title: 'Probability and Stochastic Systems',
         instructors: ['Ioannis Akrotirianakis'],
+      },
+      {
+        code: 'mat320',
+        title: 'Introduction to Real Analysis',
+        instructors: ['Samuel Pérez-Ayala'],
+        current: true,
       },
       {
         code: 'orf335',
@@ -73,27 +89,6 @@ const groups: CourseGroup[] = [
         code: 'cos597c',
         title: 'AI Agents',
         instructors: ['Karthik Narasimhan'],
-        current: true,
-      },
-    ],
-  },
-  {
-    heading: 'mathematics',
-    courses: [
-      {
-        code: 'mat201',
-        title: 'Multivariable Calculus',
-        instructors: ['Semon Rezchikov'],
-      },
-      {
-        code: 'mat202',
-        title: 'Linear Algebra with Applications',
-        instructors: ['Matija Bucic'],
-      },
-      {
-        code: 'mat320',
-        title: 'Introduction to Real Analysis',
-        instructors: ['Samuel Pérez-Ayala'],
         current: true,
       },
     ],
