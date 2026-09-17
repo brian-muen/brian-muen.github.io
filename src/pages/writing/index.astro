@@ -27,7 +27,7 @@ const fmt = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', 
   )}
 
   {archive.length > 0 && (
-    <details class="archive">
+    <details class="archive" open>
       <summary>Archive</summary>
       <ul class="post-list">
         {archive.map((post) => (

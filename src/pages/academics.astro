@@ -1,0 +1,197 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+type Course = {
+  code: string;
+  title: string;
+  instructors?: string[];
+  current?: boolean;
+};
+
+type CourseGroup = {
+  heading: string;
+  courses: Course[];
+};
+
+const groups: CourseGroup[] = [
+  {
+    heading: 'operations research',
+    courses: [
+      {
+        code: 'orf245',
+        title: 'Fundamentals of Statistics',
+        instructors: ['Daniel Rigobon'],
+      },
+      {
+        code: 'orf309',
+        title: 'Probability and Stochastic Systems',
+        instructors: ['Ioannis Akrotirianakis'],
+      },
+      {
+        code: 'orf335',
+        title: 'Introduction to Financial Mathematics',
+        instructors: ['Lu Vy'],
+      },
+    ],
+  },
+  {
+    heading: 'computer science',
+    courses: [
+      {
+        code: 'cos217',
+        title: 'Introduction to Programming Systems',
+        instructors: ['Christopher Moretti'],
+      },
+      {
+        code: 'cos226',
+        title: 'Algorithms and Data Structures',
+        instructors: ['Kevin Wayne'],
+      },
+      {
+        code: 'cos375',
+        title: 'Computer Architecture and Organization',
+        instructors: ['David August'],
+        current: true,
+      },
+      {
+        code: 'cos418',
+        title: 'Distributed Systems',
+        instructors: ['Michael Freedman', 'Jialin Ding'],
+        current: true,
+      },
+      {
+        code: 'cos484',
+        title: 'Natural Language Processing',
+        instructors: ['Tri Dao', 'Karthik Narasimhan'],
+      },
+      {
+        code: 'cos486',
+        title: 'Introduction to Brain Emulation',
+        instructors: ['Sebastian Seung'],
+      },
+      {
+        code: 'cos597c',
+        title: 'AI Agents',
+        instructors: ['Karthik Narasimhan'],
+        current: true,
+      },
+    ],
+  },
+  {
+    heading: 'mathematics',
+    courses: [
+      {
+        code: 'mat201',
+        title: 'Multivariable Calculus',
+        instructors: ['Semon Rezchikov'],
+      },
+      {
+        code: 'mat202',
+        title: 'Linear Algebra with Applications',
+        instructors: ['Matija Bucic'],
+      },
+      {
+        code: 'mat320',
+        title: 'Introduction to Real Analysis',
+        instructors: ['Samuel Pérez-Ayala'],
+        current: true,
+      },
+    ],
+  },
+  {
+    heading: 'other',
+    courses: [
+      {
+        code: 'eas344',
+        title: 'Postwar Japanese Literature: Modern to Postmodern',
+        instructors: ['Atsuko Ueda']
+      },
+      { code: 'frs153', title: 'Celluloid Science', instructors: ['Erika Milam'] },
+      {
+        code: 'ece364',
+        title: 'Machine Learning for Predictive Data Analytics',
+        instructors: ['Niraj Jha'],
+      },
+      {
+        code: 'eco312',
+        title: 'Econometrics: A Mathematical Approach',
+        instructors: ['Louise Laage'],
+      },
+      {
+        code: 'mol214',
+        title: 'Introduction to Cellular and Molecular Biology',
+        instructors: ['Elizabeth Gavis', 'AJ te Velthuis', 'Heather Thieringer'],
+      },
+      {
+        code: 'neu201',
+        title: 'Fundamentals of Neuroscience',
+        instructors: ['Lindy McBride'],
+      },
+      {
+        code: 'psy254',
+        title: 'Developmental Psychology',
+        instructors: ['Casey Lew-Williams'],
+      },
+      { code: 'wri140', 
+        title: 'How to Raise a Machine',
+        instructors: ['Allen Durgin'],
+      },
+    ],
+  },
+];
+
+function catalogNumber(code: string) {
+  return parseInt(code.replace(/\D/g, ''), 10);
+}
+
+function codeLevel(code: string) {
+  const n = catalogNumber(code);
+  if (n >= 500) return 'grad';
+  if (n >= 400) return 'upper';
+  if (n >= 300) return 'mid';
+  return 'intro';
+}
+
+function taughtBy(names: string[]) {
+  if (names.length === 1) return names[0];
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(', ')}, and ${names.at(-1)}`;
+}
+---
+
+<Layout title="academics — brian wang" description="Coursework at Princeton">
+  <h1>academics</h1>
+  <p class="academics-lede">coursework</p>
+
+  <section class="home-block">
+    <h2>school</h2>
+    <p class="school-note">
+      studying operations research and financial engineering at
+      <a class="draw-link" href="https://orfe.princeton.edu/">princeton</a>.
+      b.s.e. expected 2028.
+    </p>
+  </section>
+
+  <p class="course-legend">* currently taking</p>
+
+  {groups.map((group) => (
+    <section class="home-block course-group">
+      <h2>{group.heading}</h2>
+      <ul class="course-rows">
+        {group.courses.map((course) => (
+          <li>
+            <span class:list={['course-code', `course-code--${codeLevel(course.code)}`]}>
+              {course.current ? '*' : ''}{course.code}
+            </span>
+            <span class="course-detail">
+              {course.title}
+              {course.instructors && (
+                <em> taught by {taughtBy(course.instructors)}</em>
+              )}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+</Layout>

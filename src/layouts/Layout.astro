@@ -7,23 +7,11 @@ interface Props {
 }
 
 const { title, description } = Astro.props;
-const path = Astro.url.pathname;
-
-const links = [
-  { href: '/', label: 'Home' },
-  { href: '/writing', label: 'Writing' },
-  { href: '/reading', label: 'Reading' },
-];
 
 const social = [
   { href: 'https://x.com/diffferance', label: 'Twitter' },
   { href: 'https://github.com/brian-muen', label: 'GitHub' },
 ];
-
-function isCurrent(href: string) {
-  if (href === '/') return path === '/';
-  return path === href || path.startsWith(href + '/');
-}
 ---
 
 <!doctype html>
@@ -52,15 +40,11 @@ function isCurrent(href: string) {
     </script>
   </head>
   <body>
-    <aside class="sidebar">
-      <nav>
-        {links.map((l) => (
-          <a href={l.href} aria-current={isCurrent(l.href) ? 'page' : undefined}>{l.label}</a>
-        ))}
-      </nav>
-    </aside>
     <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle color theme" title="Theme"></button>
     <div class="content">
+      <header class="site-header">
+        <a href="/" class="wordmark">brian wang</a>
+      </header>
       <main>
         <slot />
       </main>
