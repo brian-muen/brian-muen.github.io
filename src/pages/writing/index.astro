@@ -12,8 +12,8 @@ const archive = allPosts.filter((p) => p.id.startsWith('archive/')).sort(byDate)
 const fmt = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 ---
 
-<Layout title="Writing — Brian" description="Essays">
-  <h1>Writing</h1>
+<Layout title="essays — brian wang" description="Essays">
+  <h1>essays</h1>
   {posts.length === 0 && archive.length === 0 && <p class="muted">Nothing here yet.</p>}
   {posts.length > 0 && (
     <ul class="post-list">
