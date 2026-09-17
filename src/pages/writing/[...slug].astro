@@ -1,0 +1,12 @@
+---
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('writing');
+  return posts.map((post) => ({
+    params: { slug: post.id },
+  }));
+}
+
+return Astro.redirect(`/essays/${Astro.params.slug}`, 301);
+---
