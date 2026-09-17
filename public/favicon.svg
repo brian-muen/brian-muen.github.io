@@ -1,4 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
-  <rect width="64" height="64" fill="#ffffff"/>
-  <text x="32" y="46" text-anchor="middle" font-family="EB Garamond, Garamond, serif" font-size="44" font-weight="bold" fill="#000000">B</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <style>
+    .ink { fill: #111110; }
+    @media (prefers-color-scheme: dark) {
+      .ink { fill: #f2efe8; }
+    }
+  </style>
+  <g class="ink">
+    <path fill-rule="evenodd" d="M10.6 1.7h3.4v4.4c.65-.5 1.55-.8 2.6-.8 2.55 0 4.2 1.75 4.2 4.35 0 2.65-1.7 4.5-4.3 4.5-1.05 0-1.95-.28-2.5-.8v1.35h-3.4V1.7zm3.4 5.35v4.5c.48.38 1.15.62 1.95.62 1.5 0 2.4-1.1 2.4-2.7s-.9-2.55-2.4-2.55c-.8 0-1.47.2-1.95.63z"/>
+    <path d="M8.2 16.15h15.6l-.5 1.55H7.7z"/>
+    <path d="M9.55 19.5h2.55l1.2 6.55 1.1-6.55h2.7l1.1 6.55 1.2-6.55h2.55L19.55 30.3h-2.7l-1.25-6.7-1.25 6.7h-2.7z"/>
+  </g>
 </svg>

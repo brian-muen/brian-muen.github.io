@@ -15,7 +15,7 @@ type CourseGroup = {
 
 const groups: CourseGroup[] = [
   {
-    heading: 'applied math',
+    heading: 'Applied math',
     courses: [
       {
         code: 'mat201',
@@ -51,7 +51,7 @@ const groups: CourseGroup[] = [
     ],
   },
   {
-    heading: 'computer science',
+    heading: 'Computer science',
     courses: [
       {
         code: 'cos217',
@@ -94,7 +94,7 @@ const groups: CourseGroup[] = [
     ],
   },
   {
-    heading: 'other',
+    heading: 'Other',
     courses: [
       {
         code: 'eas344',
@@ -154,12 +154,12 @@ function taughtBy(names: string[]) {
 }
 ---
 
-<Layout title="academics — brian wang" description="Coursework at Princeton">
-  <h1>academics</h1>
-  <p class="academics-lede">coursework</p>
+<Layout title="Academics — brian wang" description="Coursework at Princeton">
+  <h1>Academics</h1>
+  <p class="academics-lede">Coursework</p>
 
   <section class="home-block">
-    <h2>school</h2>
+    <h2>School</h2>
     <p class="school-note">
       studying operations research and financial engineering at
       <a class="draw-link" href="https://orfe.princeton.edu/">princeton</a>.
@@ -167,7 +167,7 @@ function taughtBy(names: string[]) {
     </p>
   </section>
 
-  <p class="course-legend">* currently taking</p>
+  <p class="course-legend">* Currently taking</p>
 
   {groups.map((group) => (
     <section class="home-block course-group">

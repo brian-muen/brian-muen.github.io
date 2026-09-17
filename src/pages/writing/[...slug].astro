@@ -8,5 +8,5 @@ export async function getStaticPaths() {
   }));
 }
 
-return Astro.redirect(`/essays/${Astro.params.slug}`, 301);
+return Astro.redirect(`/essays/${Astro.params.slug}/`, 301);
 ---
