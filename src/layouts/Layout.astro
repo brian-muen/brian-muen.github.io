@@ -7,6 +7,7 @@ interface Props {
 }
 
 const { title, description } = Astro.props;
+const wordmark = 'brian wang';
 
 const social = [
   { href: 'https://x.com/diffferance', label: 'Twitter' },
@@ -15,12 +16,19 @@ const social = [
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" class="boot">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     {description && <meta name="description" content={description} />}
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=bw3" />
+    <noscript>
+      <style>
+        html.boot .wordmark span,
+        html.boot .content > main,
+        html.boot .content > .social { opacity: 1; filter: none; }
+      </style>
+    </noscript>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=bw6" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
@@ -43,7 +51,11 @@ const social = [
     <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle color theme" title="Theme"></button>
     <div class="content">
       <header class="site-header">
-        <a href="/" class="wordmark">brian wang</a>
+        <a href="/" class="wordmark" aria-label="brian wang">
+          {wordmark.split('').map((ch) => (
+            <span>{ch === ' ' ? '\u00a0' : ch}</span>
+          ))}
+        </a>
       </header>
       <main>
         <slot />
@@ -54,6 +66,13 @@ const social = [
         ))}
       </footer>
     </div>
+    <script is:inline>
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          document.documentElement.classList.remove('boot');
+        });
+      });
+    </script>
     <script>
       const root = document.documentElement;
       const btn = document.getElementById('theme-toggle');

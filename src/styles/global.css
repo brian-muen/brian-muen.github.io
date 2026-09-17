@@ -11,6 +11,7 @@
   --course-mid: #b56a1e;
   --course-upper: #c45c2c;
   --course-grad: #c43c28;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   color-scheme: light;
 }
 
@@ -78,6 +79,58 @@ body {
   text-align: left;
 }
 
+.content > main,
+.content > .social {
+  animation: fade-focus 520ms var(--ease-out) both;
+}
+
+.content > main {
+  animation-delay: 120ms;
+}
+
+.content > .social {
+  animation-delay: 180ms;
+}
+
+html.boot .wordmark span,
+html.boot .content > main,
+html.boot .content > .social {
+  animation: none !important;
+  opacity: 0;
+  filter: blur(8px);
+}
+
+@keyframes fade-focus {
+  from {
+    opacity: 0;
+    filter: blur(7px);
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+  }
+}
+
+@keyframes crumb-in {
+  from {
+    opacity: 0;
+    filter: blur(5px);
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+  }
+}
+
+@keyframes page-in-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 .site-header {
   padding: var(--page-padding-y) var(--page-padding-x) 0;
 }
@@ -89,6 +142,39 @@ body {
   line-height: 1.25;
   text-decoration: none;
 }
+
+.wordmark span {
+  display: inline-block;
+  animation: crumb-in 480ms var(--ease-out) both;
+}
+
+.wordmark span:nth-child(odd) {
+  animation-name: crumb-in-odd;
+}
+
+@keyframes crumb-in-odd {
+  from {
+    opacity: 0;
+    filter: blur(5px);
+    transform: translate(3px, 14px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+  }
+}
+
+.wordmark span:nth-child(1) { animation-delay: 0ms; }
+.wordmark span:nth-child(2) { animation-delay: 24ms; }
+.wordmark span:nth-child(3) { animation-delay: 48ms; }
+.wordmark span:nth-child(4) { animation-delay: 18ms; }
+.wordmark span:nth-child(5) { animation-delay: 72ms; }
+.wordmark span:nth-child(6) { animation-delay: 40ms; }
+.wordmark span:nth-child(7) { animation-delay: 96ms; }
+.wordmark span:nth-child(8) { animation-delay: 62ms; }
+.wordmark span:nth-child(9) { animation-delay: 118ms; }
+.wordmark span:nth-child(10) { animation-delay: 88ms; }
 
 .wordmark:hover {
   color: var(--text);
@@ -1750,6 +1836,15 @@ html[data-theme='dark'] .gx-star {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .content > main,
+  .content > .social,
+  .wordmark span {
+    animation: page-in-fade 160ms var(--ease-out) both;
+    animation-delay: 0ms;
+    filter: none;
+    transform: none;
+  }
+
   .gx-star {
     animation: none;
   }
