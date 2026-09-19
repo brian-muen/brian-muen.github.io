@@ -1184,7 +1184,28 @@ button.stat-label {
 
 /* Essay content */
 article img {
+  display: block;
   max-width: 100%;
+}
+
+article figure {
+  margin: 2.25rem 0;
+}
+
+article figure img {
+  width: 100%;
+  border-radius: 2px;
+}
+
+article figcaption {
+  margin-top: 0.55rem;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+article figcaption a {
+  color: inherit;
 }
 
 article blockquote {
