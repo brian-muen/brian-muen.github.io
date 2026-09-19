@@ -4,11 +4,6 @@ date: 2024-12-01T12:00:00Z
 description: "How Blowup and La Jetée use photography to question reality, memory, authorship, and the boundaries of cinema."
 ---
 
-<figure class="essay-hero">
-  <img src="/images/essays/photography-1960s-cinema/vintage-camera-header.jpg" alt="A vintage Minolta film camera and roll of black-and-white film" />
-  <figcaption>Film camera and photographic film. Photo by <a href="https://www.pexels.com/photo/grayscale-photo-of-a-vintage-camera-12765061/">Miguel Delima</a>.</figcaption>
-</figure>
-
 In the image-ridden age of modernity, we have begun to forget the element of the fantastical in the act of photography. With a light tap of the finger upon a digital interface, we can record the world around us at a moment's notice, one moment at a time. The mechanical click of the shutter that is emitted from our cell phones is a vestigial sound effect placing digital photography in a lineage that traces all the way back to 1839. That was the year when the freshly-invented daguerreotype was presented in the French Chamber of Deputies, inducing a rupture in the history and perceptions of representational systems (Benjamin, 1931/1999). It was now possible to mechanically preserve a slice of time in realistic detail, satisfying the obsession for realism previously sought through paintings (Bazin & Gray, 1960).
 
 In his book *Understanding Media: The Extensions of Man*, Marshall McLuhan famously wrote that the "medium is the message" (McLuhan, 1964). With this statement, he hinted at the vital way in which media and content interact to produce meaning. The medium is not an empty container suited for communication, but a container with its own expectations and eccentricities that shapes what is being communicated. Thus, the ontology of a photograph becomes a question of importance. Is the photograph an authentic representation of reality, or is it a form that through the process of capture results in a new fictional reality? Throughout the history of photography, this is an issue that has repeatedly been addressed but never definitely answered.
