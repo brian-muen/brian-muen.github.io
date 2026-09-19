@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>favicon options</title>
+  <style>
+    body {
+      margin: 0;
+      font: 16px/1.45 "EB Garamond", Garamond, serif;
+      background: #141311;
+      color: #f2efe8;
+      padding: 2.5rem;
+    }
+    h1 { font-size: 1.25rem; font-weight: 700; margin: 0 0 0.4rem; }
+    .lede { color: #9a958c; max-width: 38rem; margin: 0 0 2rem; }
+    .opts { display: grid; gap: 1.75rem; }
+    .opt h2 { font-size: 1rem; font-weight: 400; margin: 0 0 0.65rem; }
+    .row { display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; }
+    .swatch { display: flex; flex-direction: column; gap: 0.3rem; align-items: center; }
+    .swatch span { font-size: 0.72rem; color: #9a958c; }
+    .cell { display: grid; place-items: center; border-radius: 3px; }
+    .cell.dark { background: #1c1b18; }
+    .cell.light { background: #e8e4d8; }
+    img { display: block; }
+  </style>
+</head>
+<body>
+  <h1>round 2 · real type</h1>
+  <p class="lede">Cut from EB Garamond Bold and Didot Bold, with padding so nothing hits the edge. 16px is the actual tab.</p>
+  <div class="opts" id="opts"></div>
+  <script>
+    const opts = [
+      { file: '/favicon-opts/e-b-tile.svg', name: '1 · Garamond b on a black tile' },
+      { file: '/favicon-opts/e-B-tile.svg', name: '2 · Garamond B on a black tile' },
+      { file: '/favicon-opts/e-b-pad.svg', name: '3 · Garamond b, no tile' },
+      { file: '/favicon-opts/e-didot-b-tile.svg', name: '4 · Didot b on a black tile' },
+      { file: '/favicon-opts/e-didot-B-tile.svg', name: '5 · Didot B on a black tile' },
+      { file: '/favicon-opts/e-bw-tile.svg', name: '6 · Garamond b/w on a tile' },
+    ];
+    const sizes = [16, 24, 32];
+    const root = document.getElementById('opts');
+    const t = Date.now();
+    for (const opt of opts) {
+      const el = document.createElement('section');
+      el.className = 'opt';
+      el.innerHTML = `<h2>${opt.name}</h2><div class="row"></div>`;
+      const row = el.querySelector('.row');
+      for (const bg of ['dark', 'light']) {
+        for (const n of sizes) {
+          const sw = document.createElement('div');
+          sw.className = 'swatch';
+          sw.innerHTML = `<div class="cell ${bg}" style="width:${n+14}px;height:${n+14}px"><img src="${opt.file}?t=${t}" width="${n}" height="${n}" alt=""></div><span>${n} ${bg}</span>`;
+          row.appendChild(sw);
+        }
+      }
+      root.appendChild(el);
+    }
+  </script>
+</body>
+</html>
