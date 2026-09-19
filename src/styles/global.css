@@ -7,10 +7,10 @@
   --content-width: 40rem;
   --page-padding-x: 2rem;
   --page-padding-y: 2.5rem;
-  --course-intro: #2f7a4a;
-  --course-mid: #b56a1e;
-  --course-upper: #c45c2c;
-  --course-grad: #c43c28;
+  --course-intro: #3a6466;
+  --course-mid: #8a6414;
+  --course-upper: #a03c2a;
+  --course-grad: #8a2d4e;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   color-scheme: light;
 }
@@ -20,10 +20,10 @@ html[data-theme='dark'] {
   --muted: #9a958c;
   --border: #2e2c28;
   --bg: #141311;
-  --course-intro: #6fb98a;
-  --course-mid: #d4a05a;
-  --course-upper: #e08a62;
-  --course-grad: #e06a58;
+  --course-intro: #7a9e9a;
+  --course-mid: #b8a86a;
+  --course-upper: #c49078;
+  --course-grad: #d17a7a;
   color-scheme: dark;
 }
 
@@ -50,6 +50,7 @@ body {
   width: max-content;
   margin: 0;
   color: var(--text);
+  animation: rise-in 380ms var(--ease-out) both;
 }
 
 .theme-toggle {
@@ -66,8 +67,6 @@ body {
   line-height: 1.25;
   cursor: pointer;
   transform-origin: 50% 78%;
-  animation: crumb-in 480ms var(--ease-out) both;
-  animation-delay: 136ms;
   transition: color 150ms ease, transform 120ms var(--ease-out);
 }
 
@@ -103,50 +102,47 @@ body {
   text-align: left;
 }
 
-.content > main,
+.content > main:not(.home),
 .content > .social {
-  animation: fade-focus 520ms var(--ease-out) both;
+  animation: rise-in 400ms var(--ease-out) both;
 }
 
-.content > main {
-  animation-delay: 120ms;
+.content > main:not(.home) {
+  animation-delay: 60ms;
 }
 
 .content > .social {
-  animation-delay: 180ms;
+  animation-delay: 140ms;
 }
 
-html.boot .wordmark span,
-html.boot .theme-toggle,
-html.boot .content > main,
+html.home .content > .social {
+  animation-delay: 280ms;
+}
+
+main.home > * {
+  animation: rise-in 420ms var(--ease-out) both;
+}
+
+main.home > *:nth-child(1) { animation-delay: 70ms; }
+main.home > *:nth-child(2) { animation-delay: 130ms; }
+main.home > *:nth-child(3) { animation-delay: 190ms; }
+main.home > *:nth-child(4) { animation-delay: 250ms; }
+
+html.boot .wordmark-line,
+html.boot .content > main:not(.home),
+html.boot main.home > *,
 html.boot .content > .social {
   animation: none !important;
   opacity: 0;
-  filter: blur(8px);
 }
 
-@keyframes fade-focus {
+@keyframes rise-in {
   from {
     opacity: 0;
-    filter: blur(7px);
-    transform: translateY(8px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
-    filter: blur(0);
-    transform: none;
-  }
-}
-
-@keyframes crumb-in {
-  from {
-    opacity: 0;
-    filter: blur(5px);
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    filter: blur(0);
     transform: none;
   }
 }
@@ -167,39 +163,6 @@ html.boot .content > .social {
   line-height: 1.25;
   text-decoration: none;
 }
-
-.wordmark span {
-  display: inline-block;
-  animation: crumb-in 480ms var(--ease-out) both;
-}
-
-.wordmark span:nth-child(odd) {
-  animation-name: crumb-in-odd;
-}
-
-@keyframes crumb-in-odd {
-  from {
-    opacity: 0;
-    filter: blur(5px);
-    transform: translate(3px, 14px);
-  }
-  to {
-    opacity: 1;
-    filter: blur(0);
-    transform: none;
-  }
-}
-
-.wordmark span:nth-child(1) { animation-delay: 0ms; }
-.wordmark span:nth-child(2) { animation-delay: 24ms; }
-.wordmark span:nth-child(3) { animation-delay: 48ms; }
-.wordmark span:nth-child(4) { animation-delay: 18ms; }
-.wordmark span:nth-child(5) { animation-delay: 72ms; }
-.wordmark span:nth-child(6) { animation-delay: 40ms; }
-.wordmark span:nth-child(7) { animation-delay: 96ms; }
-.wordmark span:nth-child(8) { animation-delay: 62ms; }
-.wordmark span:nth-child(9) { animation-delay: 118ms; }
-.wordmark span:nth-child(10) { animation-delay: 88ms; }
 
 .wordmark:hover {
   color: var(--text);
@@ -337,7 +300,7 @@ hr {
 }
 
 .course-legend {
-  margin: 2.25rem 0 0;
+  margin: 0.15rem 0 0;
   color: var(--muted);
   font-style: italic;
 }
@@ -1861,10 +1824,10 @@ html[data-theme='dark'] .gx-star {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .wordmark-line,
   .content > main,
   .content > .social,
-  .wordmark span,
-  .theme-toggle {
+  main.home > * {
     animation: page-in-fade 160ms var(--ease-out) both;
     animation-delay: 0ms;
     filter: none;

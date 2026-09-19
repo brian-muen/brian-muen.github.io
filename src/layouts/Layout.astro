@@ -7,7 +7,7 @@ interface Props {
 }
 
 const { title, description } = Astro.props;
-const wordmark = 'brian wang';
+const isHome = Astro.url.pathname === '/';
 
 const social = [
   { href: 'https://x.com/diffferance', label: 'Twitter' },
@@ -16,20 +16,20 @@ const social = [
 ---
 
 <!doctype html>
-<html lang="en" class="boot">
+<html lang="en" class:list={['boot', { home: isHome }]}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     {description && <meta name="description" content={description} />}
     <noscript>
       <style>
-        html.boot .wordmark span,
-        html.boot .theme-toggle,
+        html.boot .wordmark-line,
         html.boot .content > main,
-        html.boot .content > .social { opacity: 1; filter: none; }
+        html.boot main.home > *,
+        html.boot .content > .social { opacity: 1; }
       </style>
     </noscript>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon-9.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
@@ -52,14 +52,10 @@ const social = [
     <div class="content">
       <header class="site-header">
         <div class="wordmark-line">
-          <a href="/" class="wordmark" aria-label="brian wang">
-            {wordmark.split('').map((ch) => (
-              <span>{ch === ' ' ? '\u00a0' : ch}</span>
-            ))}
-          </a><button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle color theme" title="Theme">.</button>
+          <a href="/" class="wordmark">brian wang</a><button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle color theme" title="Theme">.</button>
         </div>
       </header>
-      <main>
+      <main class:list={[{ home: isHome }]}>
         <slot />
       </main>
       <footer class="social">
