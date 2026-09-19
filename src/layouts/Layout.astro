@@ -24,6 +24,7 @@ const social = [
     <noscript>
       <style>
         html.boot .wordmark span,
+        html.boot .theme-toggle,
         html.boot .content > main,
         html.boot .content > .social { opacity: 1; filter: none; }
       </style>
@@ -48,14 +49,15 @@ const social = [
     </script>
   </head>
   <body>
-    <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle color theme" title="Theme"></button>
     <div class="content">
       <header class="site-header">
-        <a href="/" class="wordmark" aria-label="brian wang">
-          {wordmark.split('').map((ch) => (
-            <span>{ch === ' ' ? '\u00a0' : ch}</span>
-          ))}
-        </a>
+        <div class="wordmark-line">
+          <a href="/" class="wordmark" aria-label="brian wang">
+            {wordmark.split('').map((ch) => (
+              <span>{ch === ' ' ? '\u00a0' : ch}</span>
+            ))}
+          </a><button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle color theme" title="Theme">.</button>
+        </div>
       </header>
       <main>
         <slot />
