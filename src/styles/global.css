@@ -176,6 +176,8 @@ main {
 
 .social {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 1.25rem;
   padding: 0 var(--page-padding-x) var(--page-padding-y);
 }
@@ -188,6 +190,29 @@ main {
 
 .social a:hover {
   color: var(--text);
+}
+
+.social a:focus-visible {
+  outline: 1px solid var(--muted);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.webring {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.webring-mark {
+  display: block;
+  width: 2rem;
+  height: 2rem;
+  image-rendering: pixelated;
+}
+
+html[data-theme='dark'] .webring-mark {
+  filter: invert(1);
 }
 
 @media (max-width: 640px) {
