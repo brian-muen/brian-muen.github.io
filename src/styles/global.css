@@ -176,20 +176,88 @@ main {
 
 .social {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 1.25rem;
   padding: 0 var(--page-padding-x) var(--page-padding-y);
 }
 
-.social a {
-  color: var(--muted);
-  text-decoration: none;
-  font-size: 0.875rem;
+.contact-line {
+  margin: 0;
+  max-width: 36rem;
 }
 
-.social a:hover {
+.social-cycle {
+  display: inline-grid;
+  position: relative;
+  vertical-align: baseline;
+  white-space: nowrap;
+  transition: width 480ms var(--ease-out);
+}
+
+.social-cycle::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.14em;
+  height: 1px;
+  background: color-mix(in srgb, var(--text) 32%, transparent);
+  pointer-events: none;
+  transition: background-color 140ms ease;
+}
+
+.social-cycle:focus-within::after {
+  background: var(--text);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .social-cycle:hover::after {
+    background: var(--text);
+  }
+}
+
+.social-cycle-link {
+  grid-area: 1 / 1;
+  justify-self: start;
   color: var(--text);
+  font-size: inherit;
+  text-decoration: none;
+  outline: none;
+}
+
+.social-cycle-link:not([data-state='active']) {
+  pointer-events: none;
+}
+
+.social-cycle-link > span {
+  display: inline-block;
+  white-space: pre;
+  transition:
+    opacity 320ms var(--ease-out),
+    filter 320ms var(--ease-out),
+    transform 420ms var(--ease-out);
+}
+
+.social-cycle-host {
+  color: var(--muted);
+}
+
+.social-cycle-link[data-state='active'] > span {
+  transition-delay: calc(var(--char) * 14ms);
+}
+
+.social-cycle-link[data-state='waiting'] > span,
+.social-cycle-link[data-state='leaving'] > span {
+  opacity: 0;
+  filter: blur(4px);
+  transform: translateY(0.5em);
+}
+
+.social-cycle-link[data-state='leaving'] > span {
+  transition-duration: 220ms;
+  transition-delay: calc(var(--char) * 6ms);
+  transform: translateY(-0.5em);
 }
 
 .social a:focus-visible {
@@ -198,10 +266,48 @@ main {
   border-radius: 2px;
 }
 
+.webring a {
+  color: var(--muted);
+  text-decoration: none;
+  line-height: 0;
+}
+
+.webring-arrow svg {
+  display: block;
+  overflow: visible;
+}
+
+.webring-arrow path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.15;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .webring-arrow:hover {
+    color: var(--text);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .social-cycle {
+    transition: none;
+  }
+
+  .social-cycle-link > span,
+  .social-cycle-link[data-state] > span {
+    filter: none;
+    transform: none;
+    transition: opacity 200ms linear;
+  }
+}
+
 .webring {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 1.15rem;
 }
 
 .webring-mark {
@@ -213,8 +319,8 @@ main {
   transition: filter 160ms ease;
 }
 
-.webring:hover .webring-mark,
-.webring:focus-within .webring-mark {
+.webring-home:hover .webring-mark,
+.webring-home:focus-visible .webring-mark {
   filter: none;
 }
 
@@ -222,8 +328,8 @@ html[data-theme='dark'] .webring-mark {
   filter: grayscale(1) invert(1);
 }
 
-html[data-theme='dark'] .webring:hover .webring-mark,
-html[data-theme='dark'] .webring:focus-within .webring-mark {
+html[data-theme='dark'] .webring-home:hover .webring-mark,
+html[data-theme='dark'] .webring-home:focus-visible .webring-mark {
   filter: brightness(1.2);
 }
 
