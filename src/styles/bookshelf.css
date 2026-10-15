@@ -612,19 +612,22 @@ html[data-theme='dark'] .bookshelf {
   padding: 0.6rem 0;
 }
 
+/* The lines under the shelf are set like the painting captions, a little
+   smaller than the page's Garamond since Jost runs larger */
 .bs-read-text {
   gap: 0.1rem;
-  font-size: 1rem;
+  font-family: var(--bs-label-font);
+  font-size: 0.9375rem;
   line-height: 1.35;
 }
 
 .bs-read-by,
 .bs-rating-num {
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
 }
 
 .bs-now {
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
 }
 
 .bs-cover {
