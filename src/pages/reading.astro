@@ -135,10 +135,22 @@ spines.push({
     (window as any).Bookshelf.mount(nowShelf, {
       books: JSON.parse(nowData.textContent || '[]'),
       storageKey: 'now-shelf-order',
+      artBase: '/art/',
+      // Public-domain scans from Wikimedia Commons
+      art: [
+        { src: 'zojoji-snow-hasui.jpg', title: 'Snow at Zōjō-ji Temple', by: 'Kawase Hasui, 1925', aspect: 0.664, row: 0,
+          crate: { x: 8, width: 66, height: 99, back: 0.6 } },
+        { src: 'sisyphus-titian.jpg', title: 'Sisyphus', by: 'Titian, 1548–49', aspect: 0.863, row: 0,
+          crate: { x: 107, width: 77, height: 88, back: 0.35 } },
+        { src: 'monk-by-the-sea-friedrich.jpg', title: 'The Monk by the Sea', by: 'Caspar David Friedrich, 1808–10', aspect: 1.566, row: 1,
+          crate: { x: 24, width: 162, height: 102, back: 1.2 } },
+      ],
       labels: {
-        shelf: "A shelf of what I'm reading now and just finished",
+        shelf: "A shelf of what I'm reading now and just finished, and a crate of art prints",
         reading: 'Now and recently',
         current: 'Reading now',
+        art: 'Art',
+        crate: 'Art',
       },
     });
   }

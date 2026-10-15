@@ -3,6 +3,9 @@
  * Local changes: the bookend stays put in front of the books and never blurs
  * back, and keeps one height whichever book is last, so it no longer pops in
  * and out of existence when the last book is picked or the books are reordered.
+ * Spine titles share one size and are shortened rather than shrunk. Under the
+ * shelf only the picked book's line shows. Pressing a book pulls it up off
+ * the shelf and turns it to show its front cover.
  *
  * Bookshelf: a shelf of the books you're reading and just finished, drawn
  * as blocks standing on a plank, with the same books listed under it, and
@@ -135,12 +138,19 @@
     // The spine titles, fitted again whenever the page's font changes (a
     // different font sets the same title longer or shorter)
     var titles = [];
+    // Every spine's title is set the same size; one too long for its spine
+    // loses words from the end instead of shrinking
+    var SPINE_SIZE = 9.5;
     function fitTitle(title, L, w, h) {
-      var size = Math.min(13, w * 0.55);
+      var full = title.getAttribute('data-full');
+      if (full === null) { full = title.textContent; title.setAttribute('data-full', full); }
+      var size = Math.min(SPINE_SIZE, w * 0.5);
       title.style.fontSize = size + 'px';
-      while (size > 7 && title.getComputedTextLength() > h - 18) {
-        size -= 0.5;
-        title.style.fontSize = size + 'px';
+      var words = full.toUpperCase().split(' ');
+      title.textContent = words.join(' ');
+      while (words.length > 1 && title.getComputedTextLength() > h - 18) {
+        words.pop();
+        title.textContent = words.join(' ').replace(/[,:;]$/, '') + '\u2026';
       }
       // centered across the spine at whatever size it came out
       title.setAttribute('transform', 'translate(' + (L + w / 2 + size * 0.35) + ',' + (LINE - 9) + ') rotate(-90)');
@@ -203,6 +213,7 @@
     list.id = uid + '-list';
     html('h2', 'bs-label', list, o.labels.reading);
     var readList = html('ul', 'bs-reads', list);
+    var hint = html('p', 'bs-hint', list, o.labels.hint || 'Hover a book, or press one to pull it out.');
     var reads = BOOKS.map(function (b) {
       var li = html('li', 'bs-read' + (b.current ? ' is-current' : ''), readList);
       li.tabIndex = 0;
@@ -536,7 +547,12 @@
       // the other lines in the list blur back, as the shelf's books do
       reads.forEach(function (r, j) {
         r.classList.toggle('is-dimmed', book !== null && j !== book);
+        r.classList.toggle('is-shown', j === book);
       });
+      hint.hidden = book !== null;
+      // a pressed book comes off the shelf to show its cover
+      if (pinned !== null && !drag && !sort) pullOut(pinned);
+      else putBack();
       list.hidden = art;
       root.classList.toggle('has-picked', book !== null);
       root.classList.toggle('has-art', art);
@@ -628,6 +644,92 @@
         });
       };
     }
+    // Pulling a book out: it rises straight up out of its slot, then swings
+    // round toward you to show its front cover, standing a little forward of
+    // the shelf. Its slot stays empty until it goes back, which runs the same
+    // motion in reverse (from wherever it had got to).
+    var pulled = null, returning = null;
+    var COVER_ASPECT = 0.66;
+    function pullOut(i) {
+      if (pulled && pulled.i === i) return;
+      putBack(true);
+      if (returning && returning.i === i) {
+        // pressed again on its way back: it turns round from where it is
+        pulled = returning;
+        returning = null;
+        pulled.anim.onfinish = null;
+        pulled.anim.reverse();
+        return;
+      }
+      if (returning) { returning.anim.cancel(); returning.done(); }
+      var b = BOOKS[i];
+      var r = groups[i].querySelector('.bs-book-spine').getBoundingClientRect();
+      var R = root.getBoundingClientRect();
+      var ws = r.width, hs = r.height, wc = hs * COVER_ASPECT, grow = 1.12;
+      var wrap = html('div', 'bs-pull', root);
+      wrap.style.left = r.left - R.left + 'px';
+      wrap.style.top = r.top - R.top + 'px';
+      wrap.style.width = ws + 'px';
+      wrap.style.height = hs + 'px';
+      wrap.setAttribute('aria-hidden', 'true');
+      var box = html('div', 'bs-pull-box', wrap);
+      var spineFace = html('div', 'bs-pull-face bs-pull-spine', box);
+      spineFace.style.width = ws + 'px';
+      spineFace.style.background = b.color;
+      spineFace.style.color = b.ink === 'dark' ? '#1a1a18' : '#fff';
+      spineFace.style.transform = 'translateZ(' + wc / 2 + 'px)';
+      html('span', '', spineFace, groups[i].querySelector('.bs-book-title').textContent).style.fontSize =
+        SPINE_SIZE * r.height / BOOKS[i].height + 'px';
+      var coverFace = html('div', 'bs-pull-face bs-pull-cover', box);
+      coverFace.style.width = wc + 'px';
+      coverFace.style.left = (ws - wc) / 2 + 'px';
+      coverFace.style.backgroundColor = b.color;
+      if (b.cover) coverFace.style.backgroundImage = 'url("' + encodeURI(b.cover) + '")';
+      coverFace.style.transform = 'rotateY(90deg) translateZ(' + ws / 2 + 'px)';
+      // where it ends up: over its slot, kept inside the shelf's width
+      var center = r.left - R.left + ws / 2, half = wc * grow / 2 + 4;
+      var dx = Math.max(half, Math.min(R.width - half, center)) - center;
+      var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var anim = box.animate([
+        { transform: 'translate3d(0, 0, 0) rotateY(0deg) scale(1)', easing: 'cubic-bezier(0.3, 0, 0.2, 1)' },
+        { transform: 'translate3d(0, ' + -hs * 0.3 + 'px, 0) rotateY(0deg) scale(1.02)', offset: 0.38, easing: 'cubic-bezier(0.25, 0.8, 0.25, 1)' },
+        { transform: 'translate3d(' + dx + 'px, ' + -hs * 0.14 + 'px, 40px) rotateY(-90deg) scale(' + grow + ')' }
+      ], { duration: still ? 0 : 820, fill: 'both' });
+      groups[i].classList.add('is-pulled-out');
+      shadows[i].classList.add('is-pulled-out');
+      wrap.addEventListener('click', function () { if (pinned === i) pin(i); });
+      pulled = { i: i, wrap: wrap, anim: anim };
+    }
+    function putBack(instant) {
+      var p = pulled;
+      if (!p) return;
+      pulled = null;
+      p.done = function () {
+        if (returning === p) returning = null;
+        p.wrap.remove();
+        groups[p.i].classList.remove('is-pulled-out');
+        shadows[p.i].classList.remove('is-pulled-out');
+      };
+      if (instant) { p.anim.cancel(); p.done(); return; }
+      returning = p;
+      p.anim.onfinish = p.done;
+      p.anim.reverse();
+    }
+    // When the shelf changes width, a pulled-out book is set out again at
+    // once for the new size (a phone's toolbar hiding on scroll changes only
+    // the height, and leaves it be)
+    var shelfW = root.getBoundingClientRect().width;
+    window.addEventListener('resize', function () {
+      var w = root.getBoundingClientRect().width;
+      if (w === shelfW) return;
+      shelfW = w;
+      if (!pulled) return;
+      var i = pulled.i;
+      putBack(true);
+      pullOut(i);
+      pulled.anim.finish();
+    });
+
     function pin(i) {
       pinned = pinned === i ? null : i;
       if (pinned !== null) artPinned = false;
@@ -761,6 +863,7 @@
       if (!drag.moving) {
         if (Math.abs(e.clientX - drag.x0) < 4) return;
         drag.moving = true;
+        if (pinned !== null) { pinned = null; putBack(true); }
         g.classList.add('is-dragging');
         shadows[i].classList.add('is-dragging');
         makeRoom(true);

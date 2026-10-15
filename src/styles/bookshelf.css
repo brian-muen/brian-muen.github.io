@@ -649,3 +649,93 @@ html[data-theme='dark'] .bookshelf {
 .bs-cover {
   width: 52px;
 }
+
+/* Spine titles: one size, tracked capitals */
+.bs-book-title {
+  letter-spacing: 0.12em;
+}
+
+/* Under the shelf, only the picked book's line shows, without its small
+   cover (pulling the book out shows the cover); otherwise a hint */
+.bs-list {
+  min-height: 5.75rem;
+}
+
+.bs-list > .bs-label,
+.bs-read .bs-cover {
+  display: none;
+}
+
+.bs-read {
+  display: none;
+}
+
+.bs-read.is-shown {
+  display: flex;
+}
+
+.bs-hint {
+  margin: 0;
+  padding: 0.6rem 0;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+/* A pulled-out book: a box with the spine on its front and the cover on its
+   right side, turned a quarter round to face you */
+.bookshelf .bs-pull {
+  position: absolute;
+  z-index: 3;
+  perspective: 1100px;
+  cursor: pointer;
+}
+
+.bs-pull-box {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform-origin: 50% 50%;
+}
+
+.bs-pull-face {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.bs-pull-spine {
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  outline: 0.9px solid var(--bs-book-line);
+}
+
+.bs-pull-spine span {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+}
+
+.bs-pull-cover {
+  background-size: cover;
+  background-position: center;
+  border-radius: 1px 3px 3px 1px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25), 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+/* its slot on the shelf stands empty while it's out */
+.bs-book.is-pulled-out .bs-book-lift,
+.bs-shadow.is-pulled-out {
+  visibility: hidden;
+}
+
+/* headroom for a book rising out of the shelf */
+.now-shelf {
+  margin-top: 1.5rem;
+}
