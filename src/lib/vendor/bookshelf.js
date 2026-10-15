@@ -44,6 +44,8 @@
     storageKey: 'bookshelf-order',
     // Called with the books' titles in their new order after each reorder
     onReorder: null,
+    // Called when the bookend is pulled all the way out and let go
+    onBookendPull: null,
     labels: {
       shelf: "A shelf of what I'm reading now and just finished",
       reading: 'Recent Reading',
@@ -213,7 +215,6 @@
     list.id = uid + '-list';
     html('h2', 'bs-label', list, o.labels.reading);
     var readList = html('ul', 'bs-reads', list);
-    var hint = html('p', 'bs-hint', list, o.labels.hint || 'Hover a book, or press one to pull it out.');
     var reads = BOOKS.map(function (b) {
       var li = html('li', 'bs-read' + (b.current ? ' is-current' : ''), readList);
       li.tabIndex = 0;
@@ -441,9 +442,11 @@
     // up to three quarters of the screen, with its caption, over the page
     // darkening behind it; pressing anywhere or Esc shrinks it back into its
     // place
+    // It goes on the page's body: inside anything with a transform (an
+    // entrance animation, say) it would cover that instead of the screen
     var box = null;
     if (hasArt) {
-      box = html('div', 'bs-lightbox', root);
+      box = html('div', 'bs-lightbox', document.body);
       box.setAttribute('role', 'dialog');
       box.setAttribute('aria-modal', 'true');
       box.setAttribute('aria-label', 'Painting');
@@ -549,7 +552,6 @@
         r.classList.toggle('is-dimmed', book !== null && j !== book);
         r.classList.toggle('is-shown', j === book);
       });
-      hint.hidden = book !== null;
       // a pressed book comes off the shelf to show its cover
       if (pinned !== null && !drag && !sort) pullOut(pinned);
       else putBack();
@@ -678,8 +680,12 @@
       spineFace.style.background = b.color;
       spineFace.style.color = b.ink === 'dark' ? '#1a1a18' : '#fff';
       spineFace.style.transform = 'translateZ(' + wc / 2 + 'px)';
-      html('span', '', spineFace, groups[i].querySelector('.bs-book-title').textContent).style.fontSize =
-        SPINE_SIZE * r.height / BOOKS[i].height + 'px';
+      // its title set as on the shelf: the same size, and starting the same
+      // way up from the foot
+      var px = r.height / BOOKS[i].height, spineTitle = groups[i].querySelector('.bs-book-title');
+      html('span', '', spineFace, spineTitle.textContent).style.fontSize =
+        parseFloat(spineTitle.style.fontSize) * px + 'px';
+      spineFace.style.paddingBottom = 9 * px + 'px';
       var coverFace = html('div', 'bs-pull-face bs-pull-cover', box);
       coverFace.style.width = wc + 'px';
       coverFace.style.left = (ws - wc) / 2 + 'px';
@@ -1048,11 +1054,12 @@
     });
 
     // The bookend can be pulled a little way out from the books, harder the
-    // further it goes, and snaps back against them when it's let go
+    // further it goes, and snaps back against them when it's let go. Pulled
+    // all the way, letting go calls onBookendPull
     var pull = null;
     bookend.addEventListener('pointerdown', function (e) {
       if (e.button !== 0 || drag || sort) return;
-      pull = { x0: e.clientX, scale: W / svg.getBoundingClientRect().width };
+      pull = { x0: e.clientX, scale: W / svg.getBoundingClientRect().width, x: 0 };
       bookend.classList.add('is-pulled');
       wedgeShadow.classList.add('is-pulled');
       document.documentElement.classList.add('bookshelf-dragging');
@@ -1062,16 +1069,18 @@
       if (!pull) return;
       var out = Math.max(0, (e.clientX - pull.x0) * pull.scale);
       // stretches like a rubber band, never more than PULL_MAX
-      var x = PULL_MAX * out / (out + PULL_MAX);
+      var x = pull.x = PULL_MAX * out / (out + PULL_MAX);
       bookend.style.transform = wedgeShadow.style.transform = 'translate(' + x + 'px, 0)';
     });
     function letGo() {
       if (!pull) return;
+      var all = pull.x > PULL_MAX * 0.8;
       pull = null;
       bookend.classList.remove('is-pulled');
       wedgeShadow.classList.remove('is-pulled');
       document.documentElement.classList.remove('bookshelf-dragging');
       bookend.style.transform = wedgeShadow.style.transform = '';
+      if (all && o.onBookendPull) o.onBookendPull();
     }
     document.addEventListener('pointerup', letGo);
     document.addEventListener('pointercancel', letGo);

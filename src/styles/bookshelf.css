@@ -341,13 +341,15 @@
   display: flex;
   flex-direction: column;
   margin-top: 8px;
+  font-family: var(--bs-label-font);
   font-size: 12px;
-  line-height: 15px;
+  line-height: 16px;
 }
 
 /* Titles stay on one line, running a little past a narrow painting if need be */
 .bs-art-fig .bs-art-title {
   white-space: nowrap;
+  font-style: italic;
 }
 
 .bs-art-by {
@@ -415,6 +417,7 @@
   align-items: center;
   margin-top: 12px;
   color: #f2f2f0;
+  font-family: var(--bs-label-font);
   font-size: 12px;
   line-height: 16px;
   text-align: center;
@@ -523,35 +526,6 @@
   white-space: nowrap;
 }
 
-/* A book still being read gets a blue dot, pulsing like the timeline's
-   "now" on the home page */
-.bs-now {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--bs-accent);
-}
-
-.bs-now::before {
-  content: '';
-  flex: none;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--bs-accent);
-  animation: bs-now-pulse 2.4s ease-out infinite;
-}
-
-@keyframes bs-now-pulse {
-  0% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--bs-accent) 50%, transparent);
-  }
-  70%,
-  100% {
-    box-shadow: 0 0 0 5px color-mix(in srgb, var(--bs-accent) 0%, transparent);
-  }
-}
-
 /* A rating: its stars, then the number */
 .bs-rating {
   display: flex;
@@ -586,12 +560,19 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bs-now::before { animation: none; }
   .bs-book-lift, .bs-shadow-lift, .bs-book-art, .bs-crate-body, .bs-print { transition: none; }
   .bs-bookend, .bs-bookend-shadow { transition-timing-function: ease-out; }
 }
 
-/* This site's theme */
+/* This site's theme. The lightbox is on the page's body, outside the
+   shelf, so it takes the font too */
+.bookshelf,
+.bs-lightbox {
+  /* spine titles and painting captions, set like book spines and museum
+     wall labels */
+  --bs-label-font: 'Jost', 'Futura', 'Century Gothic', sans-serif;
+}
+
 .bookshelf {
   --bs-bg: var(--bg);
   --bs-muted: var(--muted);
@@ -652,11 +633,13 @@ html[data-theme='dark'] .bookshelf {
 
 /* Spine titles: one size, tracked capitals */
 .bs-book-title {
+  font-family: var(--bs-label-font);
+  font-weight: 500;
   letter-spacing: 0.12em;
 }
 
 /* Under the shelf, only the picked book's line shows, without its small
-   cover (pulling the book out shows the cover); otherwise a hint */
+   cover (pulling the book out shows the cover) */
 .bs-list {
   min-height: 5.75rem;
 }
@@ -672,13 +655,6 @@ html[data-theme='dark'] .bookshelf {
 
 .bs-read.is-shown {
   display: flex;
-}
-
-.bs-hint {
-  margin: 0;
-  padding: 0.6rem 0;
-  color: var(--muted);
-  font-size: 0.9375rem;
 }
 
 /* A pulled-out book: a box with the spine on its front and the cover on its
@@ -709,7 +685,10 @@ html[data-theme='dark'] .bookshelf {
 .bs-pull-spine {
   left: 0;
   display: flex;
-  align-items: center;
+  /* the title starts near the foot of the spine, as it does on the shelf
+     (the padding's set to match), so it doesn't jump when the book's
+     pulled out */
+  align-items: flex-end;
   justify-content: center;
   overflow: hidden;
   outline: 0.9px solid var(--bs-book-line);
@@ -718,6 +697,9 @@ html[data-theme='dark'] .bookshelf {
 .bs-pull-spine span {
   writing-mode: vertical-rl;
   transform: rotate(180deg);
+  font-family: var(--bs-label-font);
+  font-weight: 500;
+  line-height: 1;
   letter-spacing: 0.12em;
   white-space: nowrap;
 }

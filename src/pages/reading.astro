@@ -80,8 +80,7 @@ spines.push({
   <script is:inline type="application/json" id="now-shelf-data" set:html={JSON.stringify(nowShelf).replace(/</g, '\\u003c')} />
 
   {spines.length > 0 && (
-    <section class="home-block all-books">
-      <h2>Everything I've read</h2>
+    <section class="home-block all-books" id="all-books" hidden>
       <div class="shelf-scroller" id="shelf-scroller" aria-label="Virtual bookshelf">
         <div class="shelf-books">
           {/* Three identical runs so the shelf can loop both ways without a hard left stop. */}
@@ -135,15 +134,18 @@ spines.push({
     (window as any).Bookshelf.mount(nowShelf, {
       books: JSON.parse(nowData.textContent || '[]'),
       storageKey: 'now-shelf-order',
+      // Easter egg: pull the bookend all the way out to let the rest of the
+      // books out, and again to put them back
+      onBookendPull: () => (window as any).toggleAllBooks?.(),
       artBase: '/art/',
       // Public-domain scans from Wikimedia Commons
       art: [
-        { src: 'zojoji-snow-hasui.jpg', title: 'Snow at Zōjō-ji Temple', by: 'Kawase Hasui, 1925', aspect: 0.664, row: 0,
-          crate: { x: 8, width: 66, height: 99, back: 0.6 } },
-        { src: 'sisyphus-titian.jpg', title: 'Sisyphus', by: 'Titian, 1548–49', aspect: 0.863, row: 0,
-          crate: { x: 107, width: 77, height: 88, back: 0.35 } },
-        { src: 'monk-by-the-sea-friedrich.jpg', title: 'The Monk by the Sea', by: 'Caspar David Friedrich, 1808–10', aspect: 1.566, row: 1,
-          crate: { x: 24, width: 162, height: 102, back: 1.2 } },
+        { src: 'woman-with-a-parasol-monet.jpg', title: 'Woman with a Parasol', by: 'Claude Monet, 1875', aspect: 0.805, row: 0,
+          crate: { x: 8, width: 80, height: 99, back: 0.6 } },
+        { src: 'walk-at-dusk-friedrich.jpg', title: 'A Walk at Dusk', by: 'Caspar David Friedrich, c. 1830–35', aspect: 1.296, row: 0,
+          crate: { x: 92, width: 100, height: 77, back: 0.35 } },
+        { src: 'ophelia-millais.jpg', title: 'Ophelia', by: 'John Everett Millais, 1851–52', aspect: 1.459, row: 1,
+          crate: { x: 26, width: 149, height: 102, back: 1.2 } },
       ],
       labels: {
         shelf: "A shelf of what I'm reading now and just finished, and a crate of art prints",
@@ -202,8 +204,20 @@ spines.push({
       });
     };
 
-    measure();
-    scroller.scrollLeft = segment;
+    // The shelf starts hidden, so it can only be measured once it's shown
+    const allBooks = document.getElementById('all-books');
+    (window as any).toggleAllBooks = () => {
+      if (!allBooks) return;
+      if (!allBooks.hidden) {
+        allBooks.hidden = true;
+        return;
+      }
+      allBooks.hidden = false;
+      measure();
+      scroller.scrollLeft = segment;
+      allBooks.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+
     scroller.addEventListener('scroll', normalize, { passive: true });
     addEventListener('resize', () => {
       const before = segment;
