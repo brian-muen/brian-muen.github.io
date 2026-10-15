@@ -201,9 +201,9 @@ main {
 .webring {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.6rem;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 0.875rem;
   line-height: 16px;
 }
 
@@ -370,8 +370,8 @@ hr {
 
 .course-rows li {
   display: grid;
-  grid-template-columns: 5.6rem minmax(0, 1fr);
-  gap: 0.85rem;
+  grid-template-columns: 4.75rem minmax(0, 1fr);
+  gap: 0.75rem;
   align-items: baseline;
   padding: 0.28rem 0;
 }
@@ -400,6 +400,18 @@ hr {
 .course-detail em {
   color: var(--muted);
   font-weight: 400;
+}
+
+@media (max-width: 640px) {
+  .experiences li {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .course-rows li {
+    grid-template-columns: 4.25rem minmax(0, 1fr);
+    gap: 0.6rem;
+  }
 }
 
 .small {
@@ -1009,7 +1021,7 @@ hr {
 
 .palette-swatch {
   flex: 1 1 0;
-  min-width: 3px;
+  min-width: 0;
   text-decoration: none;
   transition: opacity 0.15s ease;
 }
@@ -2131,7 +2143,6 @@ html[data-theme='dark'] .gx-star {
   border-radius: 2px;
   padding: 0.4rem 0.65rem;
   width: 100%;
-  max-width: 18rem;
   outline: none;
   accent-color: var(--text);
 }
@@ -2148,10 +2159,6 @@ html[data-theme='dark'] .gx-star {
   border-color: var(--text);
   outline: none;
   box-shadow: none;
-}
-
-.atlas-input {
-  max-width: 100%;
 }
 
 .atlas-layout-toggle {
@@ -2948,10 +2955,6 @@ html[data-theme='dark'] .morph-shift-delta.morph-delta-down {
   .atlas-row {
     grid-template-columns: 1fr;
     gap: 0.2rem;
-  }
-
-  .atlas-select {
-    max-width: none;
   }
 
   .evo-year {
