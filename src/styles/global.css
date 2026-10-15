@@ -156,6 +156,13 @@ html.boot .content > .social {
   padding: var(--page-padding-y) var(--page-padding-x) 0;
 }
 
+/* On roomy desktop screens, start the home page lower so it sits in the window. */
+@media (min-width: 641px) and (min-height: 700px) {
+  html.home .site-header {
+    padding-top: clamp(var(--page-padding-y), 18vh, 11rem);
+  }
+}
+
 .wordmark {
   color: var(--text);
   font-size: 1.0625rem;
@@ -250,10 +257,20 @@ html[data-theme='dark'] .webring-home:focus-visible .webring-mark {
   }
 }
 
+/* Page titles share the quiet label style of the home page's section headings. */
 h1 {
-  font-size: 1.75rem;
-  line-height: 1.25;
-  margin: 0 0 1rem;
+  font-size: 1.0625rem;
+  font-weight: 400;
+  line-height: 1.65;
+  color: var(--muted);
+  margin: 0 0 0.75rem;
+}
+
+/* Titles of a specific essay or book stay in the text color. */
+article > h1,
+.book-detail h1 {
+  color: var(--text);
+  font-size: 1.25rem;
 }
 
 h2 {
@@ -660,7 +677,9 @@ hr {
 }
 
 .stats-section h2 {
-  font-size: 1.125rem;
+  font-size: 1.0625rem;
+  font-weight: 400;
+  color: var(--muted);
   margin: 0 0 0.75rem;
 }
 
@@ -881,9 +900,14 @@ hr {
 
 .stats-title-row {
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  margin-bottom: 0.75rem;
   justify-content: space-between;
   gap: 1rem;
+}
+
+.stats-title-row h1 {
+  margin: 0;
 }
 
 .ghost-button {
