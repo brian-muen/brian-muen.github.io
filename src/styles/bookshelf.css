@@ -1,0 +1,651 @@
+/*
+ * Vendored from Conan Chen's Bookshelf (MIT), https://conancchen.github.io/bookshelf/
+ * Local changes: the bookend never blurs back, a picked book rises a little,
+ * and the theme at the bottom matches this site.
+ *
+ * Bookshelf styles. Everything is scoped under .bookshelf and prefixed bs-,
+ * so it won't clash with the page around it. To theme it, set any of the
+ * --bs- variables below on .bookshelf in your own stylesheet. (They're set
+ * with :where() so yours always win, whichever stylesheet loads first.)
+ */
+:where(.bookshelf) {
+  /* the page's background, which books blur back over */
+  --bs-bg: #fff;
+  /* how far the books, the bookend, the crate and the list's lines blur and
+     fade when they step back */
+  --bs-recede-blur: 1px;
+  --bs-recede-opacity: 0.6;
+  /* the shadows on the wall behind the shelf: their color, and how dark */
+  --bs-shadow: #000;
+  --bs-shadow-strength: 0.055;
+  --bs-muted: #8a8a8a;
+  --bs-accent: rgb(55, 135, 240);
+  /* a rating's stars, filled and not */
+  --bs-star: #e3a72f;
+  --bs-star-empty: #ddd8cc;
+  --bs-title-weight: 500;
+  /* the lines everything on the shelf is drawn with */
+  --bs-line: #1a1a18;
+  --bs-plank-top: #ebe6dc;
+  --bs-plank-front: #d6cfc1;
+  --bs-plank-end: #c9c1b1;
+  /* the books' outlines, and the page block on their tops */
+  --bs-book-line: #000;
+  --bs-pages: #f3eddf;
+  --bs-page-lines: #b7aa90;
+  --bs-cover-inside: #cfc4ad;
+  /* the crate the prints stand in: pale pine, darker down its side and inside */
+  --bs-crate: #d8b483;
+  --bs-crate-side: #b48c5c;
+  --bs-crate-inside: #7d5f3d;
+  --bs-crate-ink: rgba(70, 45, 20, 0.55);
+  /* the bookend, the same pine as the crate with its slope a little lighter */
+  --bs-bookend: var(--bs-crate);
+  --bs-bookend-top: #e6c99f;
+}
+
+.bookshelf {
+  position: relative;
+}
+
+.bs-cabinet {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  /* nothing in the drawing gets selected or flashes when pressed */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* The plank */
+.bs-plank-top,
+.bs-plank-front,
+.bs-plank-end,
+.bs-line {
+  stroke: var(--bs-line);
+  stroke-width: 0.7;
+  stroke-linejoin: round;
+}
+
+.bs-plank-top { fill: var(--bs-plank-top); }
+.bs-plank-front { fill: var(--bs-plank-front); }
+.bs-plank-end { fill: var(--bs-plank-end); }
+
+/* What catches the cursor over a book or the crate, unseen */
+.bs-hit {
+  fill: transparent;
+}
+
+/* The shadows on the wall slide along with their books and come up with
+   them while they're dragged (see .bs-book-lift) */
+.bs-shadows {
+  fill: var(--bs-shadow);
+  opacity: var(--bs-shadow-strength);
+}
+
+.bs-shadow {
+  transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bs-shadow-lift {
+  transform-box: view-box;
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bs-shadow.is-dragging,
+.bs-cabinet.is-loading .bs-shadow {
+  transition: none;
+}
+
+/* Books blur back over a backing in the page's color, so the shelf behind
+   them stays hidden */
+.bs-backing {
+  fill: var(--bs-bg);
+}
+
+/* Books slide aside to make room for one being dragged, which follows the
+   pointer exactly. Dragging sideways doesn't scroll the page on a touch
+   screen; up and down still does. */
+.bs-book {
+  cursor: pointer;
+  outline: none;
+  touch-action: pan-y;
+  transition: opacity 0.15s ease, transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bs-book.is-dragging {
+  cursor: grabbing;
+  transition: opacity 0.15s ease;
+}
+
+.bookshelf.is-fixed .bs-book {
+  touch-action: auto;
+}
+
+.bs-cabinet.is-loading .bs-book {
+  transition: none;
+}
+
+/* While a book is dragged, the cursor stays a grabbing hand anywhere on the
+   page and nothing gets selected along the way */
+.bookshelf-dragging,
+.bookshelf-dragging * {
+  cursor: grabbing !important;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* A hovered (or pinned) book stays put on the shelf; only the others blur
+   back (see .bs-book-art) */
+.bs-book-lift {
+  transform-box: fill-box;
+  transform-origin: 0% 100%;
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* A book being dragged comes up straight and forward off the shelf, out in
+   front of the row, so it's carried across the front of the other books
+   (and so does one whose line is being dragged in the list) */
+.bs-book.is-dragging .bs-book-lift,
+.bs-book.is-carried .bs-book-lift,
+.bs-shadow.is-dragging .bs-shadow-lift,
+.bs-shadow.is-carried .bs-shadow-lift {
+  transform: translate(-14px, -26px);
+}
+
+/* A hovered or pinned book rises a little off the plank, its shadow with it */
+.bs-book.is-picked .bs-book-lift,
+.bs-shadow.is-lifted .bs-shadow-lift {
+  transform: translate(0, -6px);
+}
+
+/* The other books blur back while one is picked or the art is out, just as
+   the crate does while a book is out */
+.bs-book-art {
+  transition: filter 0.2s ease, opacity 0.2s ease;
+}
+
+.bookshelf.has-picked .bs-book:not(.is-picked) .bs-book-art,
+.bookshelf.has-art .bs-book:not(.is-picked) .bs-book-art {
+  filter: blur(var(--bs-recede-blur));
+  opacity: var(--bs-recede-opacity);
+}
+
+/* Books are outlined a little heavier than the rest of the shelf */
+.bs-book-spine,
+.bs-book-side,
+.bs-book-edge {
+  stroke: var(--bs-book-line);
+  stroke-width: 0.9;
+  stroke-linejoin: round;
+}
+
+.bs-book-edge {
+  fill: none;
+}
+
+/* The page block on a book's top, with fine lines for the pages */
+.bs-book-pages {
+  fill: var(--bs-pages);
+}
+
+.bs-book-page-lines {
+  fill: none;
+  stroke: var(--bs-page-lines);
+  stroke-width: 0.15;
+}
+
+/* The inside of a cover, where it stands up past the pages */
+.bs-book-wall {
+  fill: var(--bs-cover-inside);
+}
+
+.bs-book-title {
+  font-size: 13px;
+  letter-spacing: 0.1px;
+}
+
+/* The bookend, which can be pulled a little way out and springs back, a
+   touch past and back, when it's let go, and stands a little way out while
+   the books are reordered; its shadow goes with it */
+.bs-bookend {
+  cursor: grab;
+  touch-action: pan-y;
+}
+
+.bs-bookend,
+.bs-bookend-shadow {
+  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease, opacity 0.2s ease;
+}
+
+/* It blurs back with the books and the crate, while a book or the art is out */
+
+.bs-bookend.is-roomy,
+.bs-bookend-shadow.is-roomy {
+  transform: translate(10px, 0);
+}
+
+.bs-bookend.is-pulled,
+.bs-bookend-shadow.is-pulled {
+  transition: filter 0.2s ease, opacity 0.2s ease;
+}
+
+/* The bookend's faces */
+.bs-bookend-face { fill: var(--bs-bookend); }
+.bs-bookend-top { fill: var(--bs-bookend-top); }
+
+/* The crate */
+.bs-crate {
+  cursor: pointer;
+  outline: none;
+}
+
+.bs-crate-front { fill: var(--bs-crate); }
+.bs-crate-side { fill: var(--bs-crate-side); }
+.bs-crate-inside { fill: var(--bs-crate-inside); }
+
+.bs-crate-label {
+  fill: var(--bs-crate-ink);
+  font-size: 15px;
+  text-anchor: middle;
+}
+
+.bs-crate-body {
+  transition: filter 0.2s ease, opacity 0.2s ease;
+}
+
+/* While a book is out, the crate blurs back */
+.bookshelf.has-picked .bs-crate-body {
+  filter: blur(var(--bs-recede-blur));
+  opacity: var(--bs-recede-opacity);
+}
+
+/* When the crate is hovered, the prints in it pop up a little, one after
+   another, and sink back in when the cursor leaves (pressing it sends them
+   out into the Art section) */
+.bs-print {
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: calc((var(--n, 1) - 1 - var(--k, 0)) * 0.03s);
+}
+
+.bs-crate.is-peek .bs-print {
+  transform: translateY(-36px);
+  transition-delay: calc(var(--k, 0) * 0.06s);
+}
+
+/* A print that's flown out of the crate leaves it empty */
+.bs-print.is-out {
+  opacity: 0;
+}
+
+/* A painting on its way between the crate and the Art section, over
+   everything else */
+.bs-flight {
+  position: absolute;
+  z-index: 3;
+  margin: 0;
+  object-fit: cover;
+  border-radius: 3px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+}
+
+/* The Art section, opened from the crate: it slides open above the reading
+   list, the paintings in rows, each row's paintings the same height */
+.bs-art {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 0.35s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease;
+}
+
+.bs-art.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.bs-art-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.bs-art-row {
+  display: flex;
+  gap: 14px;
+  padding-top: 14px;
+}
+
+.bs-art-row:last-child {
+  padding-bottom: 4px;
+}
+
+.bs-art-fig {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+}
+
+.bs-art-fig img {
+  display: block;
+  width: 100%;
+  object-fit: cover;
+  border-radius: 3px;
+  cursor: zoom-in;
+}
+
+.bs-art-fig figcaption {
+  display: flex;
+  flex-direction: column;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 15px;
+}
+
+/* Titles stay on one line, running a little past a narrow painting if need be */
+.bs-art-fig .bs-art-title {
+  white-space: nowrap;
+}
+
+.bs-art-by {
+  color: var(--bs-muted);
+}
+
+/* A painting pressed in the art section, opened large over the page */
+.bs-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  cursor: zoom-out;
+}
+
+/* The page darkens behind the painting while it grows, and lightens again
+   as it shrinks back */
+.bs-lightbox::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 20, 18, 0.82);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.bs-lightbox.is-open::before {
+  opacity: 1;
+}
+
+.bs-lightbox:focus {
+  outline: none;
+}
+
+.bs-lightbox[hidden] {
+  display: none;
+}
+
+.bs-lightbox-fig {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  margin: 0;
+}
+
+.bs-lightbox-fig img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  transform-origin: 0 0;
+  object-fit: cover;
+  border-radius: 2px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.bs-lightbox-fig figcaption {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 12px;
+  color: #f2f2f0;
+  font-size: 12px;
+  line-height: 16px;
+  text-align: center;
+}
+
+/* the caption comes in once the painting's nearly grown */
+.bs-lightbox.is-open .bs-lightbox-fig figcaption {
+  opacity: 1;
+  transition: opacity 0.25s ease 0.2s;
+}
+
+.bs-lightbox-fig .bs-art-by {
+  color: #a8a8a4;
+}
+
+/* The reading list: the same books under the shelf, a small cover, the
+   title, and who wrote it in gray, with a rating or "Currently reading"
+   under that */
+.bs-label {
+  margin: 28px 0 0;
+  padding-bottom: 8px;
+  font-size: 13px;
+  font-weight: inherit;
+}
+
+.bs-reads {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bs-read {
+  display: flex;
+  gap: 16px;
+  padding: 12px 0;
+  outline: none;
+  cursor: grab;
+  -webkit-touch-callout: none;
+  transition: opacity 0.2s ease, filter 0.2s ease, transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bookshelf.is-fixed .bs-read {
+  cursor: default;
+}
+
+/* While a book is out, the other lines blur back, like the books and crate */
+.bs-read.is-dimmed {
+  filter: blur(var(--bs-recede-blur));
+  opacity: var(--bs-recede-opacity);
+}
+
+/* A line being dragged follows the pointer over the others, which stay sharp
+   while they slide aside for it */
+.bs-read.is-sorting {
+  position: relative;
+  z-index: 1;
+  background: var(--bs-bg);
+  transition: none;
+}
+
+.bs-reads.is-sorting .bs-read.is-dimmed {
+  filter: none;
+  opacity: 1;
+}
+
+.bs-reads.no-slide .bs-read {
+  transition: none;
+}
+
+/* Covers keep their own shape (an audiobook's square art stays square) */
+.bs-cover {
+  flex: none;
+  align-self: flex-start;
+  width: 56px;
+  height: auto;
+  border-radius: 1px 3px 3px 1px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  -webkit-user-drag: none;
+}
+
+.bs-cover-blank {
+  height: 86px;
+}
+
+.bs-read-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: 12px;
+}
+
+.bs-read-title {
+  font-weight: var(--bs-title-weight);
+}
+
+.bs-read-by,
+.bs-note {
+  color: var(--bs-muted);
+}
+
+.bs-read-by,
+.bs-now {
+  white-space: nowrap;
+}
+
+/* A book still being read gets a blue dot, pulsing like the timeline's
+   "now" on the home page */
+.bs-now {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--bs-accent);
+}
+
+.bs-now::before {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--bs-accent);
+  animation: bs-now-pulse 2.4s ease-out infinite;
+}
+
+@keyframes bs-now-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--bs-accent) 50%, transparent);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--bs-accent) 0%, transparent);
+  }
+}
+
+/* A rating: its stars, then the number */
+.bs-rating {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.bs-rating-num {
+  color: var(--bs-muted);
+}
+
+/* The filled stars sit over the empty ones, cut off where the rating ends */
+.bs-stars {
+  position: relative;
+  font-size: 13px;
+  line-height: 1;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.bs-stars-empty {
+  color: var(--bs-star-empty);
+}
+
+.bs-stars-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  color: var(--bs-star);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bs-now::before { animation: none; }
+  .bs-book-lift, .bs-shadow-lift, .bs-book-art, .bs-crate-body, .bs-print { transition: none; }
+  .bs-bookend, .bs-bookend-shadow { transition-timing-function: ease-out; }
+}
+
+/* This site's theme */
+.bookshelf {
+  --bs-bg: var(--bg);
+  --bs-muted: var(--muted);
+  --bs-accent: var(--course-intro);
+  --bs-star: var(--text);
+  --bs-star-empty: var(--border);
+  --bs-title-weight: 400;
+  --bs-recede-blur: 0.6px;
+  --bs-recede-opacity: 0.5;
+}
+
+html[data-theme='dark'] .bookshelf {
+  --bs-shadow: #000;
+  --bs-shadow-strength: 0.35;
+  --bs-line: #0b0a09;
+  --bs-book-line: #0b0a09;
+  --bs-plank-top: #4a443b;
+  --bs-plank-front: #3a352e;
+  --bs-plank-end: #2e2a24;
+  --bs-pages: #d9d2c2;
+  --bs-page-lines: #9c907a;
+  --bs-cover-inside: #b3a88f;
+  --bs-bookend: #a8875c;
+  --bs-bookend-top: #bd9c6e;
+}
+
+.bs-label {
+  margin: 2rem 0 0.5rem;
+  padding: 0;
+  font-size: 1.0625rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.bs-read {
+  gap: 1rem;
+  padding: 0.6rem 0;
+}
+
+.bs-read-text {
+  gap: 0.1rem;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.bs-read-by,
+.bs-rating-num {
+  font-size: 0.9375rem;
+}
+
+.bs-now {
+  font-size: 0.9375rem;
+}
+
+.bs-cover {
+  width: 52px;
+}

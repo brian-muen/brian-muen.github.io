@@ -6,6 +6,8 @@ import {
   sanitizeCoverColor,
   shortTitle,
 } from '../lib/bookshelf-stats';
+import { nowReading } from '../data/now-reading';
+import '../styles/bookshelf.css';
 
 const reviews = (await getCollection('reading')).sort((a, b) => {
   const da = a.data.dateRead?.valueOf() ?? 0;
@@ -46,6 +48,20 @@ const spines = shelf.map((b) => {
   };
 });
 
+// The 3D shelf up top: what I'm reading now, then the last few finished
+const nowShelf = [
+  ...nowReading.map((b) => ({ ...b, current: true })),
+  ...shelf.slice(0, 3).map((b, i) => ({
+    title: b.data.title,
+    author: b.data.author,
+    cover: b.data.cover,
+    color: sanitizeCoverColor(b.data.coverColor) ?? CLOTH,
+    pages: b.data.pages,
+    height: [158, 170, 150][i],
+    rating: b.data.rating,
+  })),
+];
+
 // Easter egg: a fake spine that opens reading stats
 spines.push({
   id: 'how-to-lie',
@@ -60,26 +76,32 @@ spines.push({
 <Layout title="Reading — brian wang" description="Books I've read">
   <h1>Reading</h1>
 
+  <div id="now-shelf" class="now-shelf"></div>
+  <script is:inline type="application/json" id="now-shelf-data" set:html={JSON.stringify(nowShelf).replace(/</g, '\\u003c')} />
+
   {spines.length > 0 && (
-    <div class="shelf-scroller" id="shelf-scroller" aria-label="Virtual bookshelf">
-      <div class="shelf-books">
-        {/* Three identical runs so the shelf can loop both ways without a hard left stop. */}
-        {[0, 1, 2].map((copy) =>
-          spines.map((sp) => (
-            <a
-              class="spine"
-              href={sp.href}
-              title={`${sp.title} — ${sp.author}`}
-              aria-hidden={copy !== 1 ? 'true' : undefined}
-              tabindex={copy !== 1 ? -1 : undefined}
-              style={`--spine-face:${sp.color};--spine-ink:${sp.ink}`}
-            >
-              <span class="spine-title">{sp.title}</span>
-            </a>
-          ))
-        )}
+    <section class="home-block all-books">
+      <h2>Everything I've read</h2>
+      <div class="shelf-scroller" id="shelf-scroller" aria-label="Virtual bookshelf">
+        <div class="shelf-books">
+          {/* Three identical runs so the shelf can loop both ways without a hard left stop. */}
+          {[0, 1, 2].map((copy) =>
+            spines.map((sp) => (
+              <a
+                class="spine"
+                href={sp.href}
+                title={`${sp.title} — ${sp.author}`}
+                aria-hidden={copy !== 1 ? 'true' : undefined}
+                tabindex={copy !== 1 ? -1 : undefined}
+                style={`--spine-face:${sp.color};--spine-ink:${sp.ink}`}
+              >
+                <span class="spine-title">{sp.title}</span>
+              </a>
+            ))
+          )}
+        </div>
       </div>
-    </div>
+    </section>
   )}
 
   {reviews.length > 0 && (
@@ -105,6 +127,22 @@ spines.push({
 </Layout>
 
 <script>
+  import '../lib/vendor/bookshelf.js';
+
+  const nowShelf = document.getElementById('now-shelf');
+  const nowData = document.getElementById('now-shelf-data');
+  if (nowShelf && nowData) {
+    (window as any).Bookshelf.mount(nowShelf, {
+      books: JSON.parse(nowData.textContent || '[]'),
+      storageKey: 'now-shelf-order',
+      labels: {
+        shelf: "A shelf of what I'm reading now and just finished",
+        reading: 'Now and recently',
+        current: 'Reading now',
+      },
+    });
+  }
+
   // Manual horizontal scroll — three identical spine runs. Start in the middle
   // run so left and right both have a full segment of runway; wrap near the
   // native edges so the shelf never hard-stops (and hover doesn't jitter).
